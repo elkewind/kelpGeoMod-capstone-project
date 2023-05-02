@@ -1,0 +1,292 @@
+---
+title: "Kelp Biomass and Area Wrangling"
+author: "Erika Egg"
+date: '`r format(Sys.time(), "%m/%d/%Y")`'
+output: html_document
+---
+
+```{r}
+# Load in necessary packages for wrangling
+library(tidyverse)
+library(ncdf4)
+
+#library(terra)
+library(sp)
+library(sf)
+library(tidyverse)
+library(raster)
+```
+
+```{r}
+# Read in the netcdf file to convert to csv and rasterStack
+# Source for our data: https://sbclter.msi.ucsb.edu/data/catalog/package/?package=knb-lter-sbc.74
+data_nc <- nc_open("~/Desktop/meds/capstone/data/area/LandsatKelpBiomass_2023_Q1_withmetadata.nc")
+#data_nc <- nc_open("/capstone/kelpgeomod/raw_data/LTER_kelp_area_biomass/LandsatKelpBiomass_2022_Q4_withmetadata.nc")
+#setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+```
+
+```{r}
+# First we will be converting to csv.
+# Let's extract the variables of use from the netcdf file.
+lon <- ncvar_get(data_nc, varid = 'longitude') # Longitude
+lat <- ncvar_get(data_nc, varid = 'latitude') # Latitude
+biomass <- ncvar_get(data_nc, varid = 'biomass') # Biomass values
+biomass_se <- ncvar_get(data_nc, varid = 'biomass_se') # Biomass standard error
+area <- ncvar_get(data_nc, varid = 'area') # Area values
+area_se <- ncvar_get(data_nc, varid = 'area_se') # Area standard error
+
+# Now we want to find the index of years we want (2014-2022 in our case). 
+# Temporal coverage for this data: 1984-03-23 to 2022-12-31
+# This data is quarterly by year, so each year has four data values for each variable.
+begin_year <- 2014
+end_year <- 2022
+lower_time_bound <- ((begin_year - 1984) * 4) + 1
+upper_time_bound <- ((end_year - 1984) * 4) + 4
+
+# We also want to set what our latitude and longitude bounds of our area of interest are.
+lower_lat <- 33.85
+upper_lat <- 34.59
+lower_lon <- -120.65
+upper_lon <- -118.80
+
+# If applicable, here is how you gather data for the entire available time period (1984-2022 here)
+# df_full_entire_time <- data.frame()
+# for (i in 1:length(data.frame(biomass))) { # length of biomass is same as length of area so can use either
+#   df_data_gather_entire_time <- data.frame(lat,
+#                                            lon,
+#                                            biomass = data.frame(biomass)[,i],
+#                                            biomass_se = data.frame(biomass_se)[,i],
+#                                            area = data.frame(area)[,i],
+#                                            area_se = data.frame(area_se)[,i]) %>% # Gather data for variables of interest
+#     filter(lat >= lower_lat & lat <= upper_lat & lon >= lower_lon & lon <= upper_lon) %>% # Filter to area of interest
+#     mutate(time_period = i)
+#   df_full_entire_time <- rbind(df_full_entire_time, df_data_gather_entire_time) # As you gather data in the loop, add to full data frame
+# }
+
+# Here is how we gather the data for our time period of interest (2014-2022)
+df_full <- data.frame()
+for (i in lower_time_bound:upper_time_bound){
+  df_data_gather <- data.frame(lat,
+                            lon,
+                            biomass = data.frame(biomass)[,i],
+                            biomass_se = data.frame(biomass_se)[,i],
+                            area = data.frame(area)[,i],
+                            area_se = data.frame(area_se)[,i]) %>% # Gather data for variables of interest
+    filter(lat >= lower_lat & lat <= upper_lat & lon >= lower_lon & lon <= upper_lon) %>% # Filter to area of interest
+    mutate(time_period = i) # Keep track of the time steps
+  df_full <- rbind(df_full, df_data_gather) # As you gather data in the loop, add to full data frame
+}
+
+# Convert the time steps in time_period to year and quarter
+year <- data.frame(ncvar_get(data_nc, "year")) 
+year$time_period = as.numeric(row.names(year))
+quarter <- data.frame(ncvar_get(data_nc,"quarter"))
+quarter$time_period = as.numeric(row.names(quarter))
+
+df_cleaned_time <- df_full %>% left_join(year) %>% rename(year = ncvar_get.data_nc...year..) %>% left_join(quarter) %>% rename(quarter = ncvar_get.data_nc...quarter..)
+
+# Prepare the data to write to csv
+to_write_full <- df_cleaned_time %>%
+  dplyr::select(-time_period) # Since we are done using the time_period to create year and quarter variables, we can remove it
+
+to_write_no_na <- df_cleaned_time %>%
+  dplyr::select(-time_period) %>% # Since we are done using the time_period to create year and quarter variables, we can remove it
+  drop_na(area, biomass) # If you would like to get rid of NAs for area and biomass (the key variables of interest) before exporting
+
+# Write the data to csv. Change the path to whatever you'd like to name it.
+write.csv(to_write_full, file = "~/Desktop/meds/capstone/data/area/area_biomass_new_coords_2014_2022.csv", row.names = FALSE)
+write.csv(to_write_no_na, file = "~/Desktop/meds/capstone/data/area/area_biomass_no_na_new_coords_2014_2022.csv", row.names = FALSE)
+```
+
+```{r}
+# Read in data. Can use the no NA one because removing NAs from area and biomass individually give same number of rows.
+mydata <- read_csv("~/Desktop/meds/capstone/data/area/area_biomass_no_na_new_coords_2014_2022.csv")
+#mydata <- read_csv("/capstone/kelpgeomod/intermediate_data/area_biomass/area_biomass_no_na_new_coords_2014_2022.csv")
+
+# Convert year and quarter to usable date
+mydata$date <- as.Date(paste0(mydata$year, "-", as.character((mydata$quarter-1)*3+1), "-01"))
+
+# Get rid of not necessary columns
+mydata_for_sf <- mydata %>%
+  dplyr::select(-year, -quarter)
+
+# Create spatial geom
+kelp_sf <- st_as_sf(mydata_for_sf, coords = c("lon", "lat"), crs = st_crs(4326))
+
+# Read in mask
+mask <- raster::raster("~/Desktop/meds/capstone/Data-Cleaning/mask/mask_rast.tif")
+#mask <- raster::raster("/capstone/kelpgeomod/intermediate_data/mask/mask_rast.tif")
+
+# Make sure the sf data has the same CRS as the mask
+sf_data_2 <- st_transform(kelp_sf, crs = raster::projection(mask))
+
+# Crop the sf data to the extent of the mask
+data_2_crop <- st_crop(sf_data_2, mask)
+
+# Write spatial csv
+write.csv(data_2_crop, file = "~/Desktop/meds/capstone/data/area/area_biomass_new_coords_2014_2022_geom.csv")
+saveRDS(data_2_crop, "~/Desktop/meds/capstone/data/area/area_biomass_new_coords_2014_2022_geom.RDS")
+```
+
+```{r}
+# Prepare for loop creating rasterStack - area first
+# Get all unique time periods for loop
+times <- unique(kelp_sf$date)
+
+# Stacking with raster package - area
+area_stack <- raster::stack()
+
+for (i in seq_along(times)) {
+  # Subset the data for the unique time period
+  print(times[[i]]) # make this more informative
+  kelp_t <- subset(kelp_sf, date == times[[i]])
+  
+  # Create a raster object for it
+  r <- raster::raster(raster::extent(kelp_t), resolution = c(0.0002698, 0.0002698), crs = "+proj=utm +zone=11 +datum=WGS84") #keep original resolution here so is not resampled
+
+  r <- raster::rasterize(kelp_t, r, field = "area")
+  
+  # Add raster to stack
+  area_stack <- raster::addLayer(area_stack, r)
+}
+
+# Add years to layer names
+years <- c(2014:2022)
+quarters <- c(1:4)
+
+year_quarter <- c()
+for (i in seq_along(years)) {
+  for (j in seq_along(quarters)) {
+  year_quarter_new <- paste0("layer", years[i], "_", quarters[j])
+  year_quarter <- append(year_quarter, year_quarter_new)
+  }
+}
+
+names(area_stack) <- paste(year_quarter)
+names(area_stack)
+
+# Define a color palette that goes from blue to red, with grey for 0
+custom_pal <- c("grey", colorRampPalette(c("blue", "red"))(99))
+
+# Plot the first layer of the stack
+plot(area_stack[[1]], col = custom_pal) # check 10 goes up to roughly 900
+```
+
+```{r}
+# Use the mask on the rasterStack - area
+
+# Set CRS
+crs(area_stack) <- crs(mask)
+plot(area_stack[[10]], col = custom_pal) 
+
+# Crop to mask
+area_stack_cropped <- crop(x = area_stack, y = mask)
+plot(area_stack_cropped[[10]], col = custom_pal) 
+
+# Calculate the aggregation factor
+agg_factor <- 0.008 / 0.0002698 # this will correspond roughly to end resolution of 0.008
+
+# Aggregate by the aggregation factor to get to 1 km vs. 30 m
+area_stack_aggregated <- raster::aggregate(x = area_stack_cropped, fact = agg_factor, fun = sum)
+#setExtent(area_stack_aggregated, extent(mask))
+plot(area_stack_aggregated[[10]], col = custom_pal) 
+
+# Resample to mask resolution
+area_stack_resampled <- resample(x = area_stack_aggregated, y = mask, method = "ngb")
+plot(area_stack_resampled[[10]], col = custom_pal)
+
+# Check that resampling does not change cells too much
+cellStats(area_stack_aggregated[[1]], sum)
+cellStats(area_stack_resampled[[1]], sum)
+# These are pretty close
+
+# Mask to remove land
+area_stack_masked <- mask(area_stack_resampled, mask)
+
+# Check the result
+plot(area_stack_masked[[10]], col = custom_pal)
+
+# Confirm integrity of raster
+identical(extent(area_stack_masked), extent(mask))
+identical(res(area_stack_masked), res(mask))
+identical(crs(area_stack_masked), crs(mask))
+identical(origin(area_stack_masked), origin(mask))
+identical(nrow(area_stack_masked), nrow(mask))
+identical(ncol(area_stack_masked), ncol(mask))
+
+# Save the RasterBrick object
+writeRaster(area_stack_masked, filename = "~/Desktop/meds/capstone/data/area/area_brick_standardized.tif", format = "GTiff", overwrite = TRUE)
+```
+
+```{r}
+# Do the process again for biomass values (or any other value desired)
+biomass_stack <- raster::stack()
+
+for (i in seq_along(times)) {
+  # Subset the data for the unique time period
+  print(times[[i]]) # make this more informative
+  kelp_t <- subset(kelp_sf, date == times[[i]])
+  
+  # Create a raster object for it
+  r <- raster::raster(raster::extent(kelp_t), resolution = c(0.0002698, 0.0002698), crs = "+proj=utm +zone=11 +datum=WGS84") #keep original resolution here so is not resampled
+
+  r <- raster::rasterize(kelp_t, r, field = "biomass")
+  
+  # Add raster to stack
+  biomass_stack <- raster::addLayer(biomass_stack, r)
+}
+
+# Add years to layer names
+years <- c(2014:2022)
+quarters <- c(1:4)
+
+year_quarter <- c()
+for (i in seq_along(years)) {
+  for (j in seq_along(quarters)) {
+  year_quarter_new <- paste0("layer", years[i], "_", quarters[j])
+  year_quarter <- append(year_quarter, year_quarter_new)
+  }
+}
+
+names(biomass_stack) <- paste(year_quarter)
+names(biomass_stack)
+
+# Use the mask on the rasterStack
+
+# Set CRS
+crs(biomass_stack) <- crs(mask)
+
+# Crop to mask
+biomass_stack_cropped <- crop(x = biomass_stack, y = mask)
+
+# Calculate the aggregation factor
+agg_factor <- 0.008 / 0.0002698
+
+# Aggregate by the aggregation factor to get to 1 km vs. 30 m
+biomass_stack_aggregated <- raster::aggregate(x = biomass_stack_cropped, fact = agg_factor, fun = sum)
+
+# Resample to mask resolution
+biomass_stack_resampled <- resample(x = biomass_stack_aggregated, y = mask, method = "ngb")
+
+# Check that resampling does not change cells too much
+cellStats(biomass_stack_aggregated[[1]], sum)
+cellStats(biomass_stack_resampled[[1]], sum)
+# These are pretty close 
+
+# Mask to remove land
+biomass_stack_masked <- mask(biomass_stack_resampled, mask)
+
+# Check the result
+plot(biomass_stack_masked[[1]], col = custom_pal)
+
+# Confirm integrity of raster
+identical(extent(biomass_stack_masked), extent(mask))
+identical(res(biomass_stack_masked), res(mask))
+identical(crs(biomass_stack_masked), crs(mask))
+identical(origin(biomass_stack_masked), origin(mask))
+identical(nrow(biomass_stack_masked), nrow(mask))
+identical(ncol(biomass_stack_masked), ncol(mask))
+
+# Save the RasterBrick object
+writeRaster(biomass_stack_masked, filename = "~/Desktop/meds/capstone/data/area/biomass_brick_standardized.tif", format = "GTiff", overwrite = TRUE)
+```

@@ -1,0 +1,247 @@
+---
+title: "Interpolation Coast"
+author: "Jessica French"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+## Set up
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r label = "read in packages"}
+library(tidyverse)
+library(tmap)
+library(terra)
+library(sf)
+library(gstat)
+library(raster)
+```
+
+```{r label = "set data directory"}
+# set data directory to intermediate data folder on tsosie
+datadir <- "/capstone/kelpgeomod/intermediate_data/"
+```
+
+```{r label = "read in files"}
+# Read in the combined nutrient file
+nutrients <- readRDS(file.path(datadir, "/joined_nutrients/joined_nutrients.RDS"))
+
+# read in coast_mask
+coast_mask <- rast("/capstone/kelpgeomod/raw_data/interpolation_shapes/sbc_coast.tif")
+
+# read in coast polygon
+coast_poly <- st_read("/capstone/kelpgeomod/raw_data/interpolation_shapes/sbc_coast.shp")
+```
+
+```{r label = "source in functions"}
+# source in function that creates a list of data frames by quarter
+source("~/capstone/Interpolation/idw_prep.R")
+
+# Two functions, one rasterizes the data and the other removes geometries
+source("~/capstone/Interpolation/idw_implement.R")
+
+# creates the gstat formulas and uses interpolate in terra to do inverse distance weighting. 
+source("~/capstone/Interpolation/idw_interpolate.R")
+
+# calculates mean rmse, the null rmse, and the relative performance of each quarter
+source("~/capstone/Interpolation/idw_rmse.R")
+```
+
+## Prep combined nutrients data
+
+```{r label = "prep nutrient data"}
+# Select columns of interest, filter our lter_nitrate because it does not have any of the variables we are interpolating at this stage. 
+nutrient_select <- nutrients |> 
+  filter(source != "lter_nitrate") |> 
+  dplyr::select(quarter, 
+         year, 
+         nitrate_nitrite, 
+         ammonium, 
+         phosphate, 
+         geometry, 
+         source) 
+
+```
+
+
+## Interpolation
+
+### Phosphate
+
+```{r label = "phopsphate prep for idw"}
+# use idw_prep_quarters function break nutrient select into quarters
+idw_prep_quarters("phosphate", nutrient_select)
+
+
+# create rasters of selected nutrient for each quarter. ----
+phosphate_rast <- idw_implement_rasterize(phosphate_quarter_df_list, 
+                                          "phosphate", 
+                                          coast_mask)
+
+# create data frames without geometries ----
+# gstat and sf do not seem to be compatible so removing the geometry column was necessary. x and y columns are created in the prep function. 
+
+phosphate_no_geom <- idw_implement_no_geom(phosphate_quarter_df_list)
+
+phosphate_no_geom[[2]]
+
+```
+
+```{r label = "phosphate intperpolation"}
+# apply interpolation function that creates a list of formulas and applies the interpolation terra function. 
+
+phosphate_interpolation <- idw_interpolate(phosphate_no_geom, 
+                                           nutrient = "phosphate",
+                                           coast_mask)
+
+phosphate_raster_list <- list()
+for (i in seq_along(phosphate_interpolation)) {
+  phosphate_raster_list[[i]] <- raster(phosphate_interpolation[[i]])
+  
+}
+
+phosphate_idw_brick <- raster::brick(phosphate_raster_list)
+
+```
+
+### Nitrate_nitrite
+
+```{r label = "nitrate_nitrite prep for idw"}
+# use idw_prep_quarters function break nutrient select into quarters
+idw_prep_quarters("nitrate_nitrite", nutrient_select)
+
+
+# create rasters of selected nutrient for each quarter. ----
+nitrate_nitrite_rast <- idw_implement_rasterize(nitrate_nitrite_quarter_df_list, 
+                                          "nitrate_nitrite", 
+                                          coast_mask)
+
+# create data frames without geometries ----
+# gstat and sf do not seem to be compatible so removing the geometry column was necessary. x and y columns are created in the prep function. 
+
+nitrate_nitrite_no_geom <- idw_implement_no_geom(nitrate_nitrite_quarter_df_list)
+
+```
+
+```{r label = "nitrate_nitrite intperpolation"}
+# apply interpolation function that creates a list of formulas and applies the interpolation terra function. 
+
+nitrate_nitrite_interpolation <- idw_interpolate(nitrate_nitrite_no_geom, 
+                                           nutrient = "nitrate_nitrite",
+                                           coast_mask)
+
+nitrate_nitrite_raster_list <- list()
+for (i in seq_along(nitrate_nitrite_interpolation)) {
+  nitrate_nitrite_raster_list[[i]] <- raster(nitrate_nitrite_interpolation[[i]])
+  
+}
+
+nitrate_nitrite_idw_brick <- raster::brick(nitrate_nitrite_raster_list)
+
+```
+
+
+### Ammonium
+
+```{r label = "ammonium prep for idw"}
+# use idw_prep_quarters function break nutrient select into quarters
+idw_prep_quarters("ammonium", nutrient_select)
+
+
+# create rasters of selected nutrient for each quarter. ----
+ammonium_rast <- idw_implement_rasterize(ammonium_quarter_df_list, 
+                                          "ammonium", 
+                                          coast_mask)
+
+# create data frames without geometries ----
+# gstat and sf do not seem to be compatible so removing the geometry column was necessary. x and y columns are created in the prep function. 
+
+ammonium_no_geom <- idw_implement_no_geom(ammonium_quarter_df_list)
+
+ammonium_no_geom[[2]]
+
+```
+
+```{r label = "ammonium intperpolation"}
+# apply interpolation function that creates a list of formulas and applies the interpolation terra function. 
+
+ammonium_interpolation <- idw_interpolate(ammonium_no_geom, 
+                                           nutrient = "ammonium",
+                                           coast_mask, 
+                                          max_distance = 0.04) # set max distance to approx 5km, natalie said ammonium is more spatially variable set this to half the distance of the other nutrients for now so that it is more realistic going into maxent. 
+
+ammonium_raster_list <- list()
+for (i in seq_along(ammonium_interpolation)) {
+  ammonium_raster_list[[i]] <- raster(ammonium_interpolation[[i]])
+  
+}
+
+ammonium_idw_brick <- raster::brick(ammonium_raster_list)
+```
+
+## Assess performance
+
+```{r label = "assess performance"}
+# Calculate the rmse, null, and relative performance for each layer. 
+# The seed is set within the function. 
+phosphate_perf <- idw_rmse(phosphate_no_geom, "phosphate")
+
+nitrate_nitrite_perf <- idw_rmse(nitrate_nitrite_no_geom, "nitrate_nitrite")
+  
+ammonium_perf <- idw_rmse(ammonium_no_geom, "ammonium", max_distance = 0.04)
+  
+```
+
+
+```{r label = "create performance df"}
+# create a data frame of performance estimates for each quarter and nutrient
+performance_df <- bind_rows(phosphate_perf, nitrate_nitrite_perf, ammonium_perf)
+
+# Write performance df to a csv
+write_csv(performance_df, "/capstone/kelpgeomod/analysis_data/inteprolate_idw/idw_performance.csv")
+
+```
+
+```{r label = "test plot"}
+plot(ammonium_interpolation[[3]])
+ammonium_perf[[1]]
+
+plot(phosphate_interpolation[[4]])
+phosphate_perf[[1]]
+
+plot(nitrate_nitrite_interpolation[[2]])
+nitrate_nitrite_perf[[4]]
+```
+
+
+```{r label = "save bricks to tif"}
+# phosphate
+writeRaster(phosphate_idw_brick, "/capstone/kelpgeomod/analysis_data/inteprolate_idw/phosphate_quarterly.tif", format = "GTiff", overwrite = TRUE)
+# nitrate_nitrite
+writeRaster(nitrate_nitrite_idw_brick, "/capstone/kelpgeomod/analysis_data/inteprolate_idw/nitrate_nitrite_quarterly.tif", format = "GTiff", overwrite = TRUE)
+# ammonium
+writeRaster(ammonium_idw_brick, "/capstone/kelpgeomod/analysis_data/inteprolate_idw/ammonium_quarterly.tif", format = "GTiff", overwrite = TRUE)
+```
+
+
+```{r label = "write individual files"}
+# phosphate
+terra::writeRaster(phosphate_interpolation[[1]], "/capstone/kelpgeomod/analysis_data/inteprolate_idw/phosphate/phosphate_1.tif", overwrite = TRUE)
+terra::writeRaster(phosphate_interpolation[[2]], "/capstone/kelpgeomod/analysis_data/inteprolate_idw/phosphate/phosphate_2.tif", overwrite = TRUE)
+terra::writeRaster(phosphate_interpolation[[3]], "/capstone/kelpgeomod/analysis_data/inteprolate_idw/phosphate/phosphate_3.tif", overwrite = TRUE)
+terra::writeRaster(phosphate_interpolation[[4]], "/capstone/kelpgeomod/analysis_data/inteprolate_idw/phosphate/phosphate_4.tif", overwrite = TRUE)
+# nitrate_nitrite
+terra::writeRaster(nitrate_nitrite_interpolation[[1]], "/capstone/kelpgeomod/analysis_data/inteprolate_idw/nitrate_nitrite/nitrtate_nitrite_1.tif", overwrite = TRUE)
+terra::writeRaster(nitrate_nitrite_interpolation[[2]], "/capstone/kelpgeomod/analysis_data/inteprolate_idw/nitrate_nitrite/nitrtate_nitrite_2.tif", overwrite = TRUE)
+terra::writeRaster(nitrate_nitrite_interpolation[[3]], "/capstone/kelpgeomod/analysis_data/inteprolate_idw/nitrate_nitrite/nitrtate_nitrite_3.tif", overwrite = TRUE)
+terra::writeRaster(nitrate_nitrite_interpolation[[4]], "/capstone/kelpgeomod/analysis_data/inteprolate_idw/nitrate_nitrite/nitrtate_nitrite_4.tif", overwrite = TRUE)
+# ammonium
+terra::writeRaster(ammonium_interpolation[[1]], "/capstone/kelpgeomod/analysis_data/inteprolate_idw/ammonium/ammonium_1.tif", overwrite = TRUE)
+terra::writeRaster(ammonium_interpolation[[2]], "/capstone/kelpgeomod/analysis_data/inteprolate_idw/ammonium/ammonium_2.tif", overwrite = TRUE)
+terra::writeRaster(ammonium_interpolation[[3]], "/capstone/kelpgeomod/analysis_data/inteprolate_idw/ammonium/ammonium_3.tif", overwrite = TRUE)
+terra::writeRaster(ammonium_interpolation[[4]], "/capstone/kelpgeomod/analysis_data/inteprolate_idw/ammonium/ammonium_4.tif", overwrite = TRUE)
+```
+

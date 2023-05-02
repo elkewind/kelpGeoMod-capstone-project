@@ -1,0 +1,176 @@
+---
+title: "depth_wrangling"
+author: "Elke Windschitl"
+date: "2023-02-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(raster)
+library(sf)
+library(terra)
+library(tmap)
+library(RColorBrewer)
+```
+
+```{r}
+# Read in mask
+mask <- terra::rast("mask/mask_rast.tif")
+plot(mask)
+```
+
+```{r}
+# Read in depth data
+depth_dat <- terra::rast("/capstone/kelpgeomod/raw_data/depth/depth_long.tiff")
+
+# Plot to visualize
+tmap_mode("view") # set to interactive view
+tm_shape(depth_dat) + # check the location
+  tm_raster(style = "cont",
+            breaks = seq(-2000, 1500, by = 100),
+            title = "depth",
+            palette = "-BrBG") 
+```
+
+```{r}
+# Read in Geoid tiles for depth correction (only applicable to depth)
+geoid1 <- terra::rast("/capstone/kelpgeomod/raw_data/depth/ETOPO_2022_v1_15s_N45W135_geoid.tif") # left tile
+
+tm_shape(geoid1) + # check the location
+  tm_raster(style = "cont",
+            breaks = seq(-50, 50, by = 10),
+            title = "Geoid Value",
+            palette = "PRGn") 
+
+geoid2 <- terra::rast("/capstone/kelpgeomod/raw_data/depth/ETOPO_2022_v1_15s_N45W120_geoid.tif") # right tile
+
+tm_shape(geoid2) + # check the location
+  tm_raster(style = "cont",
+            breaks = seq(-50, 50, by = 10),
+            title = "Geoid Value",
+            palette = "PRGn") 
+
+geoid_tile <- merge(geoid1, geoid2) # merge the tiles
+
+tm_shape(geoid_tile) + # check the location
+  tm_raster(style = "cont",
+            breaks = seq(-50, 50, by = 10),
+            title = "Geoid Value",
+            palette = "PRGn")
+
+# Crop geoid tile to match depth extent
+geoid_tile <- crop(x = geoid_tile,
+     y = depth_dat)
+
+tm_shape(geoid_tile) + # check the location
+  tm_raster(style = "cont",
+            breaks = seq(-50, 50, by = 10),
+            title = "Geoid Value",
+            palette = "PRGn")
+
+# Add the tiles together as per the user guide instructions (https://www.ngdc.noaa.gov/mgg/global/relief/ETOPO2022/docs/1.2%20ETOPO%202022%20User%20Guide.pdf)
+depth_wgs84 <- depth_dat + geoid_tile
+  
+tm_shape(depth_wgs84) + # check the location
+  tm_raster(style = "cont",
+            breaks = seq(-2000, 1500, by = 100),
+            title = "Geoid Value",
+            palette = "-BrBG") 
+```
+
+```{r}
+# Check the crs, and reset the crs if different
+crs(depth_wgs84) == crs(mask)
+
+# Crop to mask
+depth_wgs84 <- crop(x = depth_wgs84,
+                         y = mask) # crop to set extent to mask extent
+
+# Resample to mask resolution
+resampled_depth <- terra::resample(x = depth_wgs84,
+                                   y = mask,
+                                   method = "near")
+```
+
+
+```{r}
+# TESTING resample method --------------
+pre_rast <- raster(depth_wgs84)
+plot(pre_rast)
+resampled_depth_rast <- terra::resample(x = depth_wgs84,
+                                   y = mask,
+                                   method = "bilinear")
+resampled_depth_rast <- raster(resampled_depth_rast)
+plot(resampled_depth_rast)
+resampled_depth_near_rast <- terra::resample(x = depth_wgs84,
+                                   y = mask,
+                                   method = "near")
+resampled_depth_near_rast <- raster(resampled_depth_near_rast)
+plot(resampled_depth_near_rast)
+plot(resampled_depth_rast - resampled_depth_near_rast)
+
+hist(pre_rast)
+hist(resampled_depth_rast)
+hist(resampled_depth_near_rast)
+
+mapview(pre_rast)
+mapview(resampled_depth_rast)
+mapview(resampled_depth_near_rast)
+
+cellStats(pre_rast, max)
+cellStats(resampled_depth_rast, max)
+cellStats(resampled_depth_near_rast, max)
+# From this, near seems to be best
+```
+
+```{r}
+# Mask to remove land
+resampled_depth <- mask(resampled_depth, mask)
+plot(resampled_depth) # gut check
+
+# Confirm integrity of raster
+crs(resampled_depth) == crs(mask)
+ext(resampled_depth) == ext(mask)
+res(resampled_depth) == res(mask)
+nrow(resampled_depth) == nrow(mask)
+ncol(resampled_depth) == ncol(mask)
+
+tm_shape(resampled_depth) + # check the location
+  tm_raster(style = "cont",
+            breaks = seq(-2000, 1500, by = 100),
+            title = "Geoid Value",
+            palette = "-BrBG")
+```
+
+
+```{r}
+# Write the new raster to intermediate data
+terra::writeRaster(resampled_depth, "/capstone/kelpgeomod/intermediate_data/depth/SBC_depth.tif", filetype = "GTiff", overwrite = TRUE)
+```
+
+```{r}
+# Plot fancier
+
+boundaries <- st_read("/capstone/kelpgeomod/raw_data/land_bounds/California_County_Boundaries/cnty19_1.shp") 
+
+boundaries <- st_transform(x = boundaries, crs = 4326)
+
+tmap_mode("view")
+tm_shape(resampled_depth) + # check the location
+  tm_raster(style = "cont",
+            breaks = c(-2000, -1000, -500, -200, -100, -60, -40, -20, 0),
+            title = "Depth (m)",
+            palette = "Blues") +
+  tm_layout(legend.outside = TRUE, # Moving the legend
+            main.title = "Bathymetry of the Santa Barbara Channel",
+            main.title.size = 0.8) +
+  tm_shape(boundaries) +
+  tm_polygons() +
+  tm_grid(x = c(-120.4, -120.2, -120, -119.8, -119.6),
+          y = c(34.0, 34.2, 34.4),
+    alpha = 0.3) 
+```
+
+

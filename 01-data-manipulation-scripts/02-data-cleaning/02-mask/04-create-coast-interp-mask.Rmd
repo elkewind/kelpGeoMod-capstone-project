@@ -1,0 +1,103 @@
+---
+title: "Interpolate SBC Coast"
+author: "Jessica French"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r label = "read in packages"}
+library(tidyverse)
+library(sf)
+library(tmap)
+library(terra)
+```
+
+## Create blank raster along the coast
+- 
+
+
+```{r label = "create coast raster"}
+# read in AOI shape
+AOI <- st_read("/capstone/kelpgeomod/raw_data/New_AOI_SBchannel_shp/New_AOI_SBchannel.shp")
+
+# Create land_bounds ----
+
+land_bounds <- st_read("/capstone/kelpgeomod/raw_data/land_bounds/California_County_Boundaries/cnty19_1.shp") |> 
+  # transform so that the crs matches exactly
+  st_transform(crs = "EPSG:4326") |> 
+  # crop to our AOI
+  st_crop(AOI) |> 
+  # filter by objectid to so that the channel islands are excluded, because we don't want a buffer around the islands. 
+  filter(OBJECTID %in% c(19, 42, 56)) |> 
+  # We only need the geometry so get rid of all other columns with select
+  dplyr::select(geometry) |> 
+  # combine the county geometries into one
+  st_union() 
+
+# Create coast_buffer polygon ----
+
+coast_buffer <- land_bounds |> 
+  # create a 5km buffer along the coast
+  st_buffer(dist = 5000) |> 
+  # crop to AOI 
+  st_crop(AOI) |> 
+  # keep only the non-overlapping portion
+  st_difference(land_bounds) |> 
+  # Conver to an sf dataframe so we can use dplyr filter
+  st_as_sf() |> 
+  # filter to multipolygons to get rid of line artifact from the difference function.
+  filter(st_geometry_type(x) == "MULTIPOLYGON") 
+
+
+
+# plots ---- 
+
+plot(land_bounds)
+plot(coast_buffer)
+
+
+```
+
+```{r label = "create empty raster of coast buffer"}
+# create empty raster ----
+blank <- terra::rast()
+
+crs(blank) <- "EPSG:4326" # confirm WGS84
+crs(blank)
+ext(blank) <- c(-120.65, -118.80, 33.85, 34.59) # set extent
+ext(blank)
+res(blank) <- c(0.008, 0.008) # set resolution
+res(blank)
+
+values(blank) <- 1 # fill in values 1-10873 by row
+
+# coast_buffer is rasterized, becomes coast_raster ----
+coast <- terra::vect(coast_buffer)
+coast_raster <- terra::rasterize(x = coast, 
+                        y = blank)
+
+# plot ----
+plot(coast_raster)
+```
+
+```{r}
+tmap_mode("view")
+
+tm_shape(land_bounds) +
+  tm_borders(col = "blue") +
+  tm_shape(coast_buffer) +
+  tm_borders(col = "red4")
+```
+
+```{r label = "write raster and shape to tsosie}
+# write polygon
+st_write(coast_buffer, "/capstone/kelpgeomod/raw_data/interpolation_shapes/sbc_coast.shp")
+
+# write raster
+terra::writeRaster(coast_raster, "/capstone/kelpgeomod/raw_data/interpolation_shapes/sbc_coast.tif", filetype = "GTiff", overwrite = TRUE)
+```
+

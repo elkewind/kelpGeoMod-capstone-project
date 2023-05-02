@@ -1,0 +1,142 @@
+---
+title: "reclassify_usgs"
+author: "Jessica French"
+date: "`r Sys.Date()`"
+output: html_document
+---
+# Purpose
+
+The purpose of this markdown is to combine the USGS shape files that cover the Santa Barbara Coast into a single raster file. 
+
+# Set up 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+The USGS files have better coverage along the coast but have a more complicated classification scheme compared the the rasters from the California mapping project. In this notebook I am going to try and see what classifications in the USGS shape files overlap with the rocky areas in the shape files in order to reclassify.
+
+```{r label = "read in libraries"}
+library(terra)
+library(tmap)
+library(sf)
+library(tidyverse)
+```
+
+```{r label = "set working directory"}
+# If working locally 
+#setwd("/Users/jfrench/Documents/MEDS/Capstone/DATA/Benthic_Habitat_2/USGS_shape_files/USGS_Coast_shape_files") 
+
+# If working on tsosie
+setwd("/capstone/kelpgeomod/raw_data/Benthic_Habitat_2/USGS_shape_files/USGS_Coast_shape_files")
+```
+
+Reading in the files from USGS:
+
+The Point Conception and Gaviota files were less processed than the others. They had a CMECS code and CMECS description column that I used to determine the induration (h, m, s). Any description that contained "pipeline", "trawl", "oil", or "wreck" was labeled as anthropogenic. I could not recreate the habitat description column from this and will leave the CMECS description column in its place, it has been renamed Hab_Type to make selecting columns easier. 
+
+I also had to convert from 3D multipolygons to 2D to write as a shape file. The other files are multipolygons except coal oil point which is a polygon. This could be due to these files being a little more processed. 
+
+The reclassification code is in the reclass_pointC_gaviota.Rmd. 
+
+```{r label = "define function for read in in files"}
+# The following function reads in a shape file using st_read, transforms the crs to WGS 84 and selects the columns of interest.
+
+USGS_coast_fun <- function(shape_file) {
+  st_read(shape_file) |> 
+  st_transform("EPSG:4326") |> 
+  dplyr::select(c(Hab_Type, Ind_ID, Ind, geometry))  
+}
+
+```
+
+
+```{r label = "Read in files"}
+# This entire code chunk is courtesy of ChatGPT.
+# get list of subdirectories in working directory
+subdirs <- list.dirs()
+
+# Create empty list
+SB_coast <- list()
+
+# Loop over subdirectories and read shapefiles
+for (subdir in subdirs) {
+  # Get list of shapefiles in current subdirectory
+  shapefiles <- list.files(path = subdir, pattern = "\\.shp$", full.names = TRUE) 
+  
+  # Loop over shapefiles in current subdirectory and read them
+  for (shapefile in shapefiles) {
+    # Read shapefile using sf::st_read function and assign to a new object with the name of the shapefile
+    shp <- USGS_coast_fun(shapefile)
+    shp_name <- sub('\\.shp$', '', basename(shapefile))
+    assign(shp_name, shp)
+    
+    # Append the named object to the list
+    SB_coast[[shp_name]] <- get(shp_name)
+  }
+}
+
+```
+
+
+```{r label = "combine files"}
+# vector of hab types that are explicitly anthropogenic, will classify with an "a". This is already done for point conception and gaviota. These were found by using the unique() function on the Hab_Type column and scrolling through the result. 
+
+hab_type_anthro <- c("Unidentified hard feature (anthropogenic)",
+                     "Breakwater (anthropogenic)",
+                     "Groin or jetty (anthropogenic)",
+                     "Pipeline (anthropogenic)",
+                     "Oil platform structural support within shell mound",
+                     "Shipwreck (hard anthropogenic)",
+                     "Pipeline (hard anthropogenic)",
+                     "Riprap (hard anthropogenic)",
+                     "Dredge disturbance (anthropogenic)",
+                     "Artificial fill (sand/gravel)",
+                     "Shell hash mound adjacent to oil platform",
+                     "Trawl grooves (anthropogenic)",
+                     "Unknown anthropogenic features",
+                     "Trawl disturbances (anthropogenic)?",
+                     "Linear ridge of sewer pipeline (anthropogenic)",
+                     "Pipeline trench (anthropogenic)",
+                     "Cable trench (anthropogenic)"
+                     )
+
+
+# Combine data frames and add class column with anthropogenic features labeled a, everything else is the same as Ind_ID column. 
+SB_coast <-  bind_rows(SB_coast) |> 
+             mutate(class = case_when(Hab_Type %in% hab_type_anthro ~ "a",
+                           .default = Ind_ID)) 
+```
+
+```{r label = "test plot"}
+plot(SB_coast$geometry)
+```
+
+
+```{r label = "read in the mask"}
+# read in mask
+# use this for local
+#substrate_mask <- rast("/Users/jfrench/Documents/MEDS/Capstone/Data-Cleaning/mask/habitat_mask_rast.tif")
+
+# use this for tsosie
+substrate_mask <- rast("/Users/jfrench/capstone/Data-Cleaning/mask/habitat_mask_rast.tif")
+```
+
+```{r label = "apply mask to rasterize"}
+# use rasterize to convert from shapefile to raster. 
+# This is causing a package issue on tsosie but works locally. 
+usgs_raster <- terra::rasterize(SB_coast, substrate_mask, field = "class")
+
+# set the names of the layer to be consistent with the other substrate files
+terra::set.names(usgs_raster, "substrate_class")
+
+plot(usgs_raster)
+```
+
+```{r label = "write to GTiff file "}
+
+terra::writeRaster(usgs_raster, "/capstone/kelpgeomod/intermediate_data/substrate/usgs_substrate.tif", filetype = "GTiff", overwrite = TRUE)
+```
+
+
+

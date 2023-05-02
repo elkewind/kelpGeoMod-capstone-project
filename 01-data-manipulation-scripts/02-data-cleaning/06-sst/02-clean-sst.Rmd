@@ -1,0 +1,347 @@
+---
+title: "SST"
+author: "Javier Patron"
+date: "r Sys.Date()"
+---
+
+# Sea Surface Temperature
+
+The Sea Surface Temperature (SST) is in the form of a data set called "MUR-JPL-L4-GLOB-v4.1." This data set is produced by the Jet Propulsion Laboratory (JPL) and is part of the Multi-scale Ultra-high Resolution (MUR) sea surface temperature project. The metadata for this data set provides information about the characteristics and properties of the SST data.
+
+## Reading and Loading the SST Data
+
+Load the libraries
+```{r}
+library(tidyverse)
+library(httr)
+library(ncdf4)
+library(tmap)
+library(raster)
+library(tictoc)
+library(terra)
+library(dplyr)
+library(stringr)
+library(lubridate)
+library(ggplot2)
+library(gganimate)
+library(animation)
+library(sf)
+```
+
+Read in the mask
+```{r}
+mask <- raster("/capstone/kelpgeomod/intermediate_data/mask/mask_rast.tif")
+```
+
+Read one image for testing
+```{r}
+
+# Open the first file from the folder
+file <- nc_open("/capstone/kelpgeomod/raw_data/SST/GRHSST_lvl4/20230101090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.dap.nc4")
+
+# Retrieve the "analysed_sst" variable from a NetCDF file, which contains sea surface temperature data, and assigns it to the "sst" variable for further analysis or manipulation.
+sst <- ncvar_get(file, "analysed_sst")
+
+# Convert Kelvin to Celsius
+sst <- sst - 273.15  
+
+# Convert to raster for visualization
+sst_rast <- raster(sst) 
+
+# Flip the raster by 90 degrees to the left
+flipped_data <- t(flip(sst_rast, 1))
+
+plot(flipped_data)
+
+```
+
+# General Info of the raw image
+```{r}
+plot(sst_rast) #Plot the raw image
+crs(sst_rast)
+res(sst_rast)
+plot(flipped_data)
+
+```
+
+
+
+#### *Insights for netCDF files:* NetCDF files are self-describing, meaning that they include metadata that describes the contents of the file, such as variable names, units, and dimensions. This makes it easy to understand the data without having to consult external documentation. netCDF is popular becuase it can store various data types and numerical data types and can be read and written on various operating systems.
+
+
+Check the image info and use the mask
+```{r}
+#USING THE RESAMPLE
+# Set the extent of the raster to match the mask extent
+raster_data <- setExtent(flipped_data, extent(mask))
+
+# Resample the raster to match the mask resolution
+resampled_data <- resample(raster_data, mask, method = "bilinear")
+
+# Apply the mask to the resampled raster
+sst_masked <- mask(resampled_data, mask)
+
+#Check dimentions
+dim(sst_masked)
+
+plot(sst_masked)
+
+```
+
+# Creating a For Loop for the quarterly raster stack
+
+Set up the directory path where the files are located:
+```{r}
+data_dir <- "/capstone/kelpgeomod/raw_data/SST/GRHSST_lvl4"
+```
+
+Create a list of all the files in the directory:
+```{r}
+file_list <- list.files(data_dir, full.names=TRUE)
+```
+
+Create a Data Frame that contains the information from the files names and creates a new column in a data frame:
+```{r}
+#Filter for the desired dates
+start_date <- as.Date("2014-01-01")
+end_date <- as.Date("2022-12-31")
+
+file_df <- data.frame(file_name=file_list) %>%
+  mutate(date = as.Date(str_extract(file_name, "\\d{8}"), 
+                        format="%Y%m%d")) %>% 
+  filter(date >= start_date & date <= end_date)
+
+```
+
+Create a function that reads in each file and convert it to a raster:
+```{r}
+
+ncdf_to_raster <- function(nc_file) {
+  file <- nc_open(nc_file) # Read the 
+  sst <- ncvar_get(file, "analysed_sst")
+  sst <- sst - 273.15  # Convert Kelvin to Celsius
+  sst_rast <- raster(sst)
+  
+  # Flip the raster by 90 degrees to the left
+  flipped_data <- t(flip(sst_rast, 1))
+  
+  # Set the extent of the raster to match the mask extent
+  raster_data <- setExtent(flipped_data, extent(mask))
+  
+  # Resample the raster to match the mask resolution
+  resampled_data <- resample(raster_data, mask, method="bilinear")
+  
+  # Apply the mask to the resampled raster
+  sst_masked <- mask(resampled_data, mask)
+  
+  nc_close(file) # Close the netCDF file
+  
+  return(sst_masked)
+}
+
+```
+
+Do a test for January 2014
+```{r}
+
+# Subset file_df to include only files from January 2014
+jan_2014_files <- file_df %>% 
+  filter(date < '2014-02-01')
+
+# Use lapply() to create a list of rasters for January 2014
+raster_list <- lapply(jan_2014_files$file_name, ncdf_to_raster)
+
+# Convert to RasterStack object
+jan_raster_stack <- stack(raster_list)
+
+# Calculate the mean of all layers
+jan_raster_mean <- calc(jan_raster_stack, mean)
+
+plot(jan_raster_mean)
+
+```
+
+## Normalizing the SST files
+
+a)  Create a function that builds a Data Frame with the year and month we are interested on
+b)  Apply the ncdf_to_raster function that reads in the image, converts to Celsius and transforms each image into a raster file
+
+```{r}
+
+create_raster_stack <- function(year, month) {
+  
+  # Subset file_df to include only files from the given year and month
+  files <- file_df %>% 
+    filter(year(date) == year, month(date) == month)
+  
+  # Use lapply() to create a list of rasters for the given year and month
+  raster_list <- lapply(files$file_name, ncdf_to_raster)
+  
+  # Convert to RasterStack object
+  raster_stack <- stack(raster_list)
+  
+  # Calculate the mean of all layers
+  raster_mean <- calc(raster_stack, mean)
+  
+  return(raster_mean)
+}
+
+```
+
+Test the function we just did for August 2017
+
+```{r}
+tic()
+create_raster_stack(2017, 8)
+toc()
+```
+
+
+## Now lets create the raster brick *per quarter*
+
+Create a for loop that:
+a)  Uses the function `create_raster_stack` to build a raster mean per quarter
+b)  Appends that new raster to a list
+c)  Executes the mean per quarter
+d)  Stacks all quarter asters into a brick stack
+
+```{r}
+# Step a)
+create_raster_stack_quarterly <- function(year, quarter) {
+  
+  # Define the start and end months for the given quarter
+  start_quarter <- (quarter - 1) * 3 + 1
+  end_quarter <- quarter * 3
+  
+  # Subset file_df to include only files from the given year and quarter
+  files <- file_df %>% 
+    filter(year(date) == year & month(date) >= start_quarter & month(date) <= end_quarter)
+  
+  # Use lapply() to create a list of rasters for the given year and quarter
+  raster_list <- lapply(files$file_name, ncdf_to_raster)
+  
+  # Convert to RasterStack object
+  raster_stack <- stack(raster_list)
+  
+  # Calculate the mean of all layers
+  raster_mean <- calc(raster_stack, mean)
+  
+  return(raster_mean)
+  
+}
+```
+
+Test and visualize the function with a example
+```{r}
+test_spring15 <- create_raster_stack_quarterly(2015, 2)
+plot(test_spring15)
+
+```
+
+
+```{r}
+
+# Step b. Create empty list to store raster stacks
+raster_stack_list <- list()
+
+# Step c.Executes the for loop by using the function and calculates the mean of SST per quarter
+tic()
+# Loop through all quarters from Q1 2014 to Q4 2022
+for (year in 2014:2022) {
+  for (quarter in 1:4) {
+    
+    # Create raster stack for current year and quarter
+    raster_stack <- create_raster_stack_quarterly(year, quarter)
+    
+    # Add raster stack to list
+    raster_stack_list[[length(raster_stack_list) + 1]] <- raster_stack
+    
+  }
+}
+
+
+toc()
+
+# Convert list of raster stacks to RasterBrick object
+raster_quarter_brick <- brick(raster_stack_list)
+
+# Check the object that we just created
+class(raster_quarter_brick)
+names(raster_quarter_brick)
+sum(length(names(raster_quarter_brick)))
+
+```
+
+Create the names for the raster files
+```{r}
+# Get current names of layers in raster_brick
+current_names <- names(raster_quarter_brick)
+
+# Define quarter abbreviations
+quarter_name <- c("Q1", "Q2", "Q3", "Q4")
+
+# Create vector of new names in desired format
+new_names <- paste0(quarter_name, "-", rep(2014:2022, each = 4))
+
+# Rename layers in raster_brick with new names
+names(raster_quarter_brick) <- new_names
+
+```
+
+Save the 36 raster brick
+```{r}
+# Write RasterBrick Quarter object to file
+writeRaster(raster_quarter_brick, 
+            filename = "/capstone/kelpgeomod/intermediate_data/sst/sst_all_quarter_raster", 
+            format = "GTiff", 
+            overwrite=TRUE)
+```
+
+Create the raster brick per season
+```{r}
+calc_seasonal_means_brick <- function(rast_to_convert) {
+
+  quarter_sets <- list(seq(from = 1, to = 36, by = 4), # Q1s (winter)
+                       seq(from = 2, to = 36, by = 4), # Q2s (spring)
+                       seq(from = 3, to = 36, by = 4), # Q3s (summer)
+                       seq(from = 4, to = 36, by = 4)) # Q4s (fall)
+  
+  all_seasons_brick <- brick() # set up brick to hold averaged layers for each season (will have 4 layers at the end)
+  
+  for (i in seq_along(quarter_sets)) {
+    
+    season_brick_holder <- brick() # hold all layers for one season, then reset for next season
+    
+    for (j in quarter_sets[[i]]) {
+      season_brick <- brick() # hold single layer in a season, then reset for next layer
+      season_brick <- addLayer(season_brick, rast_to_convert[[j]]) # add single layer to initialized brick
+      season_brick_holder <- addLayer(season_brick_holder, season_brick) # add this layer to the holder for this season, and repeat until have all layers from season
+    }
+
+    season_averaged_layer <- calc(season_brick_holder, mean) # after having all layers from season, take the mean
+    all_seasons_brick <- addLayer(all_seasons_brick, season_averaged_layer) # add mean to the brick holding all averaged layers, and then repeat for the next season
+}
+
+writeRaster(all_seasons_brick[[1]], "/capstone/kelpgeomod/intermediate_data/sst/sst_quarter_1.tif", format = "GTiff")
+writeRaster(all_seasons_brick[[2]], "/capstone/kelpgeomod/intermediate_data/sst/sst_quarter_2.tif", format = "GTiff")
+writeRaster(all_seasons_brick[[3]], "/capstone/kelpgeomod/intermediate_data/sst/sst_quarter_3.tif", format = "GTiff")
+writeRaster(all_seasons_brick[[4]], "/capstone/kelpgeomod/intermediate_data/sst/sst_quarter_4.tif", format = "GTiff")
+}
+
+```
+
+
+```{r}
+calc_seasonal_means_brick(raster_quarter_brick)
+```
+
+Save the 4 raster brick
+```{r}
+# Write RasterBrick Quarter object to file
+writeRaster(seasonal_sst_brick, 
+            filename = "/capstone/kelpgeomod/intermediate_data/sst/sst_seasonal", 
+            format = "GTiff",
+            overwrite= TRUE)
+
+```
+

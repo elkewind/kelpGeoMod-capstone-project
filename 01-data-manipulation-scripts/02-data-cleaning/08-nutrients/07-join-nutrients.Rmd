@@ -1,0 +1,82 @@
+---
+title: "Nutrient Join"
+author: "Jessica French"
+date: "`r Sys.Date()`"
+output: html_document
+---
+## Purpose
+
+The purpose of this notebook is to join the intermediate nutrient data into a single dataframe. 
+
+## Set-up
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r label = "read in packages"}
+library(tidyverse)
+library(tmap)
+library(sf)
+library(naniar)
+```
+
+## Read in data sets
+
+data sets to read in
+- Plumes and Blooms
+- CalCOFI
+- USGS
+- LTER Bottle
+- LTER Nitrate
+
+```{r label = "Read in Data"}
+# Read in data from tsosie
+
+# Plumes and Blooms
+PB <- readRDS("/capstone/kelpgeomod/intermediate_data/Plumes_Blooms/Plumes_Blooms.RDS") 
+
+# CalCOFI
+calCOFI <- readRDS("/capstone/kelpgeomod/intermediate_data/calcofi/calcofi_nutrients.RDS") |> 
+  # create nitrate_nitrite combined column 
+  mutate("nitrate_nitrite" = nitrate + nitrite, .after = nitrite) |> 
+  rename("ammonium" = "ammonia") # Natalie said the naming difference is likely do to how each data source quantified the measurement but it was okay to combine them. 
+
+# USGS
+# Need to add source column 
+# Also not an sf object but the geom column looks the same.
+USGS <- readRDS("/capstone/kelpgeomod/intermediate_data/usgs_nutrients/usgs_sp_data.rds") |> 
+  mutate("source" = "USGS") |> 
+  st_as_sf()
+
+# LTER Nitrate
+lter_nitrate <- readRDS("/capstone/kelpgeomod/intermediate_data/nitrate/lter_nitrate.RDS") |> 
+  st_as_sf()
+
+# LTER bottle 
+lter_bottle <- readRDS("/capstone/kelpgeomod/intermediate_data/lter_bottle_nutrients/lter_bottle_new_coords_2014_2022_geom.RDS") |> 
+  mutate("source" = "lter_bottle")
+```
+
+```{r label = "combine"}
+# Combine data sets
+# Create list of data sets
+data_set_list <- list(calCOFI, PB, USGS, lter_bottle, lter_nitrate)
+
+# test with two that have different columns
+joined_nutrients <- bind_rows(data_set_list) |> 
+  replace_with_na(replace = list(nitrate = "NaN", 
+                                 nitrite = "NaN", 
+                                 nitrate_nitrite = "NaN", 
+                                 phosphate = "NaN", 
+                                 ammonium = "NaN", 
+                                 temp = "NaN"))
+
+```
+
+
+```{r label = "write to rds"}
+# write to rds
+write_rds(joined_nutrients, "/capstone/kelpgeomod/intermediate_data/joined_nutrients/joined_nutrients.RDS")
+```
+

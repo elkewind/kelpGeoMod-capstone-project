@@ -1,0 +1,117 @@
+---
+title: "CA_mapping"
+author: "Jessica French"
+date: "`r Sys.Date()`"
+output: html_document
+---
+# Purpose
+
+The purpose of this markdown is to combine the files from the California Mapping project into a single file with the extent, resolution, crs of the mask. 
+
+## Set up
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r label = "set working directory"}
+# If working locally
+#setwd("/Users/jfrench/Documents/MEDS/Capstone/DATA/Benthic_Habitat_2/Habitat_tiffs/Channel_Islands")
+
+# If wokring on tsosie
+setwd("/capstone/kelpgeomod/raw_data/Benthic_Habitat_2/Habitat_tiffs/Channel_Islands")
+```
+
+```{r label = "read in packages"}
+# read in packages
+library(terra)
+library(tmap)
+library(sf)
+library(tidyverse)
+```
+
+```{r label = "read in the mask"}
+# Read in the mask
+habitat_mask <- rast("/Users/jfrench/capstone/Data-Cleaning/mask/habitat_mask_rast.tif") 
+
+```
+
+Prior to this the ESRI substrate .lyr files that were sent to us from the California Mapping Project were converted to .tif files using QGIS. The A cell value of 1 = Rock and 0 = Not Rock or sediment. There is one file, sp_3mrock that had slightly different coverage than the corresponding substrate file and was classified with a different method but with the same rugosity thresholds. 
+
+The files have either 2m, 3m, or 5m resolution. 
+
+According to the metadata anthropogenic features were classified as not rock by hand and there is no classification for mixed substrate. 
+
+```{r label = "define function for read in in files"}
+# The following function reads in the raster file, projects it to match the habitat mask using the nearest neighbor method and then resamples it to match the extent and resolution of the habitat mask also using the nearest neighbor method. 
+
+CA_maps_fun <- function(raster_file) {
+  rast(raster_file) |> 
+  project(habitat_mask, 
+          method = "near") |> 
+  terra::resample(habitat_mask, 
+                  method = "near")
+}
+
+```
+
+```{r label = "Read in files"}
+# This entire code chunk is courtesy of ChatGPT.
+# get list of subdirectories in working directory
+subdirs <- list.dirs()
+
+# Loop over subdirectories and read shapefiles
+for (subdir in subdirs) {
+  # Get list of shapefiles in current subdirectory
+  rasterfiles <- list.files(path = subdir, pattern = "\\.tif$", full.names = TRUE) 
+  
+  # Loop over shapefiles in current subdirectory and read them
+  for (rasterfile in rasterfiles) {
+    # Read shapefile using sf::st_read function and assign to a new object with the name of the shapefile
+    rast_file <- CA_maps_fun(rasterfile)
+    rast_name <- sub('\\.tif$', '', basename(rasterfile))
+    assign(rast_name, rast_file)
+    
+  }
+}
+
+```
+
+
+```{r label = "merge all tifs"}
+# Use moasic() function to combine rasters as two have a slight overlap. 
+CA_substrate_islands <- mosaic(
+                        santacruz_rosa_scpt_2msub,
+                        santacruz_rosa_cp_2msub,
+                        sp_3mrock,
+                        santacruz_rosa_gi_2msub,
+                        gi_5msub,
+                        fun = "min") # In this case it will be more likely to classify something as sand when it is rock than vice versa
+                        
+
+# set the names of the layer to be consistent with the other substrate files
+terra::set.names(CA_substrate_islands, "substrate_class")
+
+# plot the resulting SpatRaster
+plot(CA_substrate_islands)
+```
+
+```{r label = "convert to character"}
+# Convert the substrate raster to a dataframe so that the values can be converted to character. Use na.rm = FALSE to keep na cells, this is necessary for converting back to SpatRaster format correctly. 
+CA_substrate_df <- as.data.frame(CA_substrate_islands, na.rm = FALSE) |> 
+   mutate("substrate_class" = case_when(substrate_class == 0 ~ "s", 
+                                        substrate_class == 1 ~ "h")) 
+
+```
+
+
+```{r label = "Replace values with df values"}
+# replace values in CA_substrate_islands with the values in the CA_substrate_df
+CA_substrate_islands <- setValues(CA_substrate_islands, CA_substrate_df)
+
+plot(CA_substrate_islands)
+```
+
+```{r label = "Write to GTiff file"}
+terra::writeRaster(CA_substrate_islands, "/capstone/kelpgeomod/intermediate_data/substrate/CA_maps_substrate_islands.tif", filetype = "GTiff", overwrite = TRUE)
+```
+

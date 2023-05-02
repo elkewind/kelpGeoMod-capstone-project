@@ -1,0 +1,109 @@
+---
+title: "Substrate Raster Cover"
+author: "Jessica French"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+```{r label = "read in libraries}
+# read in packages
+library(terra)
+library(tmap)
+library(sf)
+library(tidyverse)
+```
+
+
+The purpose of this is to check the files that have been combined and/ or converted to raster that they map correctly etc. 
+
+```{r label = "set data directory"}
+# If working locally
+# datadir <- "/Users/jfrench/Documents/MEDS/Capstone/Intermediate_data/substrate"
+
+# If working on tsosie
+datadir <- "/capstone/kelpgeomod/intermediate_data/substrate"
+```
+
+## Read in and Reclassify
+
+For each file the substrate classification is different. After reading in each file a reclassification is created where the first column is the current value and the second column is the new value. This was determined by looking at the classification of each file in the markdown it was created and by comparing maps of each file. 
+
+```{r label = "read in CA_maps file"}
+# read in data from intermediate data substrate folder
+CA_maps <- rast(file.path(datadir, "CA_maps_substrate_islands.tif")) 
+
+# create reclassification matrix
+# before reclassification 0 = hard and 1 = soft
+
+CA_maps_rcl <- matrix(c(0, 1, 1, 0), nrow = 2, ncol = 2, byrow = T)
+
+# after reclassification 0 = soft and 1 = hard
+
+CA_maps <- classify(CA_maps, rcl = CA_maps_rcl)
+
+plot(CA_maps)
+```
+
+```{r label = "read in USGS_islands file"}
+# read in data from intermediate data folder
+USGS_islands <- rast(file.path(datadir, "usgs_island_substrate.tif"))
+
+# create reclassification matrix
+# before reclassification 0 = hard, 1 = mixed, and 2 = soft
+
+USGS_islands_rcl <- matrix(c(0, 1, 1, 2, 2, 0), nrow = 3, ncol = 2, byrow = T)
+
+# after reclassification 0 = soft, 1 = hard, and 2 = mixed
+
+USGS_islands <- classify(USGS_islands, rcl = USGS_islands_rcl)
+
+plot(USGS_islands)
+```
+
+```{r label = "read in USGS_coast data form intermediate data folder"}
+USGS_coast <- rast(file.path(datadir, "usgs_substrate.tif"))
+
+#create reclassification matrix
+# before reclassification 0 = anthropogenic, 1 = hard, 2 = mixed, and 3 = soft
+USGS_coast_rcl <- matrix(c(0, 3, 1, 1, 2, 2, 3, 0), nrow = 4, ncol = 2, byrow = T)
+
+# after reclassification 0 = soft, 1 = hard, 2 = mixed, adn 3 = anthropogenic. 
+
+USGS_coast <- classify(USGS_coast, rcl = USGS_coast_rcl)
+
+plot(USGS_coast)
+```
+
+```{r labels = "create dataframe of factor levels"}
+# create data frame of desired factor levels to feed into the levels so that all of the rasters are the same 
+
+relevel_df <- tribble(
+  ~ "value", ~ "substrate_class", 
+  0, "soft", 
+  1, "hard", 
+  2, "mixed", 
+  3, "anthropogenic"
+) 
+```
+
+
+```{r label = "combine files"}
+# Combine files using merge, this is a simpler operation but none of these files overlap at this point so it should not be an issue and there is no risk of it doing any calculations with categorical variables.
+SBC_substrate <- merge(CA_maps, USGS_islands, USGS_coast)
+
+levels(SBC_substrate) <- relevel_df
+
+
+# plot
+plot(SBC_substrate) 
+
+```
+
+```{r label = "write to GTiff"}
+terra::writeRaster(SBC_substrate, "/capstone/kelpgeomod/intermediate_data/substrate/SBC_substrate.tif", filetype = "GTiff", overwrite = TRUE)
+```
+
+

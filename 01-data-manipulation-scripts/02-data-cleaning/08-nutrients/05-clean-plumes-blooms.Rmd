@@ -1,0 +1,450 @@
+---
+title: "Plumes and Blooms Data Cleaning"
+author: "Jessica French"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+## Set Up
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r label = "set data directory"}
+# if running locally
+#datadir <- "/Users/jfrench/Documents/MEDS/Capstone/DATA/Nutrients/plumes_blooms"
+
+# if running on tsosie
+datadir <- "/capstone/kelpgeomod/raw_data/"
+```
+
+```{r label = "read in libraries"}
+library(tidyverse)
+library(lubridate)
+library(sf)
+library(tmap)
+library(naniar)
+```
+
+## ASC files
+
+### Define column names
+The files have three different numbers of columns, below is a vector of column names for each number of columns. The column name do. not follow a set pattern or start on the same line so I have not been able to find a way to set them that is more streamline than copy and pasting them and adding the parentheses and commas manually. 
+
+```{r label = "Column names for 73 columns"}
+# create vector of column names
+columnnames_73 <- c("Id",	#"10 digit number !###$$@@%% where [!=Cruise Type, 1=Core, 2=Process, 3=Other], [### is cruise number], [$$ is Station Id], [@@ is cast number] and [%% is bottle number].
+                 "Date", #6 digit number YYMMDD	
+                 "Julian", #Julian Day since 960100 where 960101 is Julian Day 1	
+                 "Lat",	#Decimal degrees
+                 "Lon",	#Decimal degrees
+                 "Nom_Depth",	#Nominal depth for bottle sample.  Samples taken through the underway system will have a nominal depth of -1.   Samples taken ""over the side"" will be -2.
+                 "uTime",	#Time in decimal hours since midnight
+                 "uTemp",	#[degrees Celcius]
+                 "uSalt",	#[ppt]
+                 "uFluor1",	#fluorometer [Volts]
+                 "uFlour2",	#fluorometer [Volts]
+                 "uTrans",	#transmissometer [Volts]
+                 "Bottle",	#Bottle position on carousel
+                 "Pr",	#Pressure [decibars
+                 "TimeJ",	#Time [Julian]
+                 "Sal",	#PSS-78 [ppt]
+                 "PoTemp068",	#Potential Temperature [degrees Celcius]
+                 "Sig00",	#[kg/m^3]
+                 "Sigt00",	#[kg/m^3]
+                 "T068",	#Temperature [degress Celcius]
+                 "BAT",	#Beam Attenuation Coefficient [/m]
+                 "Xmiss",	#Transmissometer (660nm) [%trans]
+                 "Fls",	#Fluorometer derived Chla (uncalibrated) [mg/m^3]
+                 "PAR",	#Photosynth. Avail. Radiation
+                 "COS/m", #Conductivity [siemens/m]
+                 "V0",	#Channel 0 [volts]
+                 "V1",	#Channel 1 [volts]	
+                 "V5",	#Channel 5 [ volts]	
+                 "Unused",	
+                 "PO4",	#[umol/L]
+                 "SiO2",	#[umol/L]
+                 "NO2",	#[umol/L]
+                 "NO3NO2",	#[umol/L]
+                 "NH4",	#[umol/L]
+                 "TSM1",	#[mg/L]
+                 "TSM2",	#[mg/L]
+                 "TSM3",	#[mg/L]
+                 "BSi",	 #[umol/L]
+                 "LSi",	#[umol/L]
+                 "chla1",	#Rep1 [ug/L]	
+                 "chla2",	#Rep2 [ug/L]	
+                 "chla3",	#Rep3 [ug/L]
+                 "phaeo1",	#Rep1 [ug/L]	
+                 "phaeo2",	#Rep2 [ug/L]
+                 "phaeo3",	#Rep3 [ug/L]	
+                 "Fluor Chl",	#[ug/L] measured on HPLC filter
+                 "Fluor Phaeo",	#[ug/L] measured on HPLC filter
+                 "Chlide a",	# [ug/L]
+                 "Chl c3",	#[ug/L]
+                 "Chl c2",	#[ug/L]
+                 "Chl c1 + c2",	#[ug/L]
+                 "Perid	", #[ug/L]
+                 "But",	#[ug/L]
+                 "Fuco",	#[ug/L]
+                 "Hex",	#[ug/L]	
+                 "Pras",	#[ug/L]
+                 "Viol",	#[ug/L]
+                 "Diadin",	#[ug/L]
+                 "Allo",	#[ug/L]
+                 "Diato",	#[ug/L]
+                 "Lut",	#[ug/L]
+                 "Zea",	#[ug/L]
+                 "Chl b",	#[ug/L]
+                 "Chl a",	#[ug/L]
+                 "alpha-Carot",	#[ug/L]
+                 "beta-Carot",	#[ug/L]
+                 "Mva",	#[ug/L]
+                 "Dva",	#[ug/L]
+                 "Tot [Chl a]",	#[ug/L]
+                 "Wt % C",	#[ug]
+                 "Wt % H", #[ug]
+                 "Wt % N", #[ug]
+                 "C/N Ratio") #[ug]
+
+length(columnnames_73)
+```
+
+```{r label = "column names for 79 columns"}
+columnnames_79 <- c("Id",
+                    "Date",	
+                    "Julian",
+                    "Lat",
+                    "Lon",
+                    "Nom_Depth",
+                    "uTime",
+                    "uTemp",
+                    "uSalt",
+                    "uFluor1",
+                    "uFlour2",
+                    "uTrans",
+                    "Bottle",
+                    "Pr",
+                    "TimeJ",
+                    "Sal",
+                    "PoTemp068",	
+                    "Sig00",
+                    "Sigt00",
+                    "T068",
+                    "BAT",
+                    "Xmiss",
+                    "Fls",
+                    "PAR",
+                    "COS/m",
+                    "V0",
+                    "V1",
+                    "V5",	
+                    "Unused",
+                    "PO4",
+                    "SiO2",
+                    "NO2",
+                    "NO3NO2",
+                    "NH4",
+                    "TSM1",
+                    "TSM2",
+                    "TSM3",
+                    "BSi",
+                    "LSi",
+                    "chla1",
+                    "chla2",
+                    "chla3",
+                    "phaeo1",
+                    "phaeo2",
+                    "phaeo3",
+                    "Fluor	Chl",
+                    "Fluor	Phaeo",
+                    "Chl	c3",
+                    "Chl	c2",
+                    "Chl	c1",
+                    "Chlide_a",
+                    "Pheophor_a",
+                    "Perid",
+                    "But_Fuco", #Butanoyloxy-Fucoxanthin	[ug/L]
+                    "Fuco", #Fucoxanthin	[ug/L]
+                    "Neo",	#Neoxanthin	[ug/L]
+                    "Prasino", #Prasinoxanthin	[ug/L]
+                    "Viol", #Violaxanthin	[ug/L]
+                    "Hex_Fuco",
+                    "Diadino",
+                    "Allo",
+                    "Diato",
+                    "Zea",
+                    "Lut",
+                    "Gyro", #Gyroxanthin-diester	[ug/L]
+                    "DVb", #Divinyl-Chlorophyll	b	[ug/L]
+                    "MVb", #Monovinyl-Chlorophyll	b	[ug/L]
+                    "Chla_allomer", #Chlorophyll	a	allomer	[ug/L]
+                    "DVa",
+                    "MVa",
+                    "Chla_epimer", #Chlorophyll	a	epimer	[ug/L]
+                    "Pheophyt_a", #Pheophytin	a	[ug/L]
+                    "a_Carot",
+                    "b_Carot",
+                    "Tot_chla",
+                    "Wt	%	C",
+                    "Wt	%	H",
+                    "Wt	%	N",
+                    "C/N	Ratio")
+
+length(columnnames_79)
+```
+
+```{r label = "column names for 69 columns"}
+columnnames_69 <- c("Id",
+                    "Date",
+                    "Julian",
+                    "Lat",
+                    "Lon",
+                    "Nom_Depth",
+                    "uTime",
+                    "uTemp",
+                    "uSalt",
+                    "uFluor1",
+                    "uFlour2",
+                    "uTrans",
+                    "Bottle",
+                    "Pr",
+                    "TimeJ",
+                    "Sal00",
+                    "PoTemp068",
+                    "Sig00",
+                    "Sigt00",
+                    "T068",
+                    "BAT",
+                    "Xmiss",
+                    "Fls",
+                    "PAR",
+                    "COS/m",
+                    "V0",
+                    "V1",
+                    "V5",
+                    "UNUSED",
+                    "PO4",
+                    "SiO2",
+                    "NO2",
+                    "NO3NO2",
+                    "NH4",
+                    "TSM1",
+                    "TSM2",
+                    "TSM3",
+                    "BSi",
+                    "LSi",
+                    "chla1",
+                    "chla2",
+                    "chla3",
+                    "phaeo1",
+                    "phaeo2",
+                    "phaeo3",
+                    "p1",
+                    "p2",
+                    "p3",
+                    "p4",
+                    "p5",
+                    "p6",
+                    "p7",
+                    "p8",
+                    "p9",
+                    "p10",
+                    "p11",
+                    "p12",
+                    "p13",
+                    "p14",
+                    "p15",
+                    "p16",
+                    "p17",
+                    "p18",
+                    "p19",
+                    "p20",
+                    "Wt % C",
+                    "Wt % H",
+                    "Wt % N",
+                    "C/N Ratio")
+
+length(columnnames_69)
+```
+
+Some of the files had a space between each line which caused an error. The loop below shows the error (the first five lines are blank) and the file that is causing the problem. You can then go remove the extra spaces in BBEdit by removing duplicate lines. 
+
+### Loop through files
+
+```{r label = "create loop to read in the files"}
+# want to create a loop that read in the files from the folder and converts the date to a character, will convert to date in a later step. 
+
+# create a list of file names in the asc folder
+file_names <- list.files(file.path(datadir, "plumes_and_blooms"))
+
+# create empty list to add asc data frames to.
+asc_list <- c()
+
+# loop through the files in file_names
+for (i in seq_along(file_names)) {
+  skip_to_next <- FALSE # for use in tryCatch
+  
+  tryCatch(# read in files inside try catch so can move past errors.
+    file <-
+      read.table(file.path( # Use read.table to read files
+        datadir, 
+        "plumes_and_blooms",
+        file_names[i]
+      ),
+      colClasses = c(V2 = "character")), # Set date column to character to not lose zeros
+    error = function(e) {
+      skip_to_next <- TRUE # if an error comes up skip to next changes to true
+      cat("ERROR :", conditionMessage(e), "\n") # print the error message
+      print(file_names[i]) # print the name of file that caused the error
+    },
+    warning = function(w) {
+      cat("WARNING :", conditionMessage(w), "\n") # if a warning comes up, print the warning
+      print(file_names[i])# print the affected file
+    }
+  ) 
+   if (skip_to_next) {
+    next
+  } # skip to next file on error
+    asc_list[[i]] <- file   # add file with appropriate column names to asc_list
+}    
+
+###########################################################
+##### End loop to read in files and add to list ###########
+###########################################################
+```
+
+``` {r label = "loop to add column names to files"}
+# loops through files in asc_list and adds column  names depending on number of columns, there are three vectors of column names created at the beginning of this notebook from copying and pasting the column names from a file that had the number of column desired. 
+for (i in seq_along(asc_list)) {
+  
+  skip_to_next <- FALSE # for use in tryCatch
+  
+  tryCatch(
+    if (ncol(asc_list[[i]]) == 73) { # What to do if file has 73 columns 
+    colnames(asc_list[[i]]) <- columnnames_73
+    
+  } else if (ncol(asc_list[[i]]) == 79) { # What to do if the file has 79 columns 
+    colnames(asc_list[[i]]) <- columnnames_79
+    
+  } else { # What to do if the file has 69 columns 
+      colnames(asc_list[[i]]) <- columnnames_69 
+    },
+  error = function(e) {
+      skip_to_next <- TRUE # if an error comes up skip to next changes to true
+      cat("ERROR :", conditionMessage(e), "\n") # print the error message
+      print(i)  # print the index of affected file name in asc list
+    },
+    warning = function(w) {
+      cat("WARNING :", conditionMessage(w), "\n") # if a warning comes up, print the warning
+      print(i) # print the index of affected file name in asc list
+    }
+  )
+  if (skip_to_next) {
+    next
+  } 
+}
+
+###########################################################
+##### End loop to assign column names  ####################
+###########################################################
+```
+
+Files pb030429.asc, pb201021.asc, "pb220914.asc" have warnings about the rows not having the same number of elements as the columns and an incomplete final line. 
+
+"pb220914.asc" trying commenting out the last line which seems to be the issue, some of the columns are blank
+UPDATE: Seemed to work for that file. 
+
+The other two are still causing a warning and may need to be discarded.
+UPDATE: I looked at the other two by pasting them in with data pasta, no errors were generated and all of the columns align without blanks or NAs. The warnings may be do to a formatting error in the file. 
+
+```{r label = "select for columns of interest"}
+# need to identify the variables of interest
+# Column names are the same for the variables we are interested in so one vector of variables should do it. 
+# loop through files in asc_list and select for desired columns 
+for (i in seq_along(asc_list)) {
+  asc_list[[i]] <- select(asc_list[[i]], 
+                          c(Id, Date, Julian, Lat, Lon,
+                 Nom_Depth, T068, PO4, NO2, NO3NO2, 
+                 NH4))
+}
+```
+
+### Combine data frames 
+
+```{r label = "combine data frames"}
+# Combine data frames using bind rows and change column names 
+PB_combined <- bind_rows(asc_list) |> 
+  rename(c("phosphate" = "PO4", 
+           "nitrite" = "NO2", 
+           "nitrate_nitrite" = "NO3NO2", 
+           "ammonium" = "NH4", 
+           "temp" = "T068"))
+```
+
+### Dates
+
+Over 400 observations have invalid dates so can use the julian date column to see if I can fix that. 
+Julian date is days since 960101
+
+```{r label = "convert date to data time"}
+# Convert julian date column to a date time, a lot of the rows for date are missing leading zeros causing parsing errors so I am just going to use julian date which is days since 960100. 
+PB_combined <- PB_combined |> 
+    mutate("Date" = as_date(Julian, origin = ymd(960101))) |> 
+    mutate("year" = year(Date), # create a year column
+           "quarter" = quarter(Date, fiscal_start = 1, with_year = FALSE), .after = Date) |> # create a quarter column 
+    filter(year >= 2014)      
+```
+
+```{r label = "Set NAs"}
+# replace -999.0000 and -999 with NA in the nutrient columns 
+PB_combined <- PB_combined |> 
+  naniar::replace_with_na(replace = list(phosphate = -999.0000,
+                                         nitrite = -999.0000, 
+                                         nitrate_nitrite = -999.0000,
+                                         ammonium = -999)) |> 
+  replace_with_na_all(condition = ~.x < 0)
+```
+
+```{r label = "filter depth and take mean"}
+# Filter to depth less than or equal to 10m and take the mean of observation for each lat, lon, year, and quarter. Add column with source info
+
+# NOTE: Ammonium had no data so will be excluded.
+PB_mean <- PB_combined |> 
+  filter(Nom_Depth <= 10) |> 
+  group_by(Lat, Lon, year, quarter) |> # For each quarter at each location we will have an average nutrient level in the top 10 meters of water. 
+  summarize("phosphate" = mean(phosphate, na.rm = T), 
+            "nitrite" = mean(nitrite, na.rm = T), 
+            "nitrate_nitrite" = mean(nitrate_nitrite, na.rm = T),
+            "temp" = mean(temp, na.rm = T)) |> 
+  mutate("source" = "plumes_blooms") # add source
+```
+
+### Convert lat lon to geomertry
+
+```{r label = "Convert geometry"}
+
+# convert lat and lon to geometry
+PB_mean_geom <- PB_mean |> 
+  mutate("Lon" = -Lon) |> 
+  st_as_sf(coords = c("Lon", "Lat")) |> 
+  st_set_crs( "EPSG:4326")
+```
+
+### Write as an RDS file
+
+```{r label = "write to RDS file"}
+# if running locally
+#write_rds(PB_mean_geom, "/Users/jfrench/Documents/MEDS/Capstone/Intermediate_data/Plumes_Blooms/Plumes_Blooms.RDS")
+
+# if running on tsosie
+write_rds(PB_mean_geom, "/capstone/kelpgeomod/intermediate_data/Plumes_Blooms/Plumes_Blooms.RDS")
+```
+
+```{r label = "Write to CSV"}
+# write the full data frame to csv, will lose date and geom.
+
+write_csv(PB_mean_geom, "/Users/jfrench/Documents/MEDS/Capstone/Intermediate_data/Plumes_Blooms/Plumes_Blooms.CSV")
+```
+

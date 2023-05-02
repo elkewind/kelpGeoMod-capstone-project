@@ -1,0 +1,121 @@
+---
+title: "Untitled"
+author: "Jessica French"
+date: "`r Sys.Date()`"
+output: html_document
+---
+# Purpose
+
+This markdown combines the shape files from the USGS into a single raster that has the same classification scheme, extent, and resolution as the USGS coast files and the habitat mask. 
+
+## Set up 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r label = "read in libraries"}
+library(terra)
+library(tmap)
+library(sf)
+library(tidyverse)
+
+```
+
+```{r label = "set working directory"}
+setwd("/capstone/kelpgeomod/raw_data/Benthic_Habitat_2/USGS_channel_islands/")
+```
+
+These files are in a slightly different format and have different information than the main USGS files. From the metadata the bottom classification is in the BOTTOM_ID column and is coded as h for hard bottom, m for mixed hard and s for sediment soft bottom. There is not additional information for what may be an anthropogenic feature so they cannot be removed from this data. 
+
+
+```{r label = "define function for read in in files"}
+# The following function reads in a shape file using st_read, transforms the crs to WGS 84 and selects the columns of interest.
+
+USGS_channel_fun <- function(shape_file) {
+  st_read(shape_file) |> 
+  st_transform("EPSG:4326") |> 
+  dplyr::select(c(BOTTOM_ID, geometry))  
+}
+
+```
+    
+```{r label = "read in files"}
+# This entire code chunk is courtesy of ChatGPT.
+# get list of subdirectories in working directory
+subdirs <- list.dirs()
+
+# Create empty list
+USGS_islands <- list()
+
+# Loop over subdirectories and read shapefiles
+for (subdir in subdirs) {
+  # Get list of shapefiles in current subdirectory
+  shapefiles <- list.files(path = subdir, pattern = "\\.shp$", full.names = TRUE) 
+  
+  # Loop over shapefiles in current subdirectory and read them
+  for (shapefile in shapefiles) {
+    # Read shapefile using sf::st_read function and assign to a new object with the name of the shapefile
+    shp <- USGS_channel_fun(shapefile)
+    shp_name <- sub('\\.shp$', '', basename(shapefile))
+    assign(shp_name, shp)
+    
+    # Append the named object to the list
+    USGS_islands[[shp_name]] <- get(shp_name)
+  }
+}
+```
+    
+    
+```{r label = "read in files"}
+# Read in files from USGS channel islands mapping
+north_anacapa_p <- st_read("nanphab/nanphab.shp") |> 
+  st_transform("EPSG:4326") |> 
+  dplyr::select(c(BOTTOM_ID, geometry))
+
+south_anacapa <- st_read("sanahab/sanahab.shp") |> 
+  st_transform("EPSG:4326") |> 
+  dplyr::select(c(BOTTOM_ID, geometry))
+
+south_anacapa_p <- st_read("sanphab/sanphab.shp") |> 
+  st_transform("EPSG:4326") |> 
+  dplyr::select(c(BOTTOM_ID, geometry))
+
+se_santa_cruz <- st_read("secruhab/secruhab.shp") |> 
+  st_transform("EPSG:4326") |> 
+  dplyr::select(c(BOTTOM_ID, geometry))
+
+```
+
+```{r label = "combine into one data frame"}
+# Combine list if data frames into one using bind rows. 
+USGS_islands <-  bind_rows(USGS_islands) 
+
+#plot(USGS_channel_islands$geometry)
+```
+
+```{r label = "read in mask"}
+# read in mask
+# use this for local
+# substrate_mask <- rast("/Users/jfrench/Documents/MEDS/Capstone/Data-Cleaning/mask/habitat_mask_rast.tif")
+
+# use this for tsosie
+substrate_mask <- rast("/Users/jfrench/capstone/Data-Cleaning/mask/habitat_mask_rast.tif")
+```
+
+```{r label = "rasterize"}
+
+usgs_islands_raster <- rasterize(USGS_islands, substrate_mask, field = "BOTTOM_ID") 
+
+# set the names of the layer to be consistent with the other substrate files
+terra::set.names(usgs_islands_raster, "substrate_class")
+
+plot(usgs_islands_raster)
+
+```
+
+```{r label = "write to shape file "}
+
+terra::writeRaster(usgs_islands_raster, "/capstone/kelpgeomod/intermediate_data/substrate/usgs_island_substrate.tif", filetype = "GTiff", overwrite = TRUE)
+```
+

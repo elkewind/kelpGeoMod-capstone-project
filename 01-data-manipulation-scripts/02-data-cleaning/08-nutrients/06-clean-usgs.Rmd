@@ -1,0 +1,155 @@
+---
+title: "usgs"
+author: "Javier Patron"
+date: "2023-03-28"
+---
+
+### **Assumptions and points to consider**
+
+1.  The -9999.00 values are no good for phosphate, ammonium, nitrate_and_nitrite in point conception, and Gill Ilands 2
+2.  The final values per quarter are the mean of the 10 observations per location
+im using the function rm.na = T, for NA values 
+
+
+Load the Libraries
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(raster)
+library(sp)
+library(tmap)
+library(sf)
+library(stars)
+library(dplyr)
+library(terra)
+library(lubridate)
+
+```
+
+Read the data
+
+```{r}
+data_version2 <- read_csv("/capstone/kelpgeomod/raw_data/usgs_bottle_fall/RL-19-05_BTL_CTD_data v2.0.csv") 
+data_version3 <- read_csv("/capstone/kelpgeomod/raw_data/usgs_bottle_fall/SH-18-12_BTL_CTD_data_v3.0.csv")
+
+```
+
+Explore the data
+```{r}
+# convert lat and long columns to sf
+sf_data_2 <- data_version2 |> 
+  st_as_sf(coords = c("Longitude", "Latitude"),
+           crs = 4326)
+
+# convert lat and long columns to sf
+sf_data_3 <- data_version3 |> 
+  st_as_sf(coords = c("Longitude", "Latitude"),
+           crs = 4326)
+
+```
+
+```{r}
+# Define the rectangle as a polygon
+rectangle <- st_polygon(list(rbind(c(-120.65, 34.59), 
+                                   c(-120.65, 33.85), 
+                                   c(-118.80, 33.85), 
+                                   c(-118.80, 34.59), 
+                                   c(-120.65, 34.59)))) # You need to close the polygon with rewriting the last point
+
+# Convert the polygon to an sf object
+area_sf <- st_sf(geometry = st_sfc(rectangle))
+area_sf <- st_set_crs(area_sf, 4326)
+
+```
+
+```{r}
+# Create map to see where the samples were taken
+tmap_mode(mode = "view")
+
+tm_shape(sf_data_2) +
+  tm_dots(col = "green") +
+
+tm_shape(sf_data_3) +
+  tm_dots(col = "blue") +
+
+tm_shape(area_sf) +
+  tm_borders(lwd = 1, col = "red") 
+```
+
+## Data Cleaning (Read, clean, select the columns and filter the sites)
+
+```{r}
+data2 <- read_csv("/capstone/kelpgeomod/raw_data/usgs_bottle_fall/RL-19-05_BTL_CTD_data v2.0.csv") |> 
+  clean_names() |> 
+  dplyr::select(c("site_name","date", "temperature", "phosphate", "ammonium", "nitrate_and_nitrite", "latitude", "longitude")) |> 
+  filter(site_name == "Annapaca")
+
+data3 <- read_csv("/capstone/kelpgeomod/raw_data/usgs_bottle_fall/SH-18-12_BTL_CTD_data_v3.0.csv") |> 
+  clean_names() |> 
+  dplyr::select(c("site_name", "date", "temperature", "phosphate", "ammonium", "nitrate_and_nitrite", "latitude", "longitude")) |> 
+  filter(site_name  %in% c("Gull Island", "Anacapa"))
+
+# Join both datasets
+joined_data <- rbind(data2, data3)
+
+# Convert -9999.00 values to NA
+joined_data[joined_data == -9999.00] <- NA
+
+#Convert date as lubridate
+joined_data$date <- as.Date(joined_data$date, format = "%m/%d/%y")
+
+
+# create a new column that has year and quarter, and select columns of interest
+joined_data <- joined_data %>% 
+  mutate(year = year(date),
+         quarter = quarter(date)) %>% 
+  dplyr::select(year, quarter, temperature, nitrate_and_nitrite, phosphate, ammonium, latitude, longitude) %>% 
+    mutate(ammonium = ifelse(ammonium == "<0.019", 0.020, as.numeric(ammonium)))
+
+# create a spatial data frame
+st_joined_data <- joined_data |> 
+  st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
+
+# group_by and create the mean
+st_joined_data <- st_joined_data %>%
+  group_by(geometry, year, quarter) %>%
+  summarise(temperature = mean(temperature, na.rm = TRUE),
+    nitrate_nitrite = mean(nitrate_and_nitrite, na.rm = TRUE),
+            phosphate = mean(phosphate, na.rm = TRUE),
+            ammonium = mean(ammonium, na.rm = TRUE)) %>% 
+  relocate(geometry, .after = ammonium)
+
+```
+
+
+```{r}
+# Write spatial object to RDS file
+saveRDS(st_joined_data, "/capstone/kelpgeomod/intermediate_data/usgs_nutrients/usgs_sp_data.rds")
+```
+
+Plot
+
+```{r}
+
+#Convert to a spatial object
+st_joined_data <- st_sf(st_joined_data)
+
+# plot the joined data with the Set1 palette
+tm_shape(st_joined_data) +
+  tm_dots() +
+  tm_legend(title = "Selected Sites", title.position = c("center", "top"), frame = FALSE) +
+tm_shape(area_sf) + 
+  tm_borders(col = "red")
+
+```
+
+## Interpolate
+
+...
+
+## Create the raster
+
+... Create a raster stack one for each nutrient (Nitrate and Nitrite, Phosphate, Ammonium).
+
+... Add the attributes for each raster such as cruise, station, site name, date and time)

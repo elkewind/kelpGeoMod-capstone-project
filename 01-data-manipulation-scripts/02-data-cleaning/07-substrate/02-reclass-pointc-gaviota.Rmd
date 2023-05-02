@@ -1,0 +1,90 @@
+---
+title: "point_conception_gaviota"
+author: "Jessica French"
+date: "`r Sys.Date()`"
+output: html_document
+---
+# Purpose
+
+The USGS habitat shape files covering Gaviota and Point Conception are in a slightly different format and have different columns. The purpose of this script is to create a Ind (Induration) column and a Ind_id column from the information contained in the CMESC Description (CMECSDESC) column. What phrases and words correspond to which substrate types was determiend by comparing them to the other USGS shape files that cover the Santa Barbara Coast though the descriptions make it fairly obvious whether it is hard. soft, mixed, or anthropogenic. 
+
+## Set up 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r label = "read in libraries"}
+library(terra)
+library(tmap)
+library(sf)
+library(tidyverse)
+library(stringr)
+```
+
+```{r label = "set working directory"}
+# If working locally use this working directory or change to whereever the Benthic_Habitat_2 folder is
+#setwd("/Users/jfrench/Documents/MEDS/Capstone/DATA/Benthic_Habitat_2")
+
+# If working on tsosie uncomment this out and use this directory
+setwd("/capstone/kelpgeomod/raw_data/Benthic_Habitat_2")
+```
+
+## Read in Data
+
+```{r label = "read in data"}
+point_conception <- st_read("USGS_shape_files/Habitat_OffshorePointConception/Habitat_OffshorePointConception.shp")
+
+gaviota <- st_read("USGS_shape_files/Habitat_OffshoreGaviota/Habitat_OffshoreGaviota.shp")
+```
+
+Start by creating an induration column and populating it from the CMECS Description column 
+
+```{r label = "Add induration and Ind_ID column"}
+# Use mutate() to create Ind column 
+
+# Along with some other information the CMECSDESC column contains whether the substrate is hard, mixed, or soft. 
+# str_detect will be used to find key words or phrases that correspond to substrate type and create a Ind column that matches
+# the other USGS shape files that cover the Santa Barbara Coast. 
+gaviota <- gaviota |> 
+  mutate("Ind" = case_when(str_detect(gaviota$CMECSDESC, "Hard Substrate Induration") ~ "hard substrate",
+                          str_detect(gaviota$CMECSDESC, "Mixed Substrate Induration") ~ "mixed substrate",
+                          str_detect(gaviota$CMECSDESC, "Soft Substrate Induration") ~ "soft substrate",
+                          str_detect(gaviota$CMECSDESC, "Pipeline") ~ "Anthropogenic",
+                          str_detect(gaviota$CMECSDESC, "Trawl") ~ "Anthropogenic")) |> 
+  mutate("Ind_ID" = case_when(Ind == "hard substrate" ~ "h",
+                              Ind == "mixed substrate" ~ "m",
+                              Ind == "soft substrate" ~ "s",
+                              Ind == "Anthropogenic" ~ "a")) |> 
+  rename("Hab_Type" = "CMECSDESC") |> # Rename CMECSDESC to Hab_Type so it matches the other files. 
+  st_zm() # converts to a 2D object
+
+# Same procedure for the point_conception file. 
+point_conception <- point_conception |> 
+  mutate("Ind" = case_when(str_detect(point_conception$CMECSDESC, "Hard Substrate Induration") ~ "hard substrate",
+                          str_detect(point_conception$CMECSDESC, "Mixed Substrate Induration") ~ "mixed substrate",
+                          str_detect(point_conception$CMECSDESC, "Soft Substrate Induration") ~ "soft substrate",
+                          str_detect(point_conception$CMECSDESC, "Pipeline") ~ "Anthropogenic",
+                          str_detect(point_conception$CMECSDESC, "Trawl") ~ "Anthropogenic",
+                          str_detect(point_conception$CMECSDESC, "Wreck") ~ "Anthropogenic")) |> 
+  mutate("Ind_ID" = case_when(Ind == "hard substrate" ~ "h",
+                              Ind == "mixed substrate" ~ "m",
+                              Ind == "soft substrate" ~ "s",
+                              Ind == "Anthropogenic" ~ "a")) |> 
+  rename("Hab_Type" = "CMECSDESC") |> # Rename CMECSDESC to Hab_Type so it matches the other files.
+  st_zm() # Convert to 2D object
+
+
+
+```
+
+```{r label = "write files to benthic habitat "}
+
+st_write(gaviota, "/capstone/kelpgeomod/raw_data/Benthic_Habitat_2/USGS_shape_files/USGS_Coast_shape_files/gaviota_reclass/gaviota_reclass.shp", 
+         delete_dsn = TRUE) # delete old file
+
+st_write(point_conception, "/capstone/kelpgeomod/raw_data/Benthic_Habitat_2/USGS_shape_files/USGS_Coast_shape_files/point_C_reclass/point_C_reclass.shp", 
+         delete_dsn = TRUE) # delete old file 
+
+```
+
