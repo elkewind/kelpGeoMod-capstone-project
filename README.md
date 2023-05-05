@@ -1,5 +1,7 @@
 # kelpGeoMod-capstone-project
 
+[![Photo by Cynthia Parris/Alamy Stock Photo](04-images/kelp-header.jpeg){width="80%"}](https://hakaimagazine.com/news/reanalyzing-seaweed-ecosystems-role-as-a-carbon-sink/)
+
 This README.txt file was generated on 2023-05-02 by kelpGeoMod team
 
 #### DEVELOPING A GEOSPATIAL MODEL FOR KELP FOREST CULTIVATION AND RESTORATION
@@ -187,7 +189,7 @@ See links above and information below on how data were joined.
 #### R-packages used:
 
 | **Package** | **Version** | **Description**                                                                                                                 |
-|-------------|-------------|---------------------------------------------------------------------------------------------------------------------------------|
+|-----------|-----------|---------------------------------------------------|
 | abind       | 1.4-5       | Combines multi-dimensional arrays into a single array.                                                                          |
 | dplyr       | 1.1.0       | Provides a set of tools for working with data frames in a clear and consistent way.                                             |
 | forcats     | 0.5.2       | Provides tools for working with categorical data in a tidy way, including tools for reordering, recoding, and summarizing data. |
@@ -222,7 +224,7 @@ See links above and information below on how data were joined.
 **3. Variable List:**
 
 | **Variable Name** | **Units/ Range**             | **Type**       | **Description**                               |
-|-----------------|-----------------|-----------------|---------------------|
+|-----------------|-----------------|-----------------|--------------------|
 | quarter           | Range [1-4]                  | Numerical data | Quarter number per year. Range 1-4            |
 | year              | Range [2014-2023]            | Numerical data | Data year                                     |
 | lat               | decimal degrees              | Numerical data | Latitude in degrees                           |
@@ -235,7 +237,7 @@ See links above and information below on how data were joined.
 | nitrate_nitrite   | mcmol/L (micromol per liter) | Numerical data | Concentration of nitrate and nitrite in water |
 | ammonium          | mcmol/L (micromol per liter) | Numerical data | Concentration of ammonium in water            |
 
-#### Recommended citation for the project:
+#### Recommended Citation for the Project:
 
 Egg, E., French, J., Patrón, J., & Windschitl, E. (2023). Developing a Geospatial Model for Kelp Forest Cultivation and Restoration. kelpGeoMod. <https://github.com/kelpGeoMod/kelpGeoMod-capstone-project>.
 
@@ -244,3 +246,5 @@ People involved with sample collection, processing, analysis, and/or submission:
 ### Acknowledgements
 
 We acknowledge the Bren School of Environmental Science & Management's Master's of Environmental Data Science program at the University of California Santa Barbara for funding this synthesis project. We would also like to express our gratitude to our clients, Courtney Schatzman from Ocean Rainforest and Natalie Dornan from UCSB interdepartmental Graduate Program in Marine Science (IGPMS), as well as Sidney Gerst and Kirby Bartlett for providing user information, Jeff Massen for user testing and being the main contact as a kelp farmer, and Daphne from NCEAS for helping us explore different options for MaxEnt modeling. We are also grateful to Tamma Carleton for her valuable input during brainstorming meetings regarding statistics and model testing.
+
+![The Economist GreenWave image](04-images/kelp-headline.avif){alt="The Economist GreenWave image" width="80%"}
