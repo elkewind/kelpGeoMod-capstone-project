@@ -256,6 +256,15 @@ People involved with sample collection, processing, analysis, and/or submission:
 
 We acknowledge the Bren School of Environmental Science & Management's Master's of Environmental Data Science program at the University of California Santa Barbara for funding this synthesis project. We would also like to express our gratitude to our clients, Courtney Schatzman from Ocean Rainforest and Natalie Dornan from UCSB interdepartmental Graduate Program in Marine Science (IGPMS), as well as Sidney Gerst and Kirby Bartlett for providing user information, Jeff Massen for user testing and being the main contact as a kelp farmer, and Daphne from NCEAS for helping us explore different options for MaxEnt modeling. We are also grateful to Tamma Carleton for her valuable input during brainstorming meetings regarding statistics and model testing.
 
-<center>![](04-images/kelp-headline.avif){alt="The Economist GreenWave image" width="90%" style="display: block; margin: auto;"}</center>
+<center>
 
-<center>![](04-images/logo-bren.svg){width="40%" style="display: block; margin: auto;"}</center>
+![](04-images/kelp-headline.avif){alt="The Economist GreenWave image" width="90%" style="display: block; margin: auto;"}
+
+</center>
+
+<center>
+
+![](04-images/logo-bren.svg){width="40%" style="display: block; margin: auto;"}
+
+
+</center>
