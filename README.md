@@ -1,14 +1,14 @@
 # kelpGeoMod-capstone-project
 
-[![Photo by Cynthia Parris/Alamy Stock Photo](04-images/kelp-header.jpeg){width="80%"}](https://hakaimagazine.com/news/reanalyzing-seaweed-ecosystems-role-as-a-carbon-sink/)
-
-This README.txt file was generated on 2023-05-02 by kelpGeoMod team
-
 #### DEVELOPING A GEOSPATIAL MODEL FOR KELP FOREST CULTIVATION AND RESTORATION
 
-## **GENERAL INFORMATION**
+##### *This README.txt file was generated on 2023-05-02 by kelpGeoMod team*
 
-#### A. Principal Investigator Contact Information
+<center>[![Photo by Cynthia Parris/Alamy Stock Photo](04-images/kelp-headline.avif){width="100%"}](https://www.economist.com/united-states/2021/06/26/why-new-england-is-going-wild-for-wet-weeds)</center>
+
+## **CONTACT INFORMATION**
+
+#### Principal Investigator Contact Information
 
 -   Erika Egg - [egg\@bren.ucsb.edu](mailto:egg@bren.ucsb.edu){.email}
 
@@ -18,25 +18,26 @@ This README.txt file was generated on 2023-05-02 by kelpGeoMod team
 
 -   Elke Windschitl - [elke\@bren.ucsb.edu](mailto:elke@bren.ucsb.edu){.email}
 
-Institution
-
-![](04-images/logo-bren.svg){width="60%"}
-
-#### B. Associate or Co-investigator Contact Information
+#### Associate or Co-investigator Contact Information
 
 -   Natalie Dornan (UCSB IGPMS) - [nataliedornan\@bren.ucsb.edu](mailto:nataliedornan@bren.ucsb.edu){.email}
 
-#### C. Alternate Contact Information (Sam)
+#### Alternate Contact Information (Sam)
 
 -   Samantha Stevenson (UCSB Bren School) - [stevenson\@bren.ucsb.edu](mailto:stevenson@bren.ucsb.edu){.email}
 
-#### D. Date of data collection or obtaining
+
+#### 
+
+## **GENERAL INFORMATION**
+
+#### Date of data collection or obtaining
 
 -   Obtained: January and February 2023
 
 -   Date Range: 1st January 2014 - 1st January 2023
 
-#### E. Geographic location of data collection:
+#### Geographic location of data collection:
 
 -   Point 1: -120.39, 34.59
 
@@ -46,9 +47,14 @@ Institution
 
 -   Point 4: -120.39, 33.51
 
-![Inset Map](04-images/aoi-large.png){width="50%"}
+<center>
 
-![Area of Interest](04-images/aoi.png){width="60%"}
+![Inset Map](04-images/aoi-large.png){width="90%"}
+
+![Area of Interest](04-images/aoi.png){width="90%"}
+
+</center>
+
 
 ## **SHARING/ACCESS INFORMATION**
 
@@ -189,7 +195,7 @@ See links above and information below on how data were joined.
 #### R-packages used:
 
 | **Package** | **Version** | **Description**                                                                                                                 |
-|-----------|-----------|---------------------------------------------------|
+|-------------------|-------------------|----------------------------------|
 | abind       | 1.4-5       | Combines multi-dimensional arrays into a single array.                                                                          |
 | dplyr       | 1.1.0       | Provides a set of tools for working with data frames in a clear and consistent way.                                             |
 | forcats     | 0.5.2       | Provides tools for working with categorical data in a tidy way, including tools for reordering, recoding, and summarizing data. |
@@ -215,7 +221,7 @@ See links above and information below on how data were joined.
 
 ## **DATA-SPECIFIC INFORMATION FOR:**
 
-#### [`synthesized-dataset.csv`\`]
+#### `synthesized-dataset.csv`
 
 1**. Number of variables:** 10
 
@@ -224,7 +230,7 @@ See links above and information below on how data were joined.
 **3. Variable List:**
 
 | **Variable Name** | **Units/ Range**             | **Type**       | **Description**                               |
-|-----------------|-----------------|-----------------|--------------------|
+|------------------|------------------|------------------|-------------------|
 | quarter           | Range [1-4]                  | Numerical data | Quarter number per year. Range 1-4            |
 | year              | Range [2014-2023]            | Numerical data | Data year                                     |
 | lat               | decimal degrees              | Numerical data | Latitude in degrees                           |
@@ -247,4 +253,15 @@ People involved with sample collection, processing, analysis, and/or submission:
 
 We acknowledge the Bren School of Environmental Science & Management's Master's of Environmental Data Science program at the University of California Santa Barbara for funding this synthesis project. We would also like to express our gratitude to our clients, Courtney Schatzman from Ocean Rainforest and Natalie Dornan from UCSB interdepartmental Graduate Program in Marine Science (IGPMS), as well as Sidney Gerst and Kirby Bartlett for providing user information, Jeff Massen for user testing and being the main contact as a kelp farmer, and Daphne from NCEAS for helping us explore different options for MaxEnt modeling. We are also grateful to Tamma Carleton for her valuable input during brainstorming meetings regarding statistics and model testing.
 
-![The Economist GreenWave image](04-images/kelp-headline.avif){alt="The Economist GreenWave image" width="80%"}
+<center>![](04-images/kelp-headline.avif){alt="The Economist GreenWave image" width="90%" style="display: block; margin: auto;"}
+
+</center>
+
+
+
+
+<center>
+
+![](04-images/logo-bren.svg){width="40%" style="display: block; margin: auto;"}
+
+</center>
