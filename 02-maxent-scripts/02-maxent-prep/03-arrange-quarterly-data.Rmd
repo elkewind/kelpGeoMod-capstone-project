@@ -192,7 +192,7 @@ for (i in 1:4) {
   writeRaster(depth_i, paste0("/capstone/kelpgeomod/new_file_structure/analysis_data/maxent/quarter_", i, "/01_depth_", i, ".tif"), overwrite = TRUE)
   writeRaster(nitrate_nitrite_i, paste0("/capstone/kelpgeomod/new_file_structure/analysis_data/maxent/quarter_", i, "/02_nitrate_nitrite_", i, ".tif"), overwrite = TRUE)
   writeRaster(phosphate_i, paste0("/capstone/kelpgeomod/new_file_structure/analysis_data/maxent/quarter_", i, "/03_phosphate_", i, ".tif"), overwrite = TRUE)
-}
+} 
 
 ```
 
