@@ -1,0 +1,20 @@
+---
+title: "Kelp Presence"
+author: "Elke Windschitl"
+date: '`r format(Sys.time(), "%m/%d/%Y")`'
+output: html_document
+---
+
+```{r}
+# Load in necessary packages for wrangling
+library(tidyverse)
+```
+
+```{r}
+# Read in kelp data
+kelp_dat <- read_csv("/capstone/kelpgeomod/analysis_data/synthesized/interpolated_join.csv") %>% 
+  drop_na(area) %>% # drop na values
+  filter(area > 0) %>% # remove values of 0
+  dplyr::select(quarter, lat, lon, area)
+```
+

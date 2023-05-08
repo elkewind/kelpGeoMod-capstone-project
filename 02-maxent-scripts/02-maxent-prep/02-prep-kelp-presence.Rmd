@@ -12,9 +12,32 @@ library(tidyverse)
 
 ```{r}
 # Read in kelp data
-kelp_dat <- read_csv("/capstone/kelpgeomod/analysis_data/synthesized/interpolated_join.csv") %>% 
+kelp_dat <- read_csv("/capstone/kelpgeomod/new_file_structure/analysis_data/synthesized/interpolated_join.csv") %>% 
   drop_na(area) %>% # drop na values
   filter(area > 0) %>% # remove values of 0
-  dplyr::select(quarter, lat, lon, area)
+  dplyr::select(quarter, lat, lon) %>% # remove area column
+  mutate(scientific_name = "Macrocystis pyrifera") %>% # add sci name column
+  relocate(scientific_name, .before = "lat") %>% # reorder to match maxent needs
+  relocate(lon, .before = "lat") %>% # reorder to match maxent needs
+  relocate(quarter, .after = "lat") %>%  # reorder to match maxent needs
+  rename(longitude = lon,
+         latitude = lat) #  # rename to match maxent needs
+```
+
+```{r}
+# Get four separate data frames 
+
+# split the data by quarter
+kelp_list <- split(kelp_dat, kelp_dat$quarter)
+
+# loop through the list of data frames and write each one to a separate CSV file in the respective folder
+for (i in 1:length(kelp_list)) {
+  # create a file name based on the quarter and folder
+  folder_name <- paste0("/capstone/kelpgeomod/new_file_structure/analysis_data/maxent/quarter_", i)
+  file_name <- paste0(folder_name, "/kelp_presence_", i, ".csv")
+  # write the data frame to the CSV file
+  write_csv(kelp_list[[i]], file_name)
+}
+
 ```
 
