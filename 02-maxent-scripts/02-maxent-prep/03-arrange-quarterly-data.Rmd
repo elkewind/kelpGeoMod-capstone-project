@@ -116,47 +116,83 @@ for (i in 1:4) {
 
 ```
 
-# Mask data to only include cells where we have values for every oceanographic factor.
+### Mask data to only include cells where we have values for every oceanographic factor.
 
 
 ```{r}
-# define a function that checks if all values are not NA
-all_not_na <- function(sst, nitrate_nitrite, phosphate, depth) {
-  ifelse(!is.na(sst) & !is.na(nitrate_nitrite) & !is.na(phosphate) & !is.na(depth), 1, NA)
+# # define a function that checks if all values are not NA
+# all_not_na <- function(sst, nitrate_nitrite, phosphate, depth) {
+#   ifelse(!is.na(sst) & !is.na(nitrate_nitrite) & !is.na(phosphate) & !is.na(depth), 1, NA)
+# }
+# 
+# # apply the function to the rasters using overlay
+# maxent_mask_1 <- raster::overlay(sst = sst_list[[1]], 
+#                          nitrate_nitrite = nitrate_nitrite_list[[1]], 
+#                          phosphate = phosphate_list[[1]], 
+#                          depth = depth_list[[1]],
+#                          fun = all_not_na)
+# 
+# # plot the resulting raster
+# plot(maxent_mask)
+# 
+
+
+
+
+# # Read in the three rasters
+# sst <- sst_list[[1]]
+# nitrate_nitrite <- nitrate_nitrite_list[[1]]
+# phosphate <- phosphate_list[[1]]
+# depth <- depth_list[[1]]
+# 
+# # define a function that checks if all values are not NA
+# all_not_na <- function(nitrate_nitrite, phosphate, depth) {
+#   ifelse(!is.na(nitrate_nitrite) & !is.na(phosphate) & !is.na(depth), 1, NA)
+# }
+# 
+# # apply the function to the rasters using overlay
+# maxent_mask <- overlay(nitrate_nitrite, phosphate, depth, fun = all_not_na)
+# 
+# # plot the resulting raster
+# plot(maxent_mask)
+
+```
+
+```{r}
+for (i in 1:4){
+  # Read in the three rasters
+  sst <- sst_list[[i]]
+  nitrate_nitrite <- nitrate_nitrite_list[[i]]
+  phosphate <- phosphate_list[[i]]
+  depth <- depth_list[[i]]
+  
+  # define a function that checks if all values are not NA
+  all_not_na <- function(nitrate_nitrite, phosphate, depth) {
+    ifelse(!is.na(nitrate_nitrite) & !is.na(phosphate) & !is.na(depth), 1, NA)
+    }
+  # apply the function to the rasters using overlay
+  maxent_mask <- overlay(nitrate_nitrite, phosphate, depth, fun = all_not_na)
+  assign(paste0("maxent_mask_", i), maxent_mask)
 }
+```
 
-# apply the function to the rasters using overlay
-maxent_mask_1 <- raster::overlay(sst = sst_list[[1]], 
-                         nitrate_nitrite = nitrate_nitrite_list[[1]], 
-                         phosphate = phosphate_list[[1]], 
-                         depth = depth_list[[1]],
-                         fun = all_not_na)
+### Apply the mask to every raster and export
 
-# plot the resulting raster
-plot(maxent_mask)
-
-dep <- mask(dep_raster, maxent_mask)
-nit <- mask(nit_raster, maxent_mask)
-pho <- mask(pho_raster, maxent_mask)
-
-
-
-# Read in the three rasters
-raster1 <- sst_list[[1]]
-raster2 <- nitrate_nitrite_list[[1]]
-raster3 <- phosphate_list[[1]]
-raster4 <- depth_list[[1]]
-
-# define a function that checks if all values are not NA
-all_not_na <- function(w, x, y, z) {
-  ifelse(!is.na(w) & !is.na(x) & !is.na(y) & !is.na(z), 1, NA)
+```{r}
+for (i in 1:4) {
+  # create the maxent_mask for this iteration
+  maxent_mask <- get(paste0("maxent_mask_", i))
+  
+  # mask the input rasters with the maxent_mask
+  depth_i <- mask(depth_list[[i]], maxent_mask)
+  nitrate_nitrite_i <- mask(nitrate_nitrite_list[[i]], maxent_mask)
+  phosphate_i <- mask(phosphate_list[[i]], maxent_mask)
+  
+  # save the masked rasters to files with unique names
+  writeRaster(depth_i, paste0("/capstone/kelpgeomod/new_file_structure/analysis_data/maxent/quarter_", i, "/01_depth_", i, ".tif"), overwrite = TRUE)
+  writeRaster(nitrate_nitrite_i, paste0("/capstone/kelpgeomod/new_file_structure/analysis_data/maxent/quarter_", i, "/02_nitrate_nitrite_", i, ".tif"), overwrite = TRUE)
+  writeRaster(phosphate_i, paste0("/capstone/kelpgeomod/new_file_structure/analysis_data/maxent/quarter_", i, "/03_phosphate_", i, ".tif"), overwrite = TRUE)
 }
-
-# apply the function to the rasters using overlay
-maxent_mask <- overlay(raster1, raster2, raster3, raster4, fun = all_not_na)
-
-# plot the resulting raster
-plot(maxent_mask)
 
 ```
 
