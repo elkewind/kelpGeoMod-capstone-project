@@ -11,6 +11,7 @@ This is a script that gathers oceanographic rasters from across our data sets, f
 library(tidyverse)
 library(raster)
 library(terra)
+library(sf)
 ```
 
 # Load in data using terra, assign layer names, then convert to package Raster objects
@@ -194,5 +195,18 @@ for (i in 1:4) {
   writeRaster(phosphate_i, paste0("/capstone/kelpgeomod/new_file_structure/analysis_data/maxent/quarter_", i, "/03_phosphate_", i, ".tif"), overwrite = TRUE)
 } 
 
+```
+
+### Add AOI to each file 
+
+```{r}
+# read in the shapefile of aoi
+aoi_shp <- st_read("/capstone/kelpgeomod/new_file_structure/raw_data/New_AOI_SBchannel_shp/New_AOI_SBchannel.shp")
+
+# write the aoi object to a shapefile in each quarter file
+st_write(aoi, "/capstone/kelpgeomod/new_file_structure/analysis_data/maxent/quarter_1/aoi.shp")
+st_write(aoi, "/capstone/kelpgeomod/new_file_structure/analysis_data/maxent/quarter_2/aoi.shp")
+st_write(aoi, "/capstone/kelpgeomod/new_file_structure/analysis_data/maxent/quarter_3/aoi.shp")
+st_write(aoi, "/capstone/kelpgeomod/new_file_structure/analysis_data/maxent/quarter_4/aoi.shp")
 ```
 
