@@ -164,12 +164,29 @@ for (i in 1:4) {
 
 ```{r}
 # read in the shapefile of aoi
-aoi_shp <- st_read("/capstone/kelpgeomod/new_file_structure/01-raw-data/New_AOI_SBchannel_shp/New_AOI_SBchannel.shp")
+aoi_shp <- st_read("/capstone/kelpgeomod/new_file_structure/01-raw-data/New_AOI_SBchannel_shp/New_AOI_SBchannel2.shp")
 
 # write the aoi object to a shapefile in each quarter file
-st_write(aoi_shp, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_1/aoi.shp")
-st_write(aoi_shp, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_2/aoi.shp")
-st_write(aoi_shp, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_3/aoi.shp")
-st_write(aoi_shp, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_4/aoi.shp")
+st_write(aoi_shp, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_1/aoi.shp", append = FALSE)
+st_write(aoi_shp, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_2/aoi.shp", append = FALSE)
+st_write(aoi_shp, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_3/aoi.shp", append = FALSE)
+st_write(aoi_shp, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_4/aoi.shp", append = FALSE)
+
+# my_aoi <- coordinates <- tribble(
+#   ~latitude, ~longitude,
+#   30.59, -123.32, 
+#   30.59, -115.70, 
+#   36.08, -123.32, 
+#   36.08, -115.70
+# ) %>% relocate(longitude, .before = "latitude")
+# 
+# write_csv(my_aoi, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_1/sbc_aoi.csv", 
+#           append = FALSE)
+# write_csv(my_aoi, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_2/sbc_aoi.csv", 
+#           append = FALSE)
+# write_csv(my_aoi, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_3/sbc_aoi.csv", 
+#           append = FALSE)
+# write_csv(my_aoi, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_4/sbc_aoi.csv", 
+#           append = FALSE)
 ```
 
