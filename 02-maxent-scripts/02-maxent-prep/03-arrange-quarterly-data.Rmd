@@ -26,7 +26,7 @@ sst_list <- list()
 for (i in 1:4) {
   # Read in sst quarterly data --------------------
   # create the file name
-  file_name <- paste0("/capstone/kelpgeomod/new_file_structure/intermediate_data/sst/sst_quarter_", i, ".tif")
+  file_name <- paste0("/capstone/kelpgeomod/new_file_structure/02-intermediate-data/sst/sst_quarter_", i, ".tif")
   # create the raster object and add it to the list
   sst_list[[i]] <- rast(file_name, lyr = 1)
   
@@ -46,7 +46,7 @@ nitrate_nitrite_list <- list()
 for (i in 1:4) {
   # Read in nitrate_nitrite quarterly data --------------------
   # create the file name
-  file_name <- paste0("/capstone/kelpgeomod/new_file_structure/analysis_data/inteprolate_idw/nitrate_nitrite/nitrate_nitrite_", i, ".tif")
+  file_name <- paste0("/capstone/kelpgeomod/new_file_structure/03-analysis-data/inteprolate_idw/nitrate_nitrite/nitrtate_nitrite_", i, ".tif")
   # create the raster object and add it to the list
   nitrate_nitrite_list[[i]] <- rast(file_name, lyr = 1)
   
@@ -66,7 +66,7 @@ phosphate_list <- list()
 for (i in 1:4) {
   # Read in phosphate quarterly data --------------------
   # create the file name
-  file_name <- paste0("/capstone/kelpgeomod/new_file_structure/analysis_data/inteprolate_idw/phosphate/phosphate_", i, ".tif")
+  file_name <- paste0("/capstone/kelpgeomod/new_file_structure/03-analysis-data/inteprolate_idw/phosphate/phosphate_", i, ".tif")
   # create the raster object and add it to the list
   phosphate_list[[i]] <- rast(file_name, lyr = 1)
   
@@ -86,7 +86,7 @@ ammonium_list <- list()
 for (i in 1:4) {
   # Read in ammonium quarterly data --------------------
   # create the file name
-  file_name <- paste0("/capstone/kelpgeomod/new_file_structure/analysis_data/inteprolate_idw/ammonium/ammonium_", i, ".tif")
+  file_name <- paste0("/capstone/kelpgeomod/new_file_structure/03-analysis-data/inteprolate_idw/ammonium/ammonium_", i, ".tif")
   # create the raster object and add it to the list
   ammonium_list[[i]] <- rast(file_name, lyr = 1)
   
@@ -106,7 +106,7 @@ depth_list <- list()
 for (i in 1:4) {
   # Read in ammonium quarterly data --------------------
   # create the file name
-  file_name <- paste0("/capstone/kelpgeomod/new_file_structure/intermediate_data/depth/SBC_depth.tif")
+  file_name <- paste0("/capstone/kelpgeomod/new_file_structure/02-intermediate-data/depth/depth.tif")
   # create the raster object and add it to the list
   depth_list[[i]] <- rast(file_name, lyr = 1)
   
@@ -119,45 +119,6 @@ for (i in 1:4) {
 
 ### Mask data to only include cells where we have values for every oceanographic factor.
 
-
-```{r}
-# # define a function that checks if all values are not NA
-# all_not_na <- function(sst, nitrate_nitrite, phosphate, depth) {
-#   ifelse(!is.na(sst) & !is.na(nitrate_nitrite) & !is.na(phosphate) & !is.na(depth), 1, NA)
-# }
-# 
-# # apply the function to the rasters using overlay
-# maxent_mask_1 <- raster::overlay(sst = sst_list[[1]], 
-#                          nitrate_nitrite = nitrate_nitrite_list[[1]], 
-#                          phosphate = phosphate_list[[1]], 
-#                          depth = depth_list[[1]],
-#                          fun = all_not_na)
-# 
-# # plot the resulting raster
-# plot(maxent_mask)
-# 
-
-
-
-
-# # Read in the three rasters
-# sst <- sst_list[[1]]
-# nitrate_nitrite <- nitrate_nitrite_list[[1]]
-# phosphate <- phosphate_list[[1]]
-# depth <- depth_list[[1]]
-# 
-# # define a function that checks if all values are not NA
-# all_not_na <- function(nitrate_nitrite, phosphate, depth) {
-#   ifelse(!is.na(nitrate_nitrite) & !is.na(phosphate) & !is.na(depth), 1, NA)
-# }
-# 
-# # apply the function to the rasters using overlay
-# maxent_mask <- overlay(nitrate_nitrite, phosphate, depth, fun = all_not_na)
-# 
-# # plot the resulting raster
-# plot(maxent_mask)
-
-```
 
 ```{r}
 for (i in 1:4){
@@ -190,9 +151,11 @@ for (i in 1:4) {
   phosphate_i <- mask(phosphate_list[[i]], maxent_mask)
   
   # save the masked rasters to files with unique names
-  writeRaster(depth_i, paste0("/capstone/kelpgeomod/new_file_structure/analysis_data/maxent/quarter_", i, "/01_depth_", i, ".tif"), overwrite = TRUE)
-  writeRaster(nitrate_nitrite_i, paste0("/capstone/kelpgeomod/new_file_structure/analysis_data/maxent/quarter_", i, "/02_nitrate_nitrite_", i, ".tif"), overwrite = TRUE)
-  writeRaster(phosphate_i, paste0("/capstone/kelpgeomod/new_file_structure/analysis_data/maxent/quarter_", i, "/03_phosphate_", i, ".tif"), overwrite = TRUE)
+  writeRaster(depth_i, paste0("/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_", i, "/depth_", i, ".tif"), overwrite = TRUE)
+  
+  writeRaster(nitrate_nitrite_i, paste0("/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_", i, "/nitrate_nitrite_", i, ".tif"), overwrite = TRUE)
+  
+  writeRaster(phosphate_i, paste0("/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_", i, "/phosphate_", i, ".tif"), overwrite = TRUE)
 } 
 
 ```
@@ -201,12 +164,12 @@ for (i in 1:4) {
 
 ```{r}
 # read in the shapefile of aoi
-aoi_shp <- st_read("/capstone/kelpgeomod/new_file_structure/raw_data/New_AOI_SBchannel_shp/New_AOI_SBchannel.shp")
+aoi_shp <- st_read("/capstone/kelpgeomod/new_file_structure/01-raw-data/New_AOI_SBchannel_shp/New_AOI_SBchannel.shp")
 
 # write the aoi object to a shapefile in each quarter file
-st_write(aoi, "/capstone/kelpgeomod/new_file_structure/analysis_data/maxent/quarter_1/aoi.shp")
-st_write(aoi, "/capstone/kelpgeomod/new_file_structure/analysis_data/maxent/quarter_2/aoi.shp")
-st_write(aoi, "/capstone/kelpgeomod/new_file_structure/analysis_data/maxent/quarter_3/aoi.shp")
-st_write(aoi, "/capstone/kelpgeomod/new_file_structure/analysis_data/maxent/quarter_4/aoi.shp")
+st_write(aoi_shp, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_1/aoi.shp")
+st_write(aoi_shp, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_2/aoi.shp")
+st_write(aoi_shp, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_3/aoi.shp")
+st_write(aoi_shp, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_4/aoi.shp")
 ```
 
