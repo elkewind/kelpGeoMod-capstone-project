@@ -17,6 +17,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(tmap)
 library(terra)
+library(raster)
 library(sf)
 library(gstat)
 library(here)
@@ -51,18 +52,62 @@ idw_prep_quarters("phosphate", nutrients)
 
 # use year and quarter if interpolating for each year and quarter. 
 idw_prep_year_quarters("phosphate", nutrients)
+idw_prep_year_quarters("nitrate_nitrite", nutrients)
+idw_prep_year_quarters("ammonium", nutrients)
 
 # creates phosphate_quarter_df_list object
 ```
 
 
-```{r label = "create phosphate raster and remove geom"}
+```{r }
 # use idw_implement_rasterize.R function to convert each year and quarter to a raster. 
 phosphate_year_quarter_raster_all <- idw_implement_rasterize(phosphate_year_quarter_df_list, 
                                                          "phosphate", 
                                                          mask, 
                                                          all = TRUE)
 
+# save phosphat_year_quarter_all as raster brick and save as tif for pivoted data frame. 
+phosphate_raster_list <- lapply(seq_along(phosphate_year_quarter_raster_all), function(i) {
+  raster(phosphate_year_quarter_raster_all[[i]])
+})
+
+phosphate_idw_brick <- raster::brick(phosphate_raster_list)
+
+###### nitrate_nitrite
+nitrate_year_quarter_raster_all <- idw_implement_rasterize(nitrate_nitrite_year_quarter_df_list, 
+                                                         "nitrate_nitrite", 
+                                                         mask, 
+                                                         all = TRUE)
+
+# save phosphat_year_quarter_all as raster brick and save as tif for pivoted data frame. 
+nitrate_list <- lapply(seq_along(nitrate_year_quarter_raster_all), function(i) {
+  raster(nitrate_year_quarter_raster_all[[i]])
+})
+
+nitrate_nitrite_idw_brick <- raster::brick(nitrate_list)
+
+###### ammonium
+ammonium_year_quarter_raster_all <- idw_implement_rasterize(ammonium_year_quarter_df_list, 
+                                                         "ammonium", 
+                                                         mask, 
+                                                         all = TRUE)
+
+# save ammonium_year_quarter_all as raster brick and save as tif for pivoted data frame. 
+ammonium_list <- lapply(seq_along(ammonium_year_quarter_raster_all), function(i) {
+  raster(ammonium_year_quarter_raster_all[[i]])
+})
+
+ammonium_idw_brick <- raster::brick(nitrate_list)
+
+# write each brick to file 
+writeRaster(phosphate_idw_brick, "/capstone/kelpgeomod/old_file_structure/intermediate_data/joined_nutrients/phosphate_raster.tif", format = "GTiff")
+
+writeRaster(nitrate_nitrite_idw_brick, "/capstone/kelpgeomod/old_file_structure/intermediate_data/joined_nutrients/nitrate_nitrite_raster.tif", format = "GTiff")
+
+writeRaster(ammonium_idw_brick, "/capstone/kelpgeomod/old_file_structure/intermediate_data/joined_nutrients/ammonium_raster.tif", format = "GTiff")
+```
+
+```{r label = "create phosphate raster and remove geom"}
 phosphate_year_quarter_raster <- idw_implement_rasterize(phosphate_year_quarter_df_list, 
                                                          "phosphate", 
                                                          mask)
@@ -76,7 +121,7 @@ phosphate_no_geom <- idw_implement_no_geom(phosphate_year_quarter_df_list)
 
 phosphate_interp <- idw_interpolate(phosphate_no_geom, "phosphate", mask)
 
-plot(phosphate_interp[[1]])
+plot(phosphate_interp[[35]])
 ```
 
 
