@@ -6,7 +6,7 @@ output: html_document
 ---
 ## Purpose
 
-This markdown will interpolate across our whole AOI using IDW (inverse distance weighting). A separate interpolation will be run for each season. 
+This markdown will interpolate across our whole AOI using IDW (inverse distance weighting). Interpolation can be done either seasonally or by year and season. 
 
 ## Set up
 ```{r setup, include=FALSE}
@@ -19,11 +19,12 @@ library(tmap)
 library(terra)
 library(sf)
 library(gstat)
+library(here)
 ```
 
 ```{r label = "set data directory"}
 # set data directory to intermediate data folder on tsosie
-datadir <- "/capstone/kelpgeomod/intermediate_data/"
+datadir <- "/capstone/kelpgeomod/old_file_structure/intermediate_data"
 ```
 
 ```{r label = "read in nutrient file"}
@@ -31,20 +32,24 @@ datadir <- "/capstone/kelpgeomod/intermediate_data/"
 nutrients <- readRDS(file.path(datadir, "/joined_nutrients/joined_nutrients.RDS"))
 
 # read in mask
-mask <- rast("/capstone/kelpgeomod/intermediate_data/mask/mask_rast.tif")
+mask <- rast(file.path(datadir, "/mask/mask_rast.tif"))
 ```
 
 ## Phosphate interpolation
 
-```{r label = "source in function"}
+```{r label = "source in functions"}
 # source in function that creates a list of data frames by quarter
-source("~/capstone/Interpolation/idw_prep.R")
+source(here("01-data-manipulation-scripts/03-data-interpolation/02-functions/02-prep.R"))
+source(here("01-data-manipulation-scripts/03-data-interpolation/02-functions/03-implement.R"))
+source(here("01-data-manipulation-scripts/03-data-interpolation/02-functions/04-interpolate.R"))
 ```
 
 ```{r label = "phosphate quarters"}
 # no need to assign this to anything, assignment is done in the function. 
+# use quarters function if interpolating by quarters. 
 idw_prep_quarters("phosphate", nutrients)
 
+# use year and quarter if interpolating for each year and quarter. 
 idw_prep_year_quarters("phosphate", nutrients)
 
 # creates phosphate_quarter_df_list object
@@ -52,75 +57,26 @@ idw_prep_year_quarters("phosphate", nutrients)
 
 
 ```{r label = "create phosphate raster and remove geom"}
-# Would repeat this for each nutrient. 
-phosphate_rast_list <- list()
-count <- 1
-for (i in seq_along(phosphate_quarter_df_list)) {
-  # convert dataframe to SpatVect
-  vect_i <- terra::vect(phosphate_quarter_df_list[[i]])
-  # Rasterize using the mask. 
-  rast <- terra::rasterize(vect_i, mask, field = "phosphate")
-  # assign to index in phosphate_rast_list
-  phosphate_rast_list[[i]] <- rast
-}
+# use idw_implement_rasterize.R function to convert each year and quarter to a raster. 
+phosphate_year_quarter_raster_all <- idw_implement_rasterize(phosphate_year_quarter_df_list, 
+                                                         "phosphate", 
+                                                         mask, 
+                                                         all = TRUE)
 
-#plot(phosphate_rast_list[[1]])
-
-# Also repeat this for each nutrient
-phosphate_no_geom_list <- list()
-
-# gstat does not play nice with sf so this removes the geometry column. 
-for (i in seq_along(phosphate_quarter_df_list)) {
-  df <- as.data.frame(phosphate_quarter_df_list[[i]]) |> 
-    dplyr::select(-geometry)
-  
-  phosphate_no_geom_list[[i]] <- df
-}
- 
+phosphate_year_quarter_raster <- idw_implement_rasterize(phosphate_year_quarter_df_list, 
+                                                         "phosphate", 
+                                                         mask)
 ```
 
 ## Try the above for year and quarter
 
 ```{r label = "year and quarter convert to raster"}
-# repeat the above code chunk for the year and quarter data (36 elements)
-# need to add a line that checks if the rasters are empty.
-# Would repeat this for each nutrient. 
-test <- phosphate_year_quarter_df_list[[25]] 
 
-all(is.na(test$phosphate))
+phosphate_no_geom <- idw_implement_no_geom(phosphate_year_quarter_df_list)
 
-phosphate_rast_list <- list()
-# count <- 1
-for (i in seq_along(phosphate_year_quarter_df_list)) {
-  df <- phosphate_year_quarter_df_list[[i]]
-  # Check if there are only na values (this if statement is not doing anything)
-  if (all(is.na(df$phosphate))) {
-    message(paste("The spatial data frame at index", i, "is empty"))
-    
-  } else {
-    
-  # convert dataframe to SpatVect
-  vect_i <- terra::vect(df)
-  # Rasterize using the mask. 
-  rast <- terra::rasterize(vect_i, mask, field = "phosphate")
-  # assign to index in phosphate_rast_list
-  phosphate_rast_list[[i]] <- rast
-  
-  }
-}
+phosphate_interp <- idw_interpolate(phosphate_no_geom, "phosphate", mask)
 
-plot(phosphate_rast_list[[36]])
-
-# Also repeat this for each nutrient
-phosphate_no_geom_list <- list()
-
-# gstat does not play nice with sf so this removes the geometry column. 
-for (i in seq_along(phosphate_year_quarter_df_list)) {
-  df <- as.data.frame(phosphate_year_quarter_df_list[[i]]) |> 
-    select(-geometry)
-  
-  phosphate_no_geom_list[[i]] <- df
-}
+plot(phosphate_interp[[1]])
 ```
 
 
