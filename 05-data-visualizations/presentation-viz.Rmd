@@ -1,0 +1,85 @@
+---
+title: "Data Visualization for Presentation"
+author: "Elke Windschitll"
+date: "2023-04-18"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(raster)
+library(terra)
+library(sf)
+library(RColorBrewer)
+library(tmap)
+library(tmaptools)
+#library(OpenStreetMap)
+```
+
+```{r}
+# Set color palette
+light_blue <- "#c7e0d8"
+dark_blue <- "#083763"
+```
+
+# AOI
+
+```{r}
+# Read in AOI
+aoi <- st_read("http://tsosie.bren.ucsb.edu/capstone/kelpgeomod/new_file_structure/01-raw-data/New_AOI_SBchannel_shp/New_AOI_SBchannel.shp")
+# Create a slightly larger bounding box
+bbox <- st_bbox(c(xmin = -120.65 - 0.1, 
+                  xmax = -118.8 + 0.1,
+                  ymax = 34.59 + 0.1,
+                  ymin = 33.85 - 0.1))
+
+# Define basemap options
+basemap <- tm_basemap("Stamen.Terrain")
+osm <- read_osm_multithread(x = bbox, zoom = NULL, type = "osm")
+osm <- tmaptools::read_osm(
+  x = bbox,
+  zoom = NULL,
+  type = "osm",
+  minNumTiles = NULL,
+  mergeTiles = NULL,
+  use.colortable = FALSE
+)
+
+# Plot
+tmap_mode("plot")
+tm_shape(aoi, bbox = bbox) +
+  tm_basemap("OpenStreetMap") +
+  tm_borders(lwd = 2, col = dark_blue) +
+  tm_fill(col = NA)  # Remove fill color
+  
+```
+
+# Maxent
+
+```{r}
+# Read in kelp data and make sf object
+kelp <- read_csv("/Users/elkewindschitl/Documents/MEDS/kelpGeoMod/data/maxent/quarter_1/kelp_presence_1.csv") %>% 
+  st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
+
+# Read in the maxent output
+maxent_output <- rast("/Users/elkewindschitl/Downloads/Macrocystis_pyrifera_logistic.tif")
+
+# Read in the counties data
+counties <- st_read("/Users/elkewindschitl/Documents/MEDS/kelpGeoMod/data/land/cnty19_1.shp")
+
+# Set a palette
+maxent_pal <- "BuGn"
+
+# Plot results
+tmap_mode("view")
+tm_shape(maxent_output) +
+  tm_raster(title = "Predicted relative habitat suitability (0.0-1.0)", alpha = 0.9, palette = maxent_pal) +  # Add the specified palette
+  tm_shape(counties) +
+  tm_polygons() +
+  # tm_shape(kelp) +
+  # tm_dots(col = dark_blue) +
+  tm_layout(
+            legend.position = c("right", "top")) +  # Move the legend to the top-right corner
+  tm_layout(bg.color = "#E4FAFE")  # Change the background color to blue
+```
+
