@@ -22,32 +22,33 @@ library(raster)
 
 ```{r label = "set data directory"}
 # set data directory to intermediate data folder on tsosie
-datadir <- "/capstone/kelpgeomod/intermediate_data/"
+datadir <- "/capstone/kelpgeomod/new_file_structure_2/intermediate_data"
+
+# set source directory
+sourcedir <- "/Users/jfrench/capstone/kelpGeoMod-capstone-project/01-data-manipulation-scripts"
 ```
 
 ```{r label = "read in files"}
 # Read in the combined nutrient file
 nutrients <- readRDS(file.path(datadir, "/joined_nutrients/joined_nutrients.RDS"))
 
-# read in coast_mask
-coast_mask <- rast("/capstone/kelpgeomod/raw_data/interpolation_shapes/sbc_coast.tif")
+# read in coast_mask ( this should probably move to where the other masks are.)
+coast_mask <- rast("/capstone/kelpgeomod/new_file_structure_2/raw_data/interpolation_shapes/sbc_coast.tif")
 
-# read in coast polygon
-coast_poly <- st_read("/capstone/kelpgeomod/raw_data/interpolation_shapes/sbc_coast.shp")
 ```
 
 ```{r label = "source in functions"}
 # source in function that creates a list of data frames by quarter
-source("~/capstone/Interpolation/idw_prep.R")
+source(file.path(sourcedir, "03-data-interpolation/02-functions/02-prep.R"))
 
 # Two functions, one rasterizes the data and the other removes geometries
-source("~/capstone/Interpolation/idw_implement.R")
+source(file.path(sourcedir, "03-data-interpolation/02-functions/03-implement.R"))
 
 # creates the gstat formulas and uses interpolate in terra to do inverse distance weighting. 
-source("~/capstone/Interpolation/idw_interpolate.R")
+source(file.path(sourcedir, "/03-data-interpolation/02-functions/04-interpolate.R"))
 
 # calculates mean rmse, the null rmse, and the relative performance of each quarter
-source("~/capstone/Interpolation/idw_rmse.R")
+source(file.path(sourcedir, "/03-data-interpolation/02-functions/05-rmse.R"))
 ```
 
 ## Prep combined nutrients data
@@ -234,10 +235,10 @@ terra::writeRaster(phosphate_interpolation[[2]], "/capstone/kelpgeomod/analysis_
 terra::writeRaster(phosphate_interpolation[[3]], "/capstone/kelpgeomod/analysis_data/inteprolate_idw/phosphate/phosphate_3.tif", overwrite = TRUE)
 terra::writeRaster(phosphate_interpolation[[4]], "/capstone/kelpgeomod/analysis_data/inteprolate_idw/phosphate/phosphate_4.tif", overwrite = TRUE)
 # nitrate_nitrite
-terra::writeRaster(nitrate_nitrite_interpolation[[1]], "/capstone/kelpgeomod/analysis_data/inteprolate_idw/nitrate_nitrite/nitrtate_nitrite_1.tif", overwrite = TRUE)
-terra::writeRaster(nitrate_nitrite_interpolation[[2]], "/capstone/kelpgeomod/analysis_data/inteprolate_idw/nitrate_nitrite/nitrtate_nitrite_2.tif", overwrite = TRUE)
-terra::writeRaster(nitrate_nitrite_interpolation[[3]], "/capstone/kelpgeomod/analysis_data/inteprolate_idw/nitrate_nitrite/nitrtate_nitrite_3.tif", overwrite = TRUE)
-terra::writeRaster(nitrate_nitrite_interpolation[[4]], "/capstone/kelpgeomod/analysis_data/inteprolate_idw/nitrate_nitrite/nitrtate_nitrite_4.tif", overwrite = TRUE)
+terra::writeRaster(nitrate_nitrite_interpolation[[1]], "/capstone/kelpgeomod/new_file_structure/analysis_data/inteprolate_idw/nitrate_nitrite/nitrate_nitrite_1.tif", overwrite = TRUE)
+terra::writeRaster(nitrate_nitrite_interpolation[[2]], "/capstone/kelpgeomod/new_file_structure/analysis_data/inteprolate_idw/nitrate_nitrite/nitrate_nitrite_2.tif", overwrite = TRUE)
+terra::writeRaster(nitrate_nitrite_interpolation[[3]], "/capstone/kelpgeomod/new_file_structure/analysis_data/inteprolate_idw/nitrate_nitrite/nitrate_nitrite_3.tif", overwrite = TRUE)
+terra::writeRaster(nitrate_nitrite_interpolation[[4]], "/capstone/kelpgeomod/new_file_structure/analysis_data/inteprolate_idw/nitrate_nitrite/nitrate_nitrite_4.tif", overwrite = TRUE)
 # ammonium
 terra::writeRaster(ammonium_interpolation[[1]], "/capstone/kelpgeomod/analysis_data/inteprolate_idw/ammonium/ammonium_1.tif", overwrite = TRUE)
 terra::writeRaster(ammonium_interpolation[[2]], "/capstone/kelpgeomod/analysis_data/inteprolate_idw/ammonium/ammonium_2.tif", overwrite = TRUE)

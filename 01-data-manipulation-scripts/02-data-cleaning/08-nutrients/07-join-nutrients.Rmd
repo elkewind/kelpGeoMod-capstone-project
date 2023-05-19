@@ -19,6 +19,11 @@ library(tidyverse)
 library(tmap)
 library(sf)
 library(naniar)
+library(here)
+```
+
+```{r}
+datadir <- "/capstone/kelpgeomod/old_file_structure/intermediate_data/"
 ```
 
 ## Read in data sets
@@ -34,10 +39,10 @@ data sets to read in
 # Read in data from tsosie
 
 # Plumes and Blooms
-PB <- readRDS("/capstone/kelpgeomod/intermediate_data/Plumes_Blooms/Plumes_Blooms.RDS") 
+PB <- readRDS(file.path(datadir, "Plumes_Blooms/Plumes_Blooms.RDS")) 
 
 # CalCOFI
-calCOFI <- readRDS("/capstone/kelpgeomod/intermediate_data/calcofi/calcofi_nutrients.RDS") |> 
+calCOFI <- readRDS(file.path(datadir, "calcofi/calcofi_nutrients.RDS")) |> 
   # create nitrate_nitrite combined column 
   mutate("nitrate_nitrite" = nitrate + nitrite, .after = nitrite) |> 
   rename("ammonium" = "ammonia") # Natalie said the naming difference is likely do to how each data source quantified the measurement but it was okay to combine them. 
@@ -45,16 +50,16 @@ calCOFI <- readRDS("/capstone/kelpgeomod/intermediate_data/calcofi/calcofi_nutri
 # USGS
 # Need to add source column 
 # Also not an sf object but the geom column looks the same.
-USGS <- readRDS("/capstone/kelpgeomod/intermediate_data/usgs_nutrients/usgs_sp_data.rds") |> 
+USGS <- readRDS(file.path(datadir, "usgs_nutrients/usgs_sp_data.rds")) |> 
   mutate("source" = "USGS") |> 
   st_as_sf()
 
 # LTER Nitrate
-lter_nitrate <- readRDS("/capstone/kelpgeomod/intermediate_data/nitrate/lter_nitrate.RDS") |> 
+lter_nitrate <- readRDS(file.path(datadir, "nitrate/lter_nitrate.RDS")) |> 
   st_as_sf()
 
 # LTER bottle 
-lter_bottle <- readRDS("/capstone/kelpgeomod/intermediate_data/lter_bottle_nutrients/lter_bottle_new_coords_2014_2022_geom.RDS") |> 
+lter_bottle <- readRDS(file.path(datadir, "lter_bottle_nutrients/lter_bottle_new_coords_2014_2022_geom.RDS")) |> 
   mutate("source" = "lter_bottle")
 ```
 
@@ -77,6 +82,6 @@ joined_nutrients <- bind_rows(data_set_list) |>
 
 ```{r label = "write to rds"}
 # write to rds
-write_rds(joined_nutrients, "/capstone/kelpgeomod/intermediate_data/joined_nutrients/joined_nutrients.RDS")
+write_rds(joined_nutrients, "/capstone/kelpgeomod/old_file_structure/intermediate_data/joined_nutrients/joined_nutrients.RDS")
 ```
 
