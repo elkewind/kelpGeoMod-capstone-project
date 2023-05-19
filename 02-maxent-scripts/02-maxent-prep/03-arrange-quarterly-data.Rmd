@@ -123,7 +123,7 @@ for (i in 1:4) {
 ```{r}
 for (i in 1:4){
   # Read in the three rasters
-  sst <- sst_list[[i]]
+  #sst <- sst_list[[i]]
   nitrate_nitrite <- nitrate_nitrite_list[[i]]
   phosphate <- phosphate_list[[i]]
   depth <- depth_list[[i]]
@@ -143,7 +143,7 @@ for (i in 1:4){
 ```{r}
 for (i in 1:4) {
   # create the maxent_mask for this iteration
-  maxent_mask <- get(paste0("maxent_mask_", i))
+  maxent_mask <- get(paste0("maxent_mask_", i)) 
   
   # mask the input rasters with the maxent_mask
   depth_i <- mask(depth_list[[i]], maxent_mask)
@@ -167,9 +167,27 @@ for (i in 1:4) {
 aoi_shp <- st_read("/capstone/kelpgeomod/new_file_structure/01-raw-data/New_AOI_SBchannel_shp/New_AOI_SBchannel.shp")
 
 # write the aoi object to a shapefile in each quarter file
-st_write(aoi_shp, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_1/aoi.shp")
-st_write(aoi_shp, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_2/aoi.shp")
-st_write(aoi_shp, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_3/aoi.shp")
-st_write(aoi_shp, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_4/aoi.shp")
+st_write(aoi_shp, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_1/aoi.shp", append = FALSE)
+st_write(aoi_shp, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_2/aoi.shp", append = FALSE)
+st_write(aoi_shp, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_3/aoi.shp", append = FALSE)
+st_write(aoi_shp, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_4/aoi.shp", append = FALSE)
+
+
+# my_aoi <- coordinates <- tribble(
+#   ~latitude, ~longitude,
+#   30.59, -123.32, 
+#   30.59, -115.70, 
+#   36.08, -123.32, 
+#   36.08, -115.70
+# ) %>% relocate(longitude, .before = "latitude")
+# 
+# write_csv(my_aoi, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_1/sbc_aoi.csv", 
+#           append = FALSE)
+# write_csv(my_aoi, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_2/sbc_aoi.csv", 
+#           append = FALSE)
+# write_csv(my_aoi, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_3/sbc_aoi.csv", 
+#           append = FALSE)
+# write_csv(my_aoi, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_4/sbc_aoi.csv", 
+#           append = FALSE)
 ```
 

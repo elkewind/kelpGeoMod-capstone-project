@@ -1,0 +1,23 @@
+---
+title: "Data Visualization for Presentation"
+author: "Elke Windschitll"
+date: "2023-04-18"
+output: html_document
+---
+
+## Quarter 1 Maxent cloglog viz
+
+```{r}
+maxent_q1 <- raster("/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_1/results/Macrocystis_pyrifera_cloglog.tif")
+```
+
+## Quarter 2 Maxent cloglog viz
+
+```{r}
+maxent_q2 <- raster("/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_2/results/Macrocystis_pyrifera_cloglog.tif")
+```
+
+## Quarter 3 Maxent cloglog viz
+
+```{r}
+maxent_q3 <- raster("/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_3/results/Macrocystis_pyrifera_cloglog.tif") 
