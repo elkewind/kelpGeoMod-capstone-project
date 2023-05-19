@@ -143,7 +143,7 @@ for (i in 1:4){
 ```{r}
 for (i in 1:4) {
   # create the maxent_mask for this iteration
-  maxent_mask <- get(paste0("maxent_mask_", i))
+  maxent_mask <- get(paste0("maxent_mask_", i)) 
   
   # mask the input rasters with the maxent_mask
   depth_i <- mask(depth_list[[i]], maxent_mask)
