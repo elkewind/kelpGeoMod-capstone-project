@@ -1,0 +1,112 @@
+---
+title: "Data Visualization for Presentation"
+author: "Elke Windschitll"
+date: "2023-04-18"
+output: html_document
+---
+
+# Prep
+```{r}
+library(tidyverse)
+library(raster)
+library(sf)
+library(tmap)
+library(tmaptools)
+library(RColorBrewer)
+
+# Read in the counties data
+counties <- st_read("/capstone/kelpgeomod/new_file_structure/01-raw-data/land_bounds/California_County_Boundaries/cnty19_1.shp")
+# Set a palette
+maxent_pal <- "BuGn" 
+# Set colors
+light_blue <- "#c7e0d8"
+dark_blue <- "#083763"
+# Set view mode
+tmap_mode("plot")
+```
+
+## Quarter 1 Maxent cloglog viz
+
+```{r}
+maxent_q1 <- raster("/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_1/results/Macrocystis_pyrifera_cloglog.tif")
+
+# Read in kelp data and make sf object
+kelp_1 <- read_csv("/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_1/kelp_presence_1.csv") %>% 
+  st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
+
+tm_shape(maxent_q1) +
+  tm_raster(title = "Predicted relative habitat suitability (0.0-1.0)", alpha = 0.9, palette = maxent_pal) +
+  tm_shape(counties) +
+  tm_polygons() +
+  #tm_shape(kelp_1) +
+  #tm_dots(col = dark_blue) +
+  tm_layout(legend.show = FALSE, 
+            main.title = "Quarter 1", 
+            main.title.position = "top", 
+            bg.color = "lightgray")
+```
+
+## Quarter 2 Maxent cloglog viz
+
+```{r}
+maxent_q2 <- raster("/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_2/results/Macrocystis_pyrifera_cloglog.tif")
+
+# Read in kelp data and make sf object
+kelp_2 <- read_csv("/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_2/kelp_presence_2.csv") %>% 
+  st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
+
+tm_shape(maxent_q2) +
+  tm_raster(title = "Predicted relative habitat suitability (0.0-1.0)", alpha = 0.9, palette = maxent_pal) +
+  tm_shape(counties) +
+  tm_polygons() +
+  #tm_shape(kelp_2) +
+  #tm_dots(col = dark_blue) +
+  tm_layout(legend.show = FALSE, 
+            main.title = "Quarter 2", 
+            main.title.position = "top", 
+            bg.color = "lightgray")
+```
+
+## Quarter 3 Maxent cloglog viz
+
+```{r}
+maxent_q3 <- raster("/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_3/results/Macrocystis_pyrifera_cloglog.tif") 
+
+# Read in kelp data and make sf object
+kelp_3 <- read_csv("/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_3/kelp_presence_3.csv") %>% 
+  st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
+
+tm_shape(maxent_q3) +
+  tm_raster(title = "Predicted relative habitat suitability (0.0-1.0)", alpha = 0.9, palette = maxent_pal) +
+  tm_shape(counties) +
+  tm_polygons() +
+  #tm_shape(kelp_3) +
+  #tm_dots(col = dark_blue) +
+  tm_layout(legend.show = FALSE, 
+            main.title = "Quarter 3", 
+            main.title.position = "top", 
+            bg.color = "lightgray")
+```
+
+## Quarter 4 Maxent cloglog viz
+
+```{r}
+maxent_q4 <- raster("/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_4/results/Macrocystis_pyrifera_cloglog.tif")
+
+# Read in kelp data and make sf object
+kelp_4 <- read_csv("/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_4/kelp_presence_4.csv") %>% 
+  st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
+
+#tmap_mode("view")
+tm_shape(maxent_q4) +
+  tm_raster(title = "Predicted relative habitat suitability (0.0-1.0)", alpha = 0.9, palette = maxent_pal) +
+  tm_shape(counties) +
+  tm_polygons() +
+  # tm_shape(kelp_4) +
+  # tm_dots(col = dark_blue) +
+  tm_layout(legend.show = FALSE, 
+            main.title = "Quarter 4", 
+            main.title.position = "top", 
+            bg.color = "lightgray")
+```
+

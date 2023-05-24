@@ -68,7 +68,7 @@ maxent_output <- rast("/Users/elkewindschitl/Downloads/Macrocystis_pyrifera_logi
 counties <- st_read("/Users/elkewindschitl/Documents/MEDS/kelpGeoMod/data/land/cnty19_1.shp")
 
 # Set a palette
-maxent_pal <- "BuGn"
+maxent_pal <- "BuGn" 
 
 # Plot results
 tmap_mode("view")
