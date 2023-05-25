@@ -1,6 +1,6 @@
 ---
 title: "Data Visualization for Presentation"
-author: "Elke Windschitll"
+author: "Elke Windschitl"
 date: "2023-04-18"
 output: html_document
 ---
@@ -35,15 +35,24 @@ kelp_1 <- read_csv("/capstone/kelpgeomod/new_file_structure/03-analysis-data/max
   st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
 
 tm_shape(maxent_q1) +
-  tm_raster(title = "Predicted relative habitat suitability (0.0-1.0)", alpha = 0.9, palette = maxent_pal) +
+  tm_raster(title = "Predicted relative habitat \nsuitability (0.0-1.0)", alpha = 0.8, palette = maxent_pal) +
   tm_shape(counties) +
   tm_polygons() +
-  #tm_shape(kelp_1) +
-  #tm_dots(col = dark_blue) +
-  tm_layout(legend.show = FALSE, 
-            main.title = "Quarter 1", 
-            main.title.position = "top", 
-            bg.color = "lightgray")
+  tm_layout(
+    legend.show = TRUE,
+    legend.position = c(0.75, 0.5),
+    legend.title.fontface = "bold",
+    legend.title.size = 0.9,
+    legend.bg.color = "white",
+    legend.bg.alpha = 0.5,
+    legend.text.size = 0.7,
+    legend.text.color = "black",
+    #main.title = "Quarter 1",
+    main.title.position = "top",
+    bg.color = "lightgray"
+  )
+
+
 ```
 
 ## Quarter 2 Maxent cloglog viz
@@ -97,13 +106,13 @@ maxent_q4 <- raster("/capstone/kelpgeomod/new_file_structure/03-analysis-data/ma
 kelp_4 <- read_csv("/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_4/kelp_presence_4.csv") %>% 
   st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
 
-#tmap_mode("view")
+tmap_mode("view")
 tm_shape(maxent_q4) +
   tm_raster(title = "Predicted relative habitat suitability (0.0-1.0)", alpha = 0.9, palette = maxent_pal) +
   tm_shape(counties) +
   tm_polygons() +
-  # tm_shape(kelp_4) +
-  # tm_dots(col = dark_blue) +
+  tm_shape(kelp_4) +
+  tm_dots(col = dark_blue) +
   tm_layout(legend.show = FALSE, 
             main.title = "Quarter 4", 
             main.title.position = "top", 
