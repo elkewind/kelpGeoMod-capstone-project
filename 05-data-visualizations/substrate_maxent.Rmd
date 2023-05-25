@@ -1,0 +1,47 @@
+---
+title: "Untitled"
+author: "Jessica French"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r label = "set up", include=FALSE, echo=FALSE}
+library(sp)
+library(terra)
+library(cartography)
+library(mapsf)
+
+datadir <- "/capstone/kelpgeomod/new_file_structure"
+```
+
+# Introduction
+
+This markdown document reads in the output of maxent species distribution modelling conducted in Wallace and the usgs_substrate.shp file to show how the estimates of giant kelp habitat suitability compare to substrate distribution. 
+
+```{r label = "read in data"}
+# read in the usgs_substrate.shp file 
+substrate <- st_read(file.path(datadir, "/02-intermediate-data/substrate/usgs_substrate_shape/usgs_substrate.shp"))
+
+# read in maxent output as tif files. In the current interation of this project there are four tif files, one for each quarter. 
+
+maxent_q1 <- rast(file.path(datadir, "03-analysis-data/maxent/quarter_1/results/Macrocystis_pyrifera_cloglog.tif"))
+```
+
+# Mapping
+
+## Quarter 1
+
+```{r label = "map q1"}
+# initiate map
+mf_init(x = substrate)
+
+#plot(maxent_q1)
+# add raster layer 
+mf_raster(x = maxent_q1, add = T)
+
+```
+
