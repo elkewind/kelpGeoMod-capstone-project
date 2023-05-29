@@ -10,7 +10,7 @@ output: html_document
 Load necessary libraries
 
 ```{r}
-library(tidyverse)
+library(tidyverse)  
 library(raster)
 library(terra)
 library(sf)
@@ -399,6 +399,7 @@ tm_shape(amm_quarter1) + # check the location
             main.title.size = 0.8) +
   tm_shape(counties) +
   tm_polygons() 
+
 ```
 
 ## Maxent Heatmap

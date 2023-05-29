@@ -8,7 +8,7 @@ output: html_document
 # Prep
 ```{r}
 library(tidyverse)
-library(raster)
+library(raster) 
 library(sf)
 library(tmap)
 library(tmaptools)
