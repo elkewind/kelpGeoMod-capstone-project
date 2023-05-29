@@ -17,7 +17,6 @@ library(sf)
 library(RColorBrewer)
 library(tmap)
 library(tmaptools)
-library(exactextractr)
 ```
 
 Choose colors

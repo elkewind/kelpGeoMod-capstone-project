@@ -1,4 +1,4 @@
-Wallace Session 2023-05-20
+Wallace Session 2023-05-23
 ================
 
 Please find below the R code history from your *Wallace* v2.0.5 session.
@@ -54,7 +54,7 @@ current workspace, change to the correct file path
 
 ```{r}
 # NOTE: provide the folder path of the .csv file
-occs_path <- ""
+occs_path <- "/Users/elkewindschitl/Documents/MEDS/kelpGeoMod/data/maxent/quarter_1"
 occs_path <- file.path(occs_path, "kelp_presence_1.csv")
 # get a list of species occurrence data
 userOccs_Mp <- occs_userOccs(
@@ -71,7 +71,7 @@ Using user-specified variables.
 
 ```{r}
 ## Specify the directory with the environmental variables
-dir_envs_Mp <- ""
+dir_envs_Mp <- "/Users/elkewindschitl/Documents/MEDS/kelpGeoMod/data/maxent/quarter_1"
 envs_path <- file.path(dir_envs_Mp, c('depth_1.tif', 'nitrate_nitrite_1.tif', 'phosphate_1.tif'))
 # Create environmental object 
 envs_Mp <- envs_userEnvs(
@@ -100,12 +100,13 @@ using a user provided background extent with a 0 degree buffer.
 # Load the user provided shapefile or csv file with the desired extent.
   ##User must input the path to shapefile or csv file and the file name 
 # Define path
-bgPath_Mp <- ""
-bgExt_Mp <- penvs_userBgExtent(
-  bgShp_path = paste0(bgPath_Mp, "aoi", ".shp"),
-  bgShp_name = paste0("aoi", c(".shp", ".shx", ".dbf")),
-  userBgBuf = 0,
-  occs = occs_Mp)
+# bgPath_Mp <- ""
+# bgExt_Mp <- penvs_userBgExtent(
+#   bgShp_path = paste0(bgPath_Mp, "aoi", ".shp"),
+#   bgShp_name = paste0("aoi", c(".shp", ".shx", ".dbf")),
+#   userBgBuf = 0,
+#   occs = occs_Mp)
+bgExt_Mp <- penvs_bgExtent(occs_Mp, bgSel = 'bounding box', bgBuf = 0.5)
 # Mask environmental data to provided extent
 bgMask_Mp <- penvs_bgMask(
   occs = occs_Mp,
@@ -162,7 +163,7 @@ model_Mp <- model_maxent(
   clampSel = FALSE,
   algMaxent = "maxnet",
   parallel = TRUE,
-  numCores = 30)
+  numCores = 6)
 ```
 
 ### Visualize
@@ -171,7 +172,7 @@ Generate a map of the maxnet generated model with no threshold
 
 ```{r}
 # Select current model and obtain raster prediction
-m_Mp <- model_Mp@models[["fc.L_rm.0.5"]]
+m_Mp <- model_Mp@models[["fc.LQHP_rm.0.5"]]
 predSel_Mp <- predictMaxnet(m_Mp, bgMask_Mp,
                                           type = "cloglog", 
                                           clamp = FALSE)
@@ -199,3 +200,8 @@ m  %>%
   addPolygons(data = bgExt_Mp,fill = FALSE,
               weight = 4, color = "blue", group = 'proj')
 ```
+
+```{r}
+
+```
+
