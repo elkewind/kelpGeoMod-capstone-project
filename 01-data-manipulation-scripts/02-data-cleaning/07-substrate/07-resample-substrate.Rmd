@@ -11,54 +11,93 @@ Load necessary libraries
 library(tidyverse)
 library(raster)
 library(terra)
+library(tmap)
+library(tmaptools)
+library(sf)
 ```
 
 Load data
 
 ```{r}
 mask <- terra::rast("/capstone/kelpgeomod/new_file_structure/02-intermediate-data/mask/mask_rast.tif")
-substrate <- raster("/capstone/kelpgeomod/new_file_structure/02-intermediate-data/substrate/SBC_substrate.tif")
+#mask <- terra::rast("/Users/elkewindschitl/Downloads/mask_rast.tif")
+substrate <- terra::rast("/capstone/kelpgeomod/new_file_structure/02-intermediate-data/substrate/SBC_substrate.tif")
+#substrate <- terra::rast("/Users/elkewindschitl/Downloads/SBC_substrate.tif")
 ```
 
-Make binary
+Make binary sandy/non-sandy
+
 ```{r}
-substrate <- substrate %>%
-  reclassify(cbind(0, 1, 0))
+# Set up a reclassification matrix to identify sandy-bottom only
+m <- c(0, 1,
+       1, 0,
+       2, 0,
+       3, 0)
+rclmat <- matrix(m, ncol=2, byrow=TRUE)
 
-m <- c(0, 0, 1,
-       0.25, 0.5, 2,
-       0.5, 1, 3)
-rclmat <- matrix(m, ncol=3, byrow=TRUE)
-rc1 <- classify(r, rclmat, include.lowest=TRUE)
+# Apply the reclassification, name this new raster rc1
+rc1 <- classify(substrate, rclmat, include.lowest=TRUE)
 
-df <- as.data.frame(substrate, xy = TRUE)
+#--------------------exploring if the reclass worked-----------------------
 
+# Define the extent for subsetting
+subset_extent <- extent(c(-120.5, -120.4, 34.4, 34.5)) 
+
+# Crop og and new to subset for faster processing for investigation
+cropped <- crop(rc1,subset_extent) # this is the new
+cropped2 <- crop(substrate, subset_extent) # thisis the og
+
+# Make a data frame to compare exact grid cells 
+df <- as.data.frame(cropped, xy = TRUE, na.rm = TRUE) # this is the new
+df2 <- as.data.frame(cropped2, xy = TRUE, na.rm = TRUE) # this is the og
+
+# Plot to check if expected
+plot(rc1)
 ```
 
-
-Resample substrate to the mask
+Aggregate and remove non-sandy areas
 
 ```{r}
-
 # Check the crs, and reset the crs if different
-crs(substrate) == crs(mask)
+crs(rc1) == crs(mask)
 
-# Resample to mask resolution
-resampled_sub <- terra::resample(x = substrate,
-                                   y = mask,
-                                   method = "near")
+small <- res(rc1)[1] # grab our smallest resolution
+large <- res(mask)[2] # grab our largest resoultion
 
-# Convert the resampled raster to a factor
-resampled_factor <- as.factor(resampled_sub)
+# Calculate the aggregation factor
+factor <- c(large / small, large / small)  # Divide the target resolution (1 km) by the source resolution (3 m)
 
-# Calculate the count of each category in each grid cell
-count_raster <- tabulate(resampled_sub)
+#Aggregate to the mask size (roughly)
+agg_sub <- terra::aggregate(x = rc1,
+                            fact = factor, # number of cells in each direction
+                            fun = "mean")
 
-# Calculate the total number of cells in each grid cell
-total_cells <- cellStats(resampled_factor, "count")
+# resample to match mask exactly
+resampled <- terra::resample(agg_sub, mask, method = "near")
 
-# Calculate the percentage of each category in each grid cell
-percentage_raster <- count_raster / total_cells * 100
+# set up a new classification matrix
+# any values <1 had a non-soft cell factor into the mean. We want pure soft-bottom
+m <- c(0, 1, NA,
+       1, 2, 1)
+rclmat2 <- matrix(m, ncol=3, byrow=TRUE)
 
+# Apply the reclassification, name this new raster rc2
+rc2 <- classify(resampled, rclmat2, right = FALSE)
+
+# Pull in polygon data to check our soft-substrate raster
+polygons <- st_read("/Users/elkewindschitl/Downloads/usgs_substrate_shape/usgs_substrate.shp") %>% 
+  filter(class == "h" | class == "m" | class == "a")
+
+# Plot our soft substrate raster vs other substrate polygons to look for overlap
+tm_shape(rc2) +
+  tm_raster() +
+  tm_shape(polygons) +
+  tm_polygons() +
+  tmap_options(check.and.fix = TRUE)
+```
+
+```{r}
+sandy_raster <- rc2
+writeRaster(sandy_raster, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/substrate/sandy-bottom-1km.tif")
 ```
 

@@ -417,7 +417,7 @@ maxent_output <- raster("/capstone/kelpgeomod/new_file_structure/03-analysis-dat
 # Plot results
 tmap_mode("view")
 tm_shape(maxent_output) +
-  tm_raster(title = "Predicted relative habitat suitability (0.0-1.0)", alpha = 0.9, palette = maxent_pal) +  # Add the specified palette
+  tm_raster(title = "Predicted habitat suitability (0.0-1.0)", alpha = 0.9, palette = maxent_pal) +  # Add the specified palette
   tm_shape(counties) +
   tm_polygons() +
   # tm_shape(kelp) +
@@ -430,135 +430,162 @@ tm_shape(maxent_output) +
 Adding substrate
 
 ```{r}
-# Read in substrate data
+# # Read in substrate data
+# # substrate <- st_read("/capstone/kelpgeomod/new_file_structure/02-intermediate-data/substrate/usgs_substrate_shape/usgs_substrate.shp") %>% 
+# #   filter(class == "s")
 # substrate <- st_read("/capstone/kelpgeomod/new_file_structure/02-intermediate-data/substrate/usgs_substrate_shape/usgs_substrate.shp") %>% 
-#   filter(class == "s")
-substrate <- st_read("/capstone/kelpgeomod/new_file_structure/02-intermediate-data/substrate/usgs_substrate_shape/usgs_substrate.shp") %>% 
-  filter(class == "h" | class == "m" | class == "a")
+#   filter(class == "h" | class == "m" | class == "a")
+# 
+# substrate_vect <- substrate %>% vect()
+# 
+# #########################chatGPT########################################
+# 
+# # Set the extent of the maxent_output raster to match the substrate polygons
+# maxent_output <- extend(maxent_output, substrate)
+# 
+# # Correct the geometries of the input polygons
+# substrate_sf_corrected <- st_make_valid(substrate)
+# 
+# # Perform the intersection between the maxent_output polygons and the corrected substrate polygons
+# intersected_polygons <- st_intersection(maxent_output_polygons, substrate_sf_corrected)
+# 
+# # Create a raster with the same extent and resolution as maxent_output
+# intersected_raster <- raster(maxent_output)
+# values(intersected_raster) <- 0
+# 
+# # Rasterize the intersected polygons
+# intersected_raster <- rasterize(intersected_polygons, intersected_raster, field = 1)
+# intersected_terra <- rast(intersected_raster)
+# 
+# # Invert the values of the intersected raster to create the final raster of non-intersecting cells
+# result <- maxent_output
+# result[intersected_terra == 1] <- NA
+# 
+# # Mask maxent output to sandy bottom
+# maxent_sandy <- terra::mask(maxent_output, intersected_terra)
+# 
+# ###########################stackoverflow######################################
+# 
+# extracted_list <- terra::extract(x = maxent_output, 
+#                                  y = substrate_vect,
+#                                  xy = TRUE,
+#                                  cell = TRUE) %>% 
+#   dplyr::select(x, y, cell) %>% 
+#   distinct()
+# 
+# cell_numbers_to_remove <- unlist(extracted_list$cell)
+# maxent_output[cell_numbers_to_remove] <- NA
+# 
+# 
+# ################################exact_extract#################################
+# 
+# exact_extract(x = maxent_output, 
+#               y = substrate)
+# 
+# #################################################################
+# 
+# 
+# # Plot results
+# tmap_mode("view")
+# tm_shape(maxent_output) +
+#   tm_raster(title = "Predicted relative habitat suitability (0.0-1.0)", 
+#             alpha = 0.9, 
+#             palette = maxent_pal,
+#             breaks = c(0, 0.1, 0.2, 0.4, 0.6, 0.8, 0.1)) +  # Add the specified palette
+#   tm_shape(kelp_quarter1) +
+#   tm_raster(title = "Kelp area (m^2)",
+#             style = "cont",
+#             breaks = c(0, 500, 1000, 5000, 10000, 20000, 40000),
+#             palette = kelp_pal) +
+#   tm_shape(counties) +
+#   tm_polygons() +
+#   tm_shape(substrate) +
+#   tm_polygons(col = "brown4",
+#               alpha = 0.7) +
+#   tmap_options(check.and.fix = TRUE) +
+#   # tm_shape(kelp) +
+#   # tm_dots(col = dark_blue) +
+#   tm_layout(
+#             legend.position = c("right", "top")) +  # Move the legend to the top-right corner
+#   tm_layout(bg.color = "#E4FAFE")  # Change the background color to blue
+# 
+# tm_shape(maxent_output) +
+#   tm_raster(title = "Predicted relative habitat suitability (0.0-1.0)", 
+#             alpha = 0.9, 
+#             palette = maxent_pal,
+#             breaks = c(0, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0)) +  # Corrected breaks vector
+#   tm_shape(kelp_quarter1) +
+#   tm_raster(title = "Kelp area (m^2)",
+#             style = "cont",
+#             breaks = c(0, 500, 1000, 5000, 10000, 20000, 40000),
+#             palette = kelp_pal) +
+#   tm_shape(counties) +
+#   tm_polygons() +
+#   tm_shape(substrate) +
+#   tm_polygons(col = "brown4",
+#               alpha = 0.7) +
+#   tmap_options(check.and.fix = TRUE) +
+#   tm_layout(legend.position = c("right", "top")) +
+#   tm_layout(bg.color = "#E4FAFE")
 
-substrate_vect <- substrate %>% vect()
+```
 
-#########################chatGPT########################################
+## Model minus kelp and substrate
 
-# Set the extent of the maxent_output raster to match the substrate polygons
-maxent_output <- extend(maxent_output, substrate)
+```{r}
+# Read in sandy-bottom raster
+sandy_raster <- raster("/capstone/kelpgeomod/new_file_structure/03-analysis-data/substrate/sandy-bottom-1km.tif")
 
-# Correct the geometries of the input polygons
-substrate_sf_corrected <- st_make_valid(substrate)
+# Mask maxent to areas without kelp
+kelp_masked_model <- mask(x = maxent_output, mask = kelp_quarter1, inverse = TRUE)
 
-# Perform the intersection between the maxent_output polygons and the corrected substrate polygons
-intersected_polygons <- st_intersection(maxent_output_polygons, substrate_sf_corrected)
+# Mask maxent to areas without sandy-bottom
+masked_model <- mask(x = kelp_masked_model, mask = sandy_raster, inverse = FALSE)
 
-# Create a raster with the same extent and resolution as maxent_output
-intersected_raster <- raster(maxent_output)
-values(intersected_raster) <- 0
-
-# Rasterize the intersected polygons
-intersected_raster <- rasterize(intersected_polygons, intersected_raster, field = 1)
-intersected_terra <- rast(intersected_raster)
-
-# Invert the values of the intersected raster to create the final raster of non-intersecting cells
-result <- maxent_output
-result[intersected_terra == 1] <- NA
-
-# Mask maxent output to sandy bottom
-maxent_sandy <- terra::mask(maxent_output, intersected_terra)
-
-###########################stackoverflow######################################
-
-extracted_list <- terra::extract(x = maxent_output, 
-                                 y = substrate_vect,
-                                 xy = TRUE,
-                                 cell = TRUE) %>% 
-  dplyr::select(x, y, cell) %>% 
-  distinct()
-
-cell_numbers_to_remove <- unlist(extracted_list$cell)
-maxent_output[cell_numbers_to_remove] <- NA
-
-
-################################exact_extract#################################
-
-exact_extract(x = maxent_output, 
-              y = substrate)
-
-#################################################################
-
-
-# Plot results
 tmap_mode("view")
 tm_shape(maxent_output) +
-  tm_raster(title = "Predicted relative habitat suitability (0.0-1.0)", 
+  tm_raster(title = "Predicted habitat suitability (0.0-1.0)", 
             alpha = 0.9, 
             palette = maxent_pal,
-            breaks = c(0, 0.1, 0.2, 0.4, 0.6, 0.8, 0.1)) +  # Add the specified palette
-  tm_shape(kelp_quarter1) +
-  tm_raster(title = "Kelp area (m^2)",
-            style = "cont",
-            breaks = c(0, 500, 1000, 5000, 10000, 20000, 40000),
-            palette = kelp_pal) +
-  tm_shape(counties) +
-  tm_polygons() +
-  tm_shape(substrate) +
-  tm_polygons(col = "brown4",
-              alpha = 0.7) +
-  tmap_options(check.and.fix = TRUE) +
-  # tm_shape(kelp) +
-  # tm_dots(col = dark_blue) +
-  tm_layout(
-            legend.position = c("right", "top")) +  # Move the legend to the top-right corner
-  tm_layout(bg.color = "#E4FAFE")  # Change the background color to blue
-
-tm_shape(maxent_output) +
-  tm_raster(title = "Predicted relative habitat suitability (0.0-1.0)", 
+            breaks = c(0, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0)) +   
+  tm_shape(kelp_masked_model) +
+  tm_raster(title = "Predicted habitat suitability (0.0-1.0)", 
             alpha = 0.9, 
             palette = maxent_pal,
-            breaks = c(0, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0)) +  # Corrected breaks vector
-  tm_shape(kelp_quarter1) +
-  tm_raster(title = "Kelp area (m^2)",
-            style = "cont",
-            breaks = c(0, 500, 1000, 5000, 10000, 20000, 40000),
-            palette = kelp_pal) +
-  tm_shape(counties) +
-  tm_polygons() +
-  tm_shape(substrate) +
-  tm_polygons(col = "brown4",
-              alpha = 0.7) +
-  tmap_options(check.and.fix = TRUE) +
-  tm_layout(legend.position = c("right", "top")) +
-  tm_layout(bg.color = "#E4FAFE")
-
-```
-
-## Empty Map with Land
-
-```{r}
-tm_shape(counties) +
-  tm_polygons() +  # Move the legend to the top-right corner
-  tm_layout(bg.color = "#E4FAFE") 
-```
-
-## Model minus kelp
-
-```{r}
-masked_model <- mask(x = maxent_output, mask = kelp_quarter1, inverse = TRUE)
-plot(masked_model)
-
-tm_shape(masked_model) +
+            breaks = c(0, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0)) + 
+  tm_shape(masked_model) +
   tm_raster(title = "Predicted habitat suitability (0.0-1.0)", 
             alpha = 0.9, 
             palette = maxent_pal,
             breaks = c(0, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0)) +  # Corrected breaks vector
   tm_shape(kelp_quarter1) +
-  tm_raster(title = "Kelp area (m"^"2",")",
+  tm_raster(title = "Kelp area (m^2)",
             style = "cont",
             breaks = c(0, 500, 1000, 5000, 10000, 20000, 40000),
             palette = kelp_pal) +
+  tm_shape(sandy_raster) +
+  tm_raster(title = "Sandy-bottom substrate") + 
+  tm_shape(depth) +
+  tm_raster(style = "cont",
+            breaks = c(-2000, -1000, -500, -200, -100, -60, -40, -20, 0),
+            title = "Depth (m)",
+            palette = "Blues") +
+  tm_shape(phos_quarter1) + # check the location
+  tm_raster(style = "cont",
+            title = "Phosphate (mcmol/L)",
+            palette = nutrient_pal) +
+  tm_shape(nitr_quarter1) + # check the location
+  tm_raster(style = "cont",
+            title = "Nitrate + Nitrite (mcmol/L)",
+            palette = nutrient_pal,
+            breaks = c(0, 2, 5, 10, 15, 20)) +
   tm_shape(counties) +
   tm_polygons() +
-  tm_shape(substrate) +
-  tm_polygons(col = "brown4",
-              alpha = 0.7) +
+  # tm_shape(substrate) +
+  # tm_polygons(col = "brown4",
+  #             alpha = 0.7) +
+  tm_shape(kelp) +
+  tm_dots(col = dark_blue) +
   tmap_options(check.and.fix = TRUE) +
   tm_layout(legend.position = c("right", "top")) +
   tm_layout(bg.color = "#E4FAFE")
