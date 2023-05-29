@@ -8,18 +8,21 @@ output: html_document
 Load necessary libraries
 
 ```{r}
+
 library(tidyverse)
 library(raster) 
 library(terra)
 library(tmap)
 library(tmaptools)
 library(sf)
+
 ```
 
 Load data
 
 ```{r}
 mask <- terra::rast("/capstone/kelpgeomod/new_file_structure/02-intermediate-data/mask/mask_rast.tif")
+
 #mask <- terra::rast("/Users/elkewindschitl/Downloads/mask_rast.tif")
 substrate <- terra::rast("/capstone/kelpgeomod/new_file_structure/02-intermediate-data/substrate/SBC_substrate.tif")
 #substrate <- terra::rast("/Users/elkewindschitl/Downloads/SBC_substrate.tif")
@@ -100,4 +103,3 @@ tm_shape(rc2) +
 sandy_raster <- rc2
 writeRaster(sandy_raster, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/substrate/sandy-bottom-1km.tif")
 ```
-
