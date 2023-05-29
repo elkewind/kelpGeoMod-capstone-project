@@ -1,32 +1,42 @@
 ---
 title: "Data Visualization for Presentation"
-author: "Elke Windschitll"
+author: "Elke Windschitl"
 date: "2023-04-18"
 output: html_document
 ---
 
+## Preparations for Data Viz
+
+Load necessary libraries
+
 ```{r}
-library(tidyverse)
+library(tidyverse)  
 library(raster)
 library(terra)
 library(sf)
 library(RColorBrewer)
 library(tmap)
 library(tmaptools)
-#library(OpenStreetMap)
+library(exactextractr)
 ```
+
+Choose colors
 
 ```{r}
 # Set color palette
 light_blue <- "#c7e0d8"
 dark_blue <- "#083763"
+sst_pal <- "YlOrRd"
+nutrient_pal <- "OrRd"
+kelp_pal <- "YlGn"
+maxent_pal <- "BuGn" 
 ```
 
-# AOI
+## Mapping our Area of Interest
 
 ```{r}
 # Read in AOI
-aoi <- st_read("http://tsosie.bren.ucsb.edu/capstone/kelpgeomod/new_file_structure/01-raw-data/New_AOI_SBchannel_shp/New_AOI_SBchannel.shp")
+aoi <- st_read("/capstone/kelpgeomod/new_file_structure/01-raw-data/New_AOI_SBchannel_shp/New_AOI_SBchannel.shp")
 # Create a slightly larger bounding box
 bbox <- st_bbox(c(xmin = -120.65 - 0.1, 
                   xmax = -118.8 + 0.1,
@@ -35,45 +45,379 @@ bbox <- st_bbox(c(xmin = -120.65 - 0.1,
 
 # Define basemap options
 basemap <- tm_basemap("Stamen.Terrain")
-osm <- read_osm_multithread(x = bbox, zoom = NULL, type = "osm")
-osm <- tmaptools::read_osm(
-  x = bbox,
-  zoom = NULL,
-  type = "osm",
-  minNumTiles = NULL,
-  mergeTiles = NULL,
-  use.colortable = FALSE
-)
 
 # Plot
-tmap_mode("plot")
+tmap_mode("view")
 tm_shape(aoi, bbox = bbox) +
-  tm_basemap("OpenStreetMap") +
-  tm_borders(lwd = 2, col = dark_blue) +
-  tm_fill(col = NA)  # Remove fill color
+  basemap +
+  tm_borders(lwd = 2, col = dark_blue)
   
 ```
 
-# Maxent
+## Kelp Area
+
+Quarter 1
+
+```{r}
+kelp <- brick("/capstone/kelpgeomod/new_file_structure/02-intermediate-data/area_biomass/area_brick_standardized.tif")
+
+# Read in the counties data
+counties <- st_read("/capstone/kelpgeomod/new_file_structure/01-raw-data/land_bounds/California_County_Boundaries/cnty19_1.shp")
+
+calc_seasonal_means_brick <- function(rast_to_convert) {
+
+  quarter_sets <- list(seq(from = 1, to = 36, by = 4), # Q1s (winter)
+                       seq(from = 2, to = 36, by = 4), # Q2s (spring)
+                       seq(from = 3, to = 36, by = 4), # Q3s (summer)
+                       seq(from = 4, to = 36, by = 4)) # Q4s (fall)
+  
+  all_seasons_brick <- brick() # set up brick to hold averaged layers for each season (will have 4 layers at the end)
+  
+  for (i in seq_along(quarter_sets)) {
+    
+    season_brick_holder <- brick() # hold all layers for one season, then reset for next season
+    
+    for (j in quarter_sets[[i]]) {
+      season_brick <- brick() # hold single layer in a season, then reset for next layer
+      season_brick <- addLayer(season_brick, rast_to_convert[[j]]) # add single layer to initialized brick
+      season_brick_holder <- addLayer(season_brick_holder, season_brick) # add this layer to the holder for this season, and repeat until have all layers from season
+    }
+
+    season_averaged_layer <- calc(season_brick_holder, mean) # after having all layers from season, take the mean
+    all_seasons_brick <- addLayer(all_seasons_brick, season_averaged_layer) # add mean to the brick holding all averaged layers, and then repeat for the next season
+  }
+  
+  return(all_seasons_brick) # return the resulting brick object
+}
+
+kelp_all <- calc_seasonal_means_brick(rast_to_convert = kelp)
+
+kelp_quarter1 <- kelp_all[[1]]
+
+tm_shape(kelp_quarter1) + # check the location
+  tm_raster(style = "cont",
+            breaks = c(0, 500, 1000, 5000, 10000, 20000, 40000),
+            title = "Kelp Area (m)",
+            palette = kelp_pal) +
+  tm_layout(legend.outside = TRUE, # Moving the legend
+            main.title = "Kelp Area (m)",
+            main.title.size = 0.8) +
+  tm_shape(counties) +
+  tm_polygons()
+```
+
+Quarter 2
+
+```{r}
+kelp_quarter2 <- kelp_all[[2]]
+
+tm_shape(kelp_quarter2) + # check the location
+  tm_raster(style = "cont",
+            breaks = c(0, 500, 1000, 5000, 10000, 20000, 40000),
+            title = "Kelp Area (m)",
+            palette = kelp_pal) +
+  tm_layout(legend.outside = TRUE, # Moving the legend
+            main.title = "Kelp Area (m)",
+            main.title.size = 0.8) +
+  tm_shape(counties) +
+  tm_polygons()
+```
+
+Quarter 3
+
+```{r}
+kelp_quarter3 <- kelp_all[[3]]
+
+tm_shape(kelp_quarter3) + # check the location
+  tm_raster(style = "cont",
+            breaks = c(0, 500, 1000, 5000, 10000, 20000, 40000),
+            title = "Kelp Area (m)",
+            palette = kelp_pal) +
+  tm_layout(legend.outside = TRUE, # Moving the legend
+            main.title = "Kelp Area (m)",
+            main.title.size = 0.8) +
+  tm_shape(counties) +
+  tm_polygons()
+```
+
+Quarter 4
+
+```{r}
+kelp_quarter4 <- kelp_all[[4]]
+
+tm_shape(kelp_quarter4) + # check the location
+  tm_raster(style = "cont",
+            breaks = c(0, 500, 1000, 5000, 10000, 20000, 40000),
+            title = "Kelp Area (m)",
+            palette = kelp_pal) +
+  tm_layout(legend.outside = TRUE, # Moving the legend
+            main.title = "Kelp Area (m)",
+            main.title.size = 0.8) +
+  tm_shape(counties) +
+  tm_polygons()
+```
+
+## Depth
+
+```{r}
+# Read in depth data
+depth <- raster("/capstone/kelpgeomod/new_file_structure/02-intermediate-data/depth/depth.tif")
+
+tm_shape(depth) + # check the location
+  tm_raster(style = "cont",
+            breaks = c(-2000, -1000, -500, -200, -100, -60, -40, -20, 0),
+            title = "Depth (m)",
+            palette = "Blues") +
+  tm_layout(legend.outside = TRUE, # Moving the legend
+            main.title = "Bathymetry of the Santa Barbara Channel",
+            main.title.size = 0.8) +
+  tm_shape(counties) +
+  tm_polygons()
+```
+
+## Sea Surface Temperature
+
+Quarter 1
+
+```{r}
+sst_quarter1 <- raster("/capstone/kelpgeomod/new_file_structure/02-intermediate-data/sst/sst_quarter_1.tif")
+
+tm_shape(sst_quarter1) + # check the location
+  tm_raster(style = "cont",
+            title = "Sea Surface Temperature (°C)",
+            palette = sst_pal) +
+  tm_layout(legend.outside = TRUE, # Moving the legend
+            main.title = "Sea Surface Temperature",
+            main.title.size = 0.8) +
+  tm_shape(counties) +
+  tm_polygons()
+```
+
+Quarter 2
+
+```{r}
+sst_quarter2 <- raster("/capstone/kelpgeomod/new_file_structure/02-intermediate-data/sst/sst_quarter_2.tif")
+
+tm_shape(sst_quarter2) + # check the location
+  tm_raster(style = "cont",
+            title = "Sea Surface Temperature (°C)",
+            palette = sst_pal) +
+  tm_layout(legend.outside = TRUE, # Moving the legend
+            main.title = "Sea Surface Temperature",
+            main.title.size = 0.8) +
+  tm_shape(counties) +
+  tm_polygons()
+```
+
+Quarter 3
+
+```{r}
+sst_quarter3 <- raster("/capstone/kelpgeomod/new_file_structure/02-intermediate-data/sst/sst_quarter_3.tif")
+
+tm_shape(sst_quarter3) + # check the location
+  tm_raster(style = "cont",
+            title = "Sea Surface Temperature (°C)",
+            palette = sst_pal) +
+  tm_layout(legend.outside = TRUE, # Moving the legend
+            main.title = "Sea Surface Temperature",
+            main.title.size = 0.8) +
+  tm_shape(counties) +
+  tm_polygons()
+```
+
+Quarter 4
+
+```{r}
+sst_quarter4 <- raster("/capstone/kelpgeomod/new_file_structure/02-intermediate-data/sst/sst_quarter_4.tif")
+
+tm_shape(sst_quarter4) + # check the location
+  tm_raster(style = "cont",
+            title = "Sea Surface Temperature (°C)",
+            palette = sst_pal) +
+  tm_layout(legend.outside = TRUE, # Moving the legend
+            main.title = "Sea Surface Temperature",
+            main.title.size = 0.8) +
+  tm_shape(counties) +
+  tm_polygons()
+```
+
+## Nitrate + Nitrite
+
+Quarter 1
+
+```{r}
+nitr_all <- brick("/capstone/kelpgeomod/new_file_structure/03-analysis-data/inteprolate_idw/nitrate_nitrite_quarterly.tif")
+
+nitr_quarter1 <- nitr_all[[1]]
+
+tm_shape(nitr_quarter1) + # check the location
+  tm_raster(style = "cont",
+            title = "Nitrate + Nitrite (mcmol/L)",
+            palette = nutrient_pal,
+            breaks = c(0, 2, 5, 10, 15, 20)) +
+  tm_layout(legend.outside = TRUE, # Moving the legend
+            main.title = "Nitrate + Nitrite (mcmol/L)",
+            main.title.size = 0.8) +
+  tm_shape(counties) +
+  tm_polygons()
+```
+
+Quarter 2
+
+```{r}
+nitr_quarter2 <- nitr_all[[2]]
+
+tm_shape(nitr_quarter2) + # check the location
+  tm_raster(style = "cont",
+            title = "Nitrate + Nitrite (mcmol/L)",
+            palette = nutrient_pal,
+            breaks = c(0, 2, 5, 10, 15, 20))  +
+  tm_layout(legend.outside = TRUE, # Moving the legend
+            main.title = "Nitrate + Nitrite (mcmol/L)",
+            main.title.size = 0.8) +
+  tm_shape(counties) +
+  tm_polygons()
+```
+
+Quarter 3
+
+```{r}
+nitr_quarter3 <- nitr_all[[3]]
+
+tm_shape(nitr_quarter3) + # check the location
+  tm_raster(style = "cont",
+            title = "Nitrate + Nitrite (mcmol/L)",
+            palette = nutrient_pal,
+            breaks = c(0, 2, 5, 10, 15, 20)) +
+  tm_layout(legend.outside = TRUE, # Moving the legend
+            main.title = "Nitrate + Nitrite (mcmol/L)",
+            main.title.size = 0.8) +
+  tm_shape(counties) +
+  tm_polygons()
+```
+
+Quarter 4
+
+```{r}
+nitr_quarter4 <- nitr_all[[4]]
+
+tm_shape(nitr_quarter4) + # check the location
+  tm_raster(style = "cont",
+            title = "Nitrate + Nitrite (mcmol/L)",
+            palette = nutrient_pal,
+            breaks = c(0, 2, 5, 10, 15, 20))  +
+  tm_layout(legend.outside = TRUE, # Moving the legend
+            main.title = "Nitrate + Nitrite (mcmol/L)",
+            main.title.size = 0.8) +
+  tm_shape(counties) +
+  tm_polygons()
+```
+
+## Phosphate
+
+Quarter 1
+
+```{r}
+phos_all <- brick("/capstone/kelpgeomod/new_file_structure/03-analysis-data/inteprolate_idw/phosphate_quarterly.tif")
+
+phos_quarter1 <- phos_all[[1]]
+
+tm_shape(phos_quarter1) + # check the location
+  tm_raster(style = "cont",
+            title = "Phosphate (mcmol/L)",
+            palette = nutrient_pal) +
+  tm_layout(legend.outside = TRUE, # Moving the legend
+            main.title = "Phosphate (mcmol/L)",
+            main.title.size = 0.8) +
+  tm_shape(counties) +
+  tm_polygons()
+```
+
+Quarter 2
+
+```{r}
+phos_quarter2 <- phos_all[[2]]
+
+tm_shape(phos_quarter2) + # check the location
+  tm_raster(style = "cont",
+            title = "Phosphate (mcmol/L)",
+            palette = nutrient_pal) +
+  tm_layout(legend.outside = TRUE, # Moving the legend
+            main.title = "Phosphate (mcmol/L)",
+            main.title.size = 0.8) +
+  tm_shape(counties) +
+  tm_polygons()
+```
+
+Quarter 3
+
+```{r}
+phos_quarter3 <- phos_all[[3]]
+
+tm_shape(phos_quarter3) + # check the location
+  tm_raster(style = "cont",
+            title = "Phosphate (mcmol/L)",
+            palette = nutrient_pal) +
+  tm_layout(legend.outside = TRUE, # Moving the legend
+            main.title = "Phosphate (mcmol/L)",
+            main.title.size = 0.8) +
+  tm_shape(counties) +
+  tm_polygons()
+```
+
+Quarter 4
+
+```{r}
+phos_quarter4 <- phos_all[[4]]
+
+tm_shape(phos_quarter4) + # check the location
+  tm_raster(style = "cont",
+            title = "Phosphate (mcmol/L)",
+            palette = nutrient_pal) +
+  tm_layout(legend.outside = TRUE, # Moving the legend
+            main.title = "Phosphate (mcmol/L)",
+            main.title.size = 0.8) +
+  tm_shape(counties) +
+  tm_polygons()
+```
+
+## Ammonium
+
+Quarter 1
+
+```{r}
+amm_all <- raster("/capstone/kelpgeomod/new_file_structure/03-analysis-data/inteprolate_idw/ammonium/ammonium_1.tif")
+
+amm_quarter1 <- amm_all[[1]]
+
+tm_shape(amm_quarter1) + # check the location
+  tm_raster(style = "cont",
+            title = "Ammonium (mcmol/L)",
+            palette = nutrient_pal) +
+  tm_layout(legend.outside = TRUE, # Moving the legend
+            main.title = "Ammonium (mcmol/L)",
+            main.title.size = 0.8) +
+  tm_shape(counties) +
+  tm_polygons()
+```
+
+## Maxent Heatmap
+
+Quarter 1
 
 ```{r}
 # Read in kelp data and make sf object
-kelp <- read_csv("/Users/elkewindschitl/Documents/MEDS/kelpGeoMod/data/maxent/quarter_1/kelp_presence_1.csv") %>% 
+kelp <- read_csv("/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_1/kelp_presence_1.csv") %>% 
   st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
 
 # Read in the maxent output
-maxent_output <- rast("/Users/elkewindschitl/Downloads/Macrocystis_pyrifera_logistic.tif")
+maxent_output <- raster("/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_1/results/Macrocystis_pyrifera_cloglog.tif")
 
-# Read in the counties data
-counties <- st_read("/Users/elkewindschitl/Documents/MEDS/kelpGeoMod/data/land/cnty19_1.shp")
-
-# Set a palette
-maxent_pal <- "BuGn" 
 
 # Plot results
 tmap_mode("view")
 tm_shape(maxent_output) +
-  tm_raster(title = "Predicted relative habitat suitability (0.0-1.0)", alpha = 0.9, palette = maxent_pal) +  # Add the specified palette
+  tm_raster(title = "Predicted habitat suitability (0.0-1.0)", alpha = 0.9, palette = maxent_pal) +  # Add the specified palette
   tm_shape(counties) +
   tm_polygons() +
   # tm_shape(kelp) +
@@ -81,5 +425,169 @@ tm_shape(maxent_output) +
   tm_layout(
             legend.position = c("right", "top")) +  # Move the legend to the top-right corner
   tm_layout(bg.color = "#E4FAFE")  # Change the background color to blue
+```
+
+Adding substrate
+
+```{r}
+# # Read in substrate data
+# # substrate <- st_read("/capstone/kelpgeomod/new_file_structure/02-intermediate-data/substrate/usgs_substrate_shape/usgs_substrate.shp") %>% 
+# #   filter(class == "s")
+# substrate <- st_read("/capstone/kelpgeomod/new_file_structure/02-intermediate-data/substrate/usgs_substrate_shape/usgs_substrate.shp") %>% 
+#   filter(class == "h" | class == "m" | class == "a")
+# 
+# substrate_vect <- substrate %>% vect()
+# 
+# #########################chatGPT########################################
+# 
+# # Set the extent of the maxent_output raster to match the substrate polygons
+# maxent_output <- extend(maxent_output, substrate)
+# 
+# # Correct the geometries of the input polygons
+# substrate_sf_corrected <- st_make_valid(substrate)
+# 
+# # Perform the intersection between the maxent_output polygons and the corrected substrate polygons
+# intersected_polygons <- st_intersection(maxent_output_polygons, substrate_sf_corrected)
+# 
+# # Create a raster with the same extent and resolution as maxent_output
+# intersected_raster <- raster(maxent_output)
+# values(intersected_raster) <- 0
+# 
+# # Rasterize the intersected polygons
+# intersected_raster <- rasterize(intersected_polygons, intersected_raster, field = 1)
+# intersected_terra <- rast(intersected_raster)
+# 
+# # Invert the values of the intersected raster to create the final raster of non-intersecting cells
+# result <- maxent_output
+# result[intersected_terra == 1] <- NA
+# 
+# # Mask maxent output to sandy bottom
+# maxent_sandy <- terra::mask(maxent_output, intersected_terra)
+# 
+# ###########################stackoverflow######################################
+# 
+# extracted_list <- terra::extract(x = maxent_output, 
+#                                  y = substrate_vect,
+#                                  xy = TRUE,
+#                                  cell = TRUE) %>% 
+#   dplyr::select(x, y, cell) %>% 
+#   distinct()
+# 
+# cell_numbers_to_remove <- unlist(extracted_list$cell)
+# maxent_output[cell_numbers_to_remove] <- NA
+# 
+# 
+# ################################exact_extract#################################
+# 
+# exact_extract(x = maxent_output, 
+#               y = substrate)
+# 
+# #################################################################
+# 
+# 
+# # Plot results
+# tmap_mode("view")
+# tm_shape(maxent_output) +
+#   tm_raster(title = "Predicted relative habitat suitability (0.0-1.0)", 
+#             alpha = 0.9, 
+#             palette = maxent_pal,
+#             breaks = c(0, 0.1, 0.2, 0.4, 0.6, 0.8, 0.1)) +  # Add the specified palette
+#   tm_shape(kelp_quarter1) +
+#   tm_raster(title = "Kelp area (m^2)",
+#             style = "cont",
+#             breaks = c(0, 500, 1000, 5000, 10000, 20000, 40000),
+#             palette = kelp_pal) +
+#   tm_shape(counties) +
+#   tm_polygons() +
+#   tm_shape(substrate) +
+#   tm_polygons(col = "brown4",
+#               alpha = 0.7) +
+#   tmap_options(check.and.fix = TRUE) +
+#   # tm_shape(kelp) +
+#   # tm_dots(col = dark_blue) +
+#   tm_layout(
+#             legend.position = c("right", "top")) +  # Move the legend to the top-right corner
+#   tm_layout(bg.color = "#E4FAFE")  # Change the background color to blue
+# 
+# tm_shape(maxent_output) +
+#   tm_raster(title = "Predicted relative habitat suitability (0.0-1.0)", 
+#             alpha = 0.9, 
+#             palette = maxent_pal,
+#             breaks = c(0, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0)) +  # Corrected breaks vector
+#   tm_shape(kelp_quarter1) +
+#   tm_raster(title = "Kelp area (m^2)",
+#             style = "cont",
+#             breaks = c(0, 500, 1000, 5000, 10000, 20000, 40000),
+#             palette = kelp_pal) +
+#   tm_shape(counties) +
+#   tm_polygons() +
+#   tm_shape(substrate) +
+#   tm_polygons(col = "brown4",
+#               alpha = 0.7) +
+#   tmap_options(check.and.fix = TRUE) +
+#   tm_layout(legend.position = c("right", "top")) +
+#   tm_layout(bg.color = "#E4FAFE")
+
+```
+
+## Model minus kelp and substrate
+
+```{r}
+# Read in sandy-bottom raster
+sandy_raster <- raster("/capstone/kelpgeomod/new_file_structure/03-analysis-data/substrate/sandy-bottom-1km.tif")
+
+# Mask maxent to areas without kelp
+kelp_masked_model <- mask(x = maxent_output, mask = kelp_quarter1, inverse = TRUE)
+
+# Mask maxent to areas without sandy-bottom
+masked_model <- mask(x = kelp_masked_model, mask = sandy_raster, inverse = FALSE)
+
+tmap_mode("view")
+tm_shape(maxent_output) +
+  tm_raster(title = "Predicted habitat suitability (0.0-1.0)", 
+            alpha = 0.9, 
+            palette = maxent_pal,
+            breaks = c(0, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0)) +   
+  tm_shape(kelp_masked_model) +
+  tm_raster(title = "Predicted habitat suitability (0.0-1.0)", 
+            alpha = 0.9, 
+            palette = maxent_pal,
+            breaks = c(0, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0)) + 
+  tm_shape(masked_model) +
+  tm_raster(title = "Predicted habitat suitability (0.0-1.0)", 
+            alpha = 0.9, 
+            palette = maxent_pal,
+            breaks = c(0, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0)) +  # Corrected breaks vector
+  tm_shape(kelp_quarter1) +
+  tm_raster(title = "Kelp area (m^2)",
+            style = "cont",
+            breaks = c(0, 500, 1000, 5000, 10000, 20000, 40000),
+            palette = kelp_pal) +
+  tm_shape(sandy_raster) +
+  tm_raster(title = "Sandy-bottom substrate") + 
+  tm_shape(depth) +
+  tm_raster(style = "cont",
+            breaks = c(-2000, -1000, -500, -200, -100, -60, -40, -20, 0),
+            title = "Depth (m)",
+            palette = "Blues") +
+  tm_shape(phos_quarter1) + # check the location
+  tm_raster(style = "cont",
+            title = "Phosphate (mcmol/L)",
+            palette = nutrient_pal) +
+  tm_shape(nitr_quarter1) + # check the location
+  tm_raster(style = "cont",
+            title = "Nitrate + Nitrite (mcmol/L)",
+            palette = nutrient_pal,
+            breaks = c(0, 2, 5, 10, 15, 20)) +
+  tm_shape(counties) +
+  tm_polygons() +
+  # tm_shape(substrate) +
+  # tm_polygons(col = "brown4",
+  #             alpha = 0.7) +
+  tm_shape(kelp) +
+  tm_dots(col = dark_blue) +
+  tmap_options(check.and.fix = TRUE) +
+  tm_layout(legend.position = c("right", "top")) +
+  tm_layout(bg.color = "#E4FAFE")
 ```
 
