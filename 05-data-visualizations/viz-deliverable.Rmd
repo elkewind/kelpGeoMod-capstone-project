@@ -530,7 +530,7 @@ masked_tm <- tm_shape(sub_masked_model) +
   tm_shape(aoi, bbox = bbox) +
   tm_borders(lwd = 2, col = dark_blue)
   
-masked_tm
+masked_tm  
 ```
 
 This map shows the mean predicted habitat suitability for grid cells that:

@@ -9,7 +9,7 @@ Load necessary libraries
 
 ```{r}
 library(tidyverse)
-library(raster)
+library(raster) 
 library(terra)
 library(tmap)
 library(tmaptools)

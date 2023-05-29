@@ -398,7 +398,7 @@ tm_shape(amm_quarter1) + # check the location
             main.title = "Ammonium (mcmol/L)",
             main.title.size = 0.8) +
   tm_shape(counties) +
-  tm_polygons()
+  tm_polygons() 
 ```
 
 ## Maxent Heatmap
