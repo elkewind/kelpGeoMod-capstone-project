@@ -167,6 +167,7 @@ model_Mp <- model_maxent(
   parallel = TRUE,
   numCores = 6)
 
+
 #--------------------------------maxent.jar strategy------------------------------
 
 # Run maxent model for the selected species
@@ -191,7 +192,8 @@ Generate a map of the maxnet generated model with no threshold
 
 ```{r}
 # Select current model and obtain raster prediction
-m_Mp <- model_Mp@models[["fc.LQHP_rm.0.7"]]
+
+m_Mp <- model_Mp@models[["fc.LQHP_rm.0.5"]]
 predSel_Mp <- predictMaxnet(m_Mp, bgMask_Mp,
                                           type = "cloglog", 
                                           clamp = FALSE)
@@ -221,6 +223,7 @@ m  %>%
 ```
 
 ```{r}
+
 #--------------------------------ENMEvaluate strategy------------------------------
 
 
@@ -252,5 +255,6 @@ data(mod_res)
 aic.mod <- model_Mp@models[[which(model_MP@results$delta.AICc==0)]]
 eval.variable.importance(model_Mp)
 str(model_Mp, max.level=2)
+
 ```
 
