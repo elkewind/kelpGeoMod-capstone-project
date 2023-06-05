@@ -17,8 +17,10 @@ library(mapsf)
 library(tmap)
 library(tmaptools)
 library(sp)
+library(sf)
 library(raster)
 library(paletteer)
+library(rasterVis)
 ```
 
 ```{r label = "read in data"}
@@ -54,8 +56,14 @@ kelp_area <- brick("intermediate_data/area_biomass/area_brick_standardized.tif")
 kelp_bio <- brick("intermediate_data/area_biomass/biomass_brick_standardized.tif")
 
 # read in substrate file 
+reclass_table <- cbind(c(0, 1, 2, 3), c("soft", "hard", "mixed", "anthropogenic"))
+
 
 substrate <- raster("intermediate_data/substrate/SBC_substrate.tif") 
+
+test <- raster("raw_data/Benthic_Habitat_2/Habitat_tiffs/Channel_Islands/Santa_Cruz/gi_5msub.tif")
+
+plot(test)
 ```
 
 ## Visualize the point data contained in the observed syntehsized data set
@@ -317,7 +325,8 @@ kelp_area_map
 
 ```{r label = "substrate map"}
 
-plot(substrate)
+plot(substrate$substrate_class)
 
+rasterVis::levelplot(substrate, col.regions = paletteer_d("RColorBrewer::BrBG"))
 ```
 
