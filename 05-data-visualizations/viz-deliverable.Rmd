@@ -394,7 +394,7 @@ kelp_1 <- read_csv("/capstone/kelpgeomod/new_file_structure/03-analysis-data/max
   st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
 
 # Read in the maxent output
-maxent_quarter_1 <- raster("/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_1/results/Macrocystis_pyrifera_cloglog.tif")
+maxent_quarter_1 <- raster("/capstone/kelpgeomod/new_file_structure/03-analysis-data/04-maxent-analysis/results/maxent-quarter-1-output.tif")
 
 # ---------------------------------Quarter 2  ---------------------------------
 
@@ -402,7 +402,7 @@ kelp_2 <- read_csv("/capstone/kelpgeomod/new_file_structure/03-analysis-data/max
   st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
 
 # Read in the maxent output
-maxent_quarter_2 <- raster("/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_2/results/Macrocystis_pyrifera_cloglog.tif")
+maxent_quarter_2 <- raster("/capstone/kelpgeomod/new_file_structure/03-analysis-data/04-maxent-analysis/results/maxent-quarter-2-output.tif")
 
 # ---------------------------------Quarter 3  ---------------------------------
 
@@ -410,7 +410,7 @@ kelp_3 <- read_csv("/capstone/kelpgeomod/new_file_structure/03-analysis-data/max
   st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
 
 # Read in the maxent output
-maxent_quarter_3 <- raster("/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_3/results/Macrocystis_pyrifera_cloglog.tif")
+maxent_quarter_3 <- raster("/capstone/kelpgeomod/new_file_structure/03-analysis-data/04-maxent-analysis/results/maxent-quarter-3-output.tif")
 
 # ---------------------------------Quarter 4  ---------------------------------
 
@@ -418,7 +418,7 @@ kelp_4 <- read_csv("/capstone/kelpgeomod/new_file_structure/03-analysis-data/max
   st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
 
 # Read in the maxent output
-maxent_quarter_4 <- raster("/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_4/results/Macrocystis_pyrifera_cloglog.tif")
+maxent_quarter_4 <- raster("/capstone/kelpgeomod/new_file_structure/03-analysis-data/04-maxent-analysis/results/maxent-quarter-4-output.tif")
 
 ```
 
