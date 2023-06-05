@@ -5,6 +5,8 @@ library(terra)
 library(tidyverse)
 library(cmocean)
 
+#---- Set up the data directory (wherever your download of our Google Shared Drive lives)
+data_dir <- "/capstone/kelpgeomod/google_drive_download"
 
 
 #---- Make an empty raster of 0.008 degree resolution in WGS84 with our AOI
@@ -31,7 +33,7 @@ mask <- x # rename to mask
 
 #---- Remove land boundaries from the mask
 # Read in land shapefile 
-boundaries <- st_read("/capstone/kelpgeomod/raw_data/land_bounds/California_County_Boundaries/cnty19_1.shp")
+boundaries <- st_read(file.path(data_dir, "01-raw-data/02-ca-county-land-boundaries-raw/California_County_Boundaries/cnty19_1.shp"))
 
 boundaries <- st_transform(x = boundaries, crs = 4326) # Transform crs to exact crs we want
 boundaries <- vect(boundaries) # Make a terra vector object
@@ -58,5 +60,5 @@ tm_shape(mask) +
 
 
 #---- Write to data files
-terra::writeRaster(mask, "mask/mask_rast.tif", filetype = "GTiff", overwrite = TRUE)
-
+# Change this file path to your own to re-write data
+terra::writeRaster(mask, "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/03-mask-intermediate/main-mask.tif", filetype = "GTiff", overwrite = TRUE)

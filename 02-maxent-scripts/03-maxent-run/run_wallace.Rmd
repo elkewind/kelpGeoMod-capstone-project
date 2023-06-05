@@ -1,6 +1,6 @@
 ---
 title: "Maxent Tutorial"
-author: "Elke Windschitll"
+author: "Elke Windschitl"
 date: "2023-04-18"
 output: html_document
 ---
