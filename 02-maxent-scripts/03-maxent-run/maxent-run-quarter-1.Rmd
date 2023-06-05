@@ -30,6 +30,7 @@ library(rgeos)
 library(ENMeval)
 library(wallace)
 library(tidyverse)
+library(terra)
 ```
 
 The *Wallace* session code .Rmd file is composed of a chain of module
@@ -293,3 +294,8 @@ ggplot(phos_dat, aes(phosphate_1, layer)) +
   labs(x = "Phosphate",
        y = "Predicted Habitat Suitability")
 ```
+
+```{r}
+terra::writeRaster(predSel_Mp, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/04-maxent-analysis/results/maxent-quarter-1-output.tif", overwrite = TRUE)
+```
+

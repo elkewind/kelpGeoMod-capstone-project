@@ -293,3 +293,7 @@ ggplot(phos_dat, aes(phosphate_3, layer)) +
   labs(x = "Phosphate",
        y = "Predicted Habitat Suitability")
 ```
+
+```{r}
+terra::writeRaster(predSel_Mp, "/capstone/kelpgeomod/new_file_structure/03-analysis-data/04-maxent-analysis/results/maxent-quarter-3-output.tif", overwrite = TRUE)
+```
