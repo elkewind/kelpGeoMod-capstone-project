@@ -60,12 +60,12 @@ current workspace, change to the correct file path
 
 ```{r}
 # NOTE: provide the folder path of the .csv file
-occs_path <- "/capstone/kelpgeomod/new_file_structure/03-analysis-data/04-maxent-analysis/quarter_1"
-occs_path <- file.path(occs_path, "kelp_presence_1.csv")
+occs_path <- "/capstone/kelpgeomod/new_file_structure/03-analysis-data/04-maxent-analysis/quarter_2"
+occs_path <- file.path(occs_path, "kelp_presence_2.csv")
 # get a list of species occurrence data
 userOccs_Mp <- occs_userOccs(
   txtPath = occs_path, 
-  txtName = "kelp_presence_1.csv", 
+  txtName = "kelp_presence_2.csv", 
   txtSep = ",", 
   txtDec = ".")
 occs_Mp <- userOccs_Mp$Macrocystis_pyrifera$cleaned
@@ -77,12 +77,12 @@ Using user-specified variables.
 
 ```{r}
 ## Specify the directory with the environmental variables
-dir_envs_Mp <- "/capstone/kelpgeomod/new_file_structure/03-analysis-data/04-maxent-analysis/quarter_1"
-envs_path <- file.path(dir_envs_Mp, c('depth_1.tif', 'nitrate_nitrite_1.tif', 'phosphate_1.tif'))
+dir_envs_Mp <- "/capstone/kelpgeomod/new_file_structure/03-analysis-data/04-maxent-analysis/quarter_2"
+envs_path <- file.path(dir_envs_Mp, c('depth_2.tif', 'nitrate_nitrite_2.tif', 'phosphate_2.tif'))
 # Create environmental object 
 envs_Mp <- envs_userEnvs(
   rasPath = envs_path,
-  rasName = c('depth_1.tif', 'nitrate_nitrite_1.tif', 'phosphate_1.tif'),
+  rasName = c('depth_2.tif', 'nitrate_nitrite_2.tif', 'phosphate_2.tif'),
   doBrick = FALSE)
 occs_xy_Mp <- occs_Mp[c('longitude', 'latitude')]
 occs_vals_Mp <- as.data.frame(raster::extract(envs_Mp, occs_xy_Mp, cellnumbers = TRUE))
@@ -271,7 +271,7 @@ kable(vars)
 ```{r}
 # Depth
 depth_dat <- cbind(as.data.frame(envs_Mp[[1]]), as.data.frame(predSel_Mp))
-ggplot(depth_dat, aes(depth_1, layer)) +
+ggplot(depth_dat, aes(depth_2, layer)) +
   geom_point() +
   theme_minimal() +
   labs(x = "Depth",
@@ -279,7 +279,7 @@ ggplot(depth_dat, aes(depth_1, layer)) +
 
 # Nitrogen
 nitr_dat <- cbind(as.data.frame(envs_Mp[[2]]), as.data.frame(predSel_Mp))
-ggplot(nitr_dat, aes(nitrate_nitrite_1, layer)) +
+ggplot(nitr_dat, aes(nitrate_nitrite_2, layer)) +
   geom_point() +
   theme_minimal() +
   labs(x = "Nitrogen",
@@ -287,7 +287,7 @@ ggplot(nitr_dat, aes(nitrate_nitrite_1, layer)) +
 
 # Phosphate
 phos_dat <- cbind(as.data.frame(envs_Mp[[3]]), as.data.frame(predSel_Mp))
-ggplot(phos_dat, aes(phosphate_1, layer)) +
+ggplot(phos_dat, aes(phosphate_2, layer)) +
   geom_point() +
   theme_minimal() +
   labs(x = "Phosphate",

@@ -1,19 +1,14 @@
----
-editor_options: 
-  markdown: 
-    wrap: 72
----
-
-# Wallace Session 2023-05-29
+Wallace Session 2023-05-23
+================
 
 Please find below the R code history from your *Wallace* v2.0.5 session.
 
 You can reproduce your session results by running this R Markdown file
 in RStudio.
 
-Each code block is called a "chunk", and you can run them either
-one-by-one or all at once by choosing an option in the "Run" menu at the
-top-right corner of the "Source" pane in RStudio.
+Each code block is called a “chunk”, and you can run them either
+one-by-one or all at once by choosing an option in the “Run” menu at the
+top-right corner of the “Source” pane in RStudio.
 
 For more detailed information see <http://rmarkdown.rstudio.com>).
 
@@ -29,7 +24,6 @@ library(dismo)
 library(rgeos)
 library(ENMeval)
 library(wallace)
-library(tidyverse)
 ```
 
 The *Wallace* session code .Rmd file is composed of a chain of module
@@ -56,7 +50,7 @@ Your analyses are below.
 
 User CSV path with occurrence data. If the CSV file is not in the
 current workspace, change to the correct file path
-(e.g./Users/darwin/Documents/occs/").
+(e.g. “/Users/darwin/Documents/occs/”).
 
 ```{r}
 # NOTE: provide the folder path of the .csv file
@@ -103,9 +97,10 @@ Sampling of 800 background points and corresponding environmental data
 using a user provided background extent with a 0 degree buffer.
 
 ```{r}
-# Set the background to our area of environmental data plus a slight buffer
+# Load the user provided shapefile or csv file with the desired extent.
+  ##User must input the path to shapefile or csv file and the file name 
 bgExt_Mp <- penvs_bgExtent(occs_Mp, bgSel = 'bounding box', bgBuf = 0.5)
-
+# Mask environmental data to provided extent
 bgMask_Mp <- penvs_bgMask(
   occs = occs_Mp,
   envs = envs_Mp,
@@ -127,7 +122,7 @@ bgEnvsVals_Mp <- cbind(scientific_name = paste0("bg_", "Macrocystis pyrifera"), 
 ### Partition occurrence data
 
 Partition occurrences and background points for model training and
-validation using "hierarchical checkerboard", a spatial partition method
+validation using “hierarchical checkerboard”, a spatial partition method
 with an aggregation factor of 2.
 
 ```{r}
@@ -142,15 +137,11 @@ groups_Mp <- part_partitionOccs(
 
 ### Build and Evaluate Niche Model
 
-Generating a species distribution model using the maxent.jar algorithm
-as implemented in ENMeval V2.0 (with clamping = FALSE). For tuning using
-L, LQ, H, LQH, LQHP feature classes and regularization multipliers in
-the 0.5, 4.5 range increasing by 0.2. Not using any categorical
-predictor variables.
-
-If this returns an error with rJava, please refer to "Setting Up Java
-Version of Maxent" in the [Wallace help
-Documentation](https://wallaceecomod.github.io/wallace/articles/tutorial-v2.html#obtain-environmental-data)
+Generating a species distribution model using the maxnet algorithm as
+implemented in ENMeval V2.0 (with clamping = FALSE). For tuning using L,
+LQ, H, LQH, LQHP feature classes and regularization multipliers in the
+0.5, 4.5 range increasing by 0.2. Not using any categorical predictor
+variables.
 
 ```{r}
 set.seed(123)
@@ -186,38 +177,21 @@ model_Mp <- model_maxent(
   clampSel = FALSE,
   algMaxent = "maxent.jar",
   parallel = TRUE,
-  numCores = 30) # Change to realistic cores for your machine
-```
+  numCores = 30)
 
-### Model eval & selection
-
-```{r}
-# Make the results a dataframe
-mod_res <- model_Mp@results
-
-# Sort data frame by AICc column in ascending order
-mod_res_sorted <- mod_res[order(mod_res$AICc), ]
-
-# Select the row with the lowest AICc value
-lowest_AIC_row <- mod_res_sorted[1, ]
-
-# Retrieve the value of the "tune.args" column from the row with the lowest AICc
-lowest_AIC_tune_args <- lowest_AIC_row$tune.args
-lowest_AIC_tune_args # Use this in the following section
 ```
 
 ### Visualize
 
-Generate a map of the Maxent generated model with no threshold
+Generate a map of the maxnet generated model with no threshold
 
 ```{r}
 # Select current model and obtain raster prediction
-m_Mp <- model_Mp@models[["fc.LQ_rm.0.5"]] # Pulled from lowest_AIC_tune_args
-predSel_Mp <- dismo::predict(
-  m_Mp, bgMask_Mp,
-  args = c(paste0("outputformat=", "cloglog"), 
-           paste0("doclamp=", tolower(as.character(FALSE)))), 
-  na.rm = TRUE)
+
+m_Mp <- model_Mp@models[["fc.LQHP_rm.0.5"]]
+predSel_Mp <- predictMaxnet(m_Mp, bgMask_Mp,
+                                          type = "cloglog", 
+                                          clamp = FALSE)
 #Get values of prediction
 mapPredVals_Mp <- getRasterVals(predSel_Mp, "cloglog")
 #Define colors and legend  
@@ -243,53 +217,39 @@ m  %>%
               weight = 4, color = "blue", group = 'proj')
 ```
 
-### Visualize
-
-Generate a Maxent evaluation plot using "delta.AICc" as evaluation
-statistic.
-
 ```{r}
-# Generate an evaluation plot
-maxentEvalPlot_Mp <- ENMeval::evalplot.stats(
-   model_Mp,
-   "delta.AICc",
-   "rm",
-   "fc")
-#plot
-maxentEvalPlot_Mp
+
+#--------------------------------ENMEvaluate strategy------------------------------
+
+
+model_enm <- ENMevaluate(
+  occs = occs_Mp[, 3:4],
+  bg = bgEnvsVals_Mp[, 2:3],
+  user.grp = groups_Mp,
+  envs = bgMask_Mp,
+  tune.args = list(fc = c('L', 'LQ', 'H', 'LQH', 'LQHP'),
+                   rm = seq(0.5, 4.5, 0.2)),
+  doClamp = FALSE,
+  algorithm = "maxnet",
+  parallel = TRUE,
+  numCores = 6,
+  taxon.name = "Macrocystis pyrifera",
+  partitions = "checkerboard2"
+)
+
+
+
+# Feature importance
+mod_res <- model_Mp@results
+
+# NOT RUN {
+data(mod_res)
+
+# Select model with lowest AICc
+
+aic.mod <- model_Mp@models[[which(model_MP@results$delta.AICc==0)]]
+eval.variable.importance(model_Mp)
+str(model_Mp, max.level=2)
+
 ```
 
-### Variable Importance
-
-```{r}
-vars <- eval.variable.importance(model_Mp)[["fc.LQ_rm.0.5"]]
-kable(vars)
-```
-
-### Data Plots
-
-```{r}
-# Depth
-depth_dat <- cbind(as.data.frame(envs_Mp[[1]]), as.data.frame(predSel_Mp))
-ggplot(depth_dat, aes(depth_1, layer)) +
-  geom_point() +
-  theme_minimal() +
-  labs(x = "Depth",
-       y = "Predicted Habitat Suitability")
-
-# Nitrogen
-nitr_dat <- cbind(as.data.frame(envs_Mp[[2]]), as.data.frame(predSel_Mp))
-ggplot(nitr_dat, aes(nitrate_nitrite_1, layer)) +
-  geom_point() +
-  theme_minimal() +
-  labs(x = "Nitrogen",
-       y = "Predicted Habitat Suitability")
-
-# Phosphate
-phos_dat <- cbind(as.data.frame(envs_Mp[[3]]), as.data.frame(predSel_Mp))
-ggplot(phos_dat, aes(phosphate_1, layer)) +
-  geom_point() +
-  theme_minimal() +
-  labs(x = "Phosphate",
-       y = "Predicted Habitat Suitability")
-```

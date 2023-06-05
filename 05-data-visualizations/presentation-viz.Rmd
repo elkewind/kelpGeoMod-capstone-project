@@ -25,9 +25,9 @@ Choose colors
 # Set color palette
 light_blue <- "#c7e0d8"
 dark_blue <- "#083763"
-sst_pal <- "YlOrRd"
+sst_pal <- "-YlGnBu"
 nutrient_pal <- "OrRd"
-kelp_pal <- "YlGn"
+kelp_pal <- "Oranges"
 maxent_pal <- "BuGn" 
 ```
 
