@@ -60,5 +60,4 @@ tm_shape(mask) +
 
 
 #---- Write to data files
-terra::writeRaster(mask, "mask/mask_rast.tif", filetype = "GTiff", overwrite = TRUE)
-
+terra::writeRaster(mask, "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/03-mask-intermediate/main-mask.tif", filetype = "GTiff", overwrite = TRUE)
