@@ -18,7 +18,7 @@ knitr::opts_chunk$set(echo = TRUE)
 #setwd("/Users/jfrench/Documents/MEDS/Capstone/DATA/Benthic_Habitat_2/Habitat_tiffs/Channel_Islands")
 
 # If wokring on tsosie
-setwd("/capstone/kelpgeomod/raw_data/Benthic_Habitat_2/Habitat_tiffs/Channel_Islands")
+setwd("/capstone/kelpgeomod/old_file_structure")
 ```
 
 ```{r label = "read in packages"}
@@ -97,21 +97,21 @@ plot(CA_substrate_islands)
 
 ```{r label = "convert to character"}
 # Convert the substrate raster to a dataframe so that the values can be converted to character. Use na.rm = FALSE to keep na cells, this is necessary for converting back to SpatRaster format correctly. 
-CA_substrate_df <- as.data.frame(CA_substrate_islands, na.rm = FALSE) |> 
-   mutate("substrate_class" = case_when(substrate_class == 0 ~ "s", 
-                                        substrate_class == 1 ~ "h")) 
+# CA_substrate_df <- as.data.frame(CA_substrate_islands, na.rm = FALSE) #|> 
+#    mutate("substrate_class" = case_when(substrate_class == 0 ~ "s", 
+#                                         substrate_class == 1 ~ "h")) 
 
 ```
 
 
 ```{r label = "Replace values with df values"}
 # replace values in CA_substrate_islands with the values in the CA_substrate_df
-CA_substrate_islands <- setValues(CA_substrate_islands, CA_substrate_df)
-
-plot(CA_substrate_islands)
+# CA_substrate_islands <- setValues(CA_substrate_islands, CA_substrate_df)
+# 
+# plot(CA_substrate_islands)
 ```
 
 ```{r label = "Write to GTiff file"}
-terra::writeRaster(CA_substrate_islands, "/capstone/kelpgeomod/intermediate_data/substrate/CA_maps_substrate_islands.tif", filetype = "GTiff", overwrite = TRUE)
+terra::writeRaster(CA_substrate_islands, "intermediate_data/substrate/CA_maps_substrate_islands.tif", filetype = "GTiff", overwrite = TRUE)
 ```
 
