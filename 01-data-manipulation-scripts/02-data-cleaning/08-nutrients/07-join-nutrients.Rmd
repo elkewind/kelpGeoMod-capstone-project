@@ -6,7 +6,7 @@ output: html_document
 ---
 ## Purpose
 
-The purpose of this notebook is to join the intermediate nutrient data into a single dataframe. 
+The purpose of this notebook is to join the intermediate nutrient data into a single dataframe and create raster bricks of nutrients with one layer per year and quarter. 
 
 ## Set-up
 

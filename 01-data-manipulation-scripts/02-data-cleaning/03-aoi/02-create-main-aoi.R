@@ -1,4 +1,4 @@
-# Create A Shapefile of our area of interest -120.85, 33.85, -118.80, 34.59 
+# Create A Shapefile of our area of interest -120.65, 33.85, -118.80, 34.59 
 #Load in libraries
 library(tidyverse)
 library(sf)
@@ -9,8 +9,8 @@ library(tmap)
 coordinates <- tribble(
   ~lat, ~lon,
   34.59, -118.80, 
-  33.85, -120.85, 
-  34.59, -120.85, 
+  33.85, -120.65, 
+  34.59, -120.65, 
   33.85, -118.80
 ) |> 
   st_as_sf(coords = c("lon", "lat"), 
