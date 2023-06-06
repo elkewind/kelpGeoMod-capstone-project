@@ -55,10 +55,18 @@ nitrate_geo <- nitrate_geo %>%
 tmap_mode("view")
 tm_shape(nitrate_geo) +
   tm_dots()
+
+# Remove geometry for export to match our nutrient data structure
+lter_unlist <- nitrate_geo %>%
+  st_coordinates() %>%
+  as.data.frame() %>%
+  setNames(c("lon", "lat")) %>%
+  bind_cols(nitrate_geo) %>% 
+  select(-geometry)
 ```
 
 ```{r}
 #---- Write to data files
 # Change this file path to your own to re-write data
-write_csv(x = nitrate_geo, file = "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/09-nutrients-intermediate/unjoined/lter-nitrate.csv")
+write_csv(x = lter_unlist, file = "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/09-nutrients-intermediate/unjoined/lter-nitrate.csv")
 ```
