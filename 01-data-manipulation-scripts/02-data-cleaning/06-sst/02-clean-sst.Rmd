@@ -28,71 +28,60 @@ library(animation)
 library(sf)
 ```
 
-Read in the mask
+Set the kelpGeoMod Google Drive Working Directory
 ```{r}
-mask <- raster("/capstone/kelpgeomod/intermediate_data/mask/mask_rast.tif")
+#---- Set up the data directory (wherever your download of our Google Shared Drive lives)
+drive_dir <- "/capstone/kelpgeomod/google_drive_download"
 ```
 
-Read one image for testing
-```{r}
 
+Read in the mask
+```{r}
+mask <- raster(file.path(drive_dir,"02-intermediate-data/03-mask-intermediate/main-mask.tif"))
+```
+
+TESTING: Read one image for knowledge and information
+```{r}
 # Open the first file from the folder
-file <- nc_open("/capstone/kelpgeomod/raw_data/SST/GRHSST_lvl4/20230101090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.dap.nc4")
+
+file <- nc_open(file.path(drive_dir, "01-raw-data/07-sst-ghrsst-raw/GRHSST_lvl4/20140622090000-JPL-L4_GHRSST-SSTfnd-MUR-GLOB-v02.0-fv04.1.dap.nc4"))
 
 # Retrieve the "analysed_sst" variable from a NetCDF file, which contains sea surface temperature data, and assigns it to the "sst" variable for further analysis or manipulation.
 sst <- ncvar_get(file, "analysed_sst")
 
 # Convert Kelvin to Celsius
-sst <- sst - 273.15  
+sst <- sst - 273.15 
 
 # Convert to raster for visualization
-sst_rast <- raster(sst) 
+sst_rast <- raster(sst)
+
+#CRS
+crs(sst_rast) <- "+init=epsg:4326"
+
+# Extent
+extent(sst_rast) <- extent(33.85,34.594, -120.65, -118.802)
 
 # Flip the raster by 90 degrees to the left
 flipped_data <- t(flip(sst_rast, 1))
 
-plot(flipped_data)
-
-```
-
-# General Info of the raw image
-```{r}
-plot(sst_rast) #Plot the raw image
-crs(sst_rast)
-res(sst_rast)
-plot(flipped_data)
-
-```
-
-
-
-#### *Insights for netCDF files:* NetCDF files are self-describing, meaning that they include metadata that describes the contents of the file, such as variable names, units, and dimensions. This makes it easy to understand the data without having to consult external documentation. netCDF is popular becuase it can store various data types and numerical data types and can be read and written on various operating systems.
-
-
-Check the image info and use the mask
-```{r}
-#USING THE RESAMPLE
-# Set the extent of the raster to match the mask extent
-raster_data <- setExtent(flipped_data, extent(mask))
-
-# Resample the raster to match the mask resolution
-resampled_data <- resample(raster_data, mask, method = "bilinear")
+# Resample
+resampled_data <- resample(flipped_data, mask, method = "ngb")
 
 # Apply the mask to the resampled raster
 sst_masked <- mask(resampled_data, mask)
-
-#Check dimentions
-dim(sst_masked)
 
 plot(sst_masked)
 
 ```
 
-# Creating a For Loop for the quarterly raster stack
+## Important Notes for *netCDF files:* 
+NetCDF files are self-describing, meaning that they include metadata that describes the contents of the file, such as variable names, units, and dimensions. This makes it easy to understand the data without having to consult external documentation. netCDF is popular becuase it can store various data types and numerical data types and can be read and written on various operating systems.
 
+
+# Creating a For Loop for the quarterly raster stack
 Set up the directory path where the files are located:
 ```{r}
-data_dir <- "/capstone/kelpgeomod/raw_data/SST/GRHSST_lvl4"
+data_dir <- "/capstone/kelpgeomod/google_drive_download/01-raw-data/07-sst-ghrsst-raw/GRHSST_lvl4"
 ```
 
 Create a list of all the files in the directory:
@@ -121,15 +110,14 @@ ncdf_to_raster <- function(nc_file) {
   sst <- ncvar_get(file, "analysed_sst")
   sst <- sst - 273.15  # Convert Kelvin to Celsius
   sst_rast <- raster(sst)
+  crs(sst_rast) <- "+init=epsg:4326"
+  extent(sst_rast) <- extent(33.85, 34.594, -120.65, -118.802)
   
   # Flip the raster by 90 degrees to the left
   flipped_data <- t(flip(sst_rast, 1))
   
-  # Set the extent of the raster to match the mask extent
-  raster_data <- setExtent(flipped_data, extent(mask))
-  
   # Resample the raster to match the mask resolution
-  resampled_data <- resample(raster_data, mask, method="bilinear")
+  resampled_data <- resample(flipped_data, mask, method="ngb")
   
   # Apply the mask to the resampled raster
   sst_masked <- mask(resampled_data, mask)
@@ -141,7 +129,7 @@ ncdf_to_raster <- function(nc_file) {
 
 ```
 
-Do a test for January 2014
+TESTING: Do a test for January 2014
 ```{r}
 
 # Subset file_df to include only files from January 2014
@@ -188,7 +176,7 @@ create_raster_stack <- function(year, month) {
 
 ```
 
-Test the function we just did for August 2017
+TESTING: Create an example with the function we just did for August 2017
 
 ```{r}
 tic()
@@ -231,7 +219,7 @@ create_raster_stack_quarterly <- function(year, quarter) {
 }
 ```
 
-Test and visualize the function with a example
+TESTING: Visualize the function with a example
 ```{r}
 test_spring15 <- create_raster_stack_quarterly(2015, 2)
 plot(test_spring15)
@@ -263,19 +251,20 @@ for (year in 2014:2022) {
 toc()
 
 # Convert list of raster stacks to RasterBrick object
-raster_quarter_brick <- brick(raster_stack_list)
+all_year_quarter_raster_brick <- brick(raster_stack_list)
 
+# TESTING
 # Check the object that we just created
-class(raster_quarter_brick)
-names(raster_quarter_brick)
-sum(length(names(raster_quarter_brick)))
+class(all_year_quarter_raster_brick)
+names(all_year_quarter_raster_brick)
+sum(length(names(all_year_quarter_raster_brick)))
 
 ```
 
 Create the names for the raster files
 ```{r}
 # Get current names of layers in raster_brick
-current_names <- names(raster_quarter_brick)
+current_names <- names(all_year_quarter_raster_brick)
 
 # Define quarter abbreviations
 quarter_name <- c("Q1", "Q2", "Q3", "Q4")
@@ -284,17 +273,24 @@ quarter_name <- c("Q1", "Q2", "Q3", "Q4")
 new_names <- paste0(quarter_name, "-", rep(2014:2022, each = 4))
 
 # Rename layers in raster_brick with new names
-names(raster_quarter_brick) <- new_names
+names(all_year_quarter_raster_brick) <- new_names
 
 ```
 
-Save the 36 raster brick
+Save the 36 raster brick into the organized Google Drive
 ```{r}
 # Write RasterBrick Quarter object to file
-writeRaster(raster_quarter_brick, 
-            filename = "/capstone/kelpgeomod/intermediate_data/sst/sst_all_quarter_raster", 
-            format = "GTiff", 
-            overwrite=TRUE)
+writeRaster(all_year_quarter_raster_brick, 
+            filename = "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/07-sst-intermediate/sst-brick.tif", 
+            format = "GTiff",
+            overwrite = TRUE)
+
+writeRaster(all_year_quarter_raster_brick, 
+            filename = "/capstone/kelpgeomod/google_drive_download/04-deliverables/02-full-synthesized/sst-brick.tif", 
+            format = "GTiff",
+            overwrite = TRUE)
+
+
 ```
 
 Create the raster brick per season
@@ -320,28 +316,25 @@ calc_seasonal_means_brick <- function(rast_to_convert) {
 
     season_averaged_layer <- calc(season_brick_holder, mean) # after having all layers from season, take the mean
     all_seasons_brick <- addLayer(all_seasons_brick, season_averaged_layer) # add mean to the brick holding all averaged layers, and then repeat for the next season
+  }
+
+
+writeRaster(all_seasons_brick[[1]], "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/07-sst-intermediate/sst-quarter-1.tif", format = "GTiff",overwrite = TRUE)
+writeRaster(all_seasons_brick[[2]], "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/07-sst-intermediate/sst-quarter-2.tif", format = "GTiff",overwrite = TRUE)
+writeRaster(all_seasons_brick[[3]], "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/07-sst-intermediate/sst-quarter-3.tif", format = "GTiff",overwrite = TRUE)
+writeRaster(all_seasons_brick[[4]], "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/07-sst-intermediate/sst-quarter-4.tif", format = "GTiff",overwrite = TRUE)
 }
 
-writeRaster(all_seasons_brick[[1]], "/capstone/kelpgeomod/intermediate_data/sst/sst_quarter_1.tif", format = "GTiff")
-writeRaster(all_seasons_brick[[2]], "/capstone/kelpgeomod/intermediate_data/sst/sst_quarter_2.tif", format = "GTiff")
-writeRaster(all_seasons_brick[[3]], "/capstone/kelpgeomod/intermediate_data/sst/sst_quarter_3.tif", format = "GTiff")
-writeRaster(all_seasons_brick[[4]], "/capstone/kelpgeomod/intermediate_data/sst/sst_quarter_4.tif", format = "GTiff")
-}
-
 ```
 
+Write the four files in the organized kelpGeoMod Google drive
+sst-quarter-1.tif
+sst-quarter-2.tif
+sst-quarter-3.tif
+sst-quarter-4.tif
 
 ```{r}
-calc_seasonal_means_brick(raster_quarter_brick)
+calc_seasonal_means_brick(all_year_quarter_raster_brick)
 ```
 
-Save the 4 raster brick
-```{r}
-# Write RasterBrick Quarter object to file
-writeRaster(seasonal_sst_brick, 
-            filename = "/capstone/kelpgeomod/intermediate_data/sst/sst_seasonal", 
-            format = "GTiff",
-            overwrite= TRUE)
-
-```
 

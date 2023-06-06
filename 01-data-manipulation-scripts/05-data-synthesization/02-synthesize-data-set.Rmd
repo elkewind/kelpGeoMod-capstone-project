@@ -18,34 +18,55 @@ library(lubridate)
 ```
 
 
+Set the kelpGeoMod Google Drive Working Directory
+```{r}
+#---- Set up the data directory (wherever your download of our Google Shared Drive lives)
+drive_dir <- "/capstone/kelpgeomod/google_drive_download"
+```
+
+# 1) Read in the data
 Read all the data sets
 ```{r}
+# NUTRIENTS
+# Observed Nutrients
+joined_nutrients <- readRDS(file.path(drive_dir, "02-intermediate-data/09-nutrients-intermediate/joined/joined-nutrients.RDS"))
 
-#setwd("/capstone/kelpgeomod/")
+# Phosphate
+interp_phosphate <- brick(file.path(drive_dir, "03-analysis-data/02-nutrient-interpolation-analysis/phosphate/phosphate-quarter-brick.tif"))
+obs_phosphate <- brick(file.path(drive_dir, "02-intermediate-data/09-nutrients-intermediate/joined/phosphate-brick.tif"))
 
-# Nutrients
-interp_phosphate <- brick("/capstone/kelpgeomod/analysis_data/inteprolate_idw/phosphate_quarterly.tif")
-interp_nitrate_nitrite <- brick("/capstone/kelpgeomod/analysis_data/inteprolate_idw/nitrate_nitrite_quarterly.tif")
-interp_ammonium <- brick("/capstone/kelpgeomod/analysis_data/inteprolate_idw/ammonium_quarterly.tif")
-joined_nutrients <- readRDS("/capstone/kelpgeomod/intermediate_data/joined_nutrients/joined_nutrients.RDS")
+# Nitrate Nitrite
+interp_nitrate_nitrite <- brick(file.path(drive_dir, "03-analysis-data/02-nutrient-interpolation-analysis/nitrate-nitrite/nitrate-nitrite-quarter-brick.tif"))
+obs_nitrate_nitrite <- brick(file.path(drive_dir, "02-intermediate-data/09-nutrients-intermediate/joined/nitrate-nitrite-brick.tif"))
 
-# Sea Surface Temperature
-sst <- brick("/capstone/kelpgeomod/intermediate_data/sst/sst_quarter_raster.tif")
 
-# Depth
-depth <- raster("/capstone/kelpgeomod/intermediate_data/depth/SBC_depth.tif")
+#Ammonium
+interp_ammonium <- brick(file.path(drive_dir, "03-analysis-data/02-nutrient-interpolation-analysis/ammonium/ammonium-quarter-brick.tif"))
+obs_ammonium <- brick(file.path(drive_dir, "02-intermediate-data/09-nutrients-intermediate/joined/ammonium-brick.tif"))
 
-#Kelp
-kelp_biomass <- brick("/capstone/kelpgeomod/intermediate_data/area_biomass/biomass_brick_standardized.tif")
-kelp_area <- brick("/capstone/kelpgeomod/intermediate_data/area_biomass/area_brick_standardized.tif")
 
-# Mask
-mask <- raster("/capstone/kelpgeomod/intermediate_data/mask/mask_rast.tif")
+# SEA SURFACE TEMPERATURE
+sst <- brick(file.path(drive_dir, "02-intermediate-data/07-sst-intermediate/sst-brick.tif"))
 
+# DEPTH
+depth <- raster(file.path(drive_dir, "02-intermediate-data/06-depth-intermediate/depth.tif"))
+
+#KELP
+
+# Kelp Area
+kelp_area <- brick(file.path(drive_dir,"02-intermediate-data/05-kelp-area-biomass-intermediate/kelp-area-brick.tif"))
+
+#Kelp Biomass
+kelp_biomass <- brick(file.path(drive_dir,"02-intermediate-data/05-kelp-area-biomass-intermediate/kelp-biomass-brick.tif"))
+
+
+# MASK
+mask <- raster(file.path(drive_dir,"02-intermediate-data/03-mask-intermediate/main-mask.tif"))
 
 ```
 
-# DEPTH
+# 2) Transforming raster data to data frames
+## DEPTH
 ```{r}
 # Convert the Raster brick to a data frame
 depth_df <- as.data.frame(depth, xy = TRUE, na.rm = TRUE)
@@ -69,28 +90,26 @@ for (q in quarters) {
 
 # Create a data frame for the Time Series
 depth_year_quarter_df <- depth_year_quarter_df %>% 
-  rename(lon = x, lat = y, depth = depth_long) %>% 
-  dplyr::select(year, quarter, lon, lat, depth)
+  rename(lon = x, lat = y, depth = exportImage) %>% 
+  dplyr::select(year, quarter, lon, lat, depth) %>%
+  mutate(year = as.character(year),
+         quarter = as.character(quarter))
   
-plot(depth)
 ```
 
 # SST
 ```{r}
-# Re-add names since they are lost when you read back in
-years <- c(2014:2022)
-quarters <- c(1:4)
+#Create the names for the raster files
+# Get current names of layers in raster_brick
+current_names <- names(sst)
+# Define quarter abbreviations
+quarter_name <- c("Q1", "Q2", "Q3", "Q4")
+# Create vector of new names in desired format
+new_names <- paste0(quarter_name, "-", rep(2014:2022, each = 4))
+# Rename layers in raster_brick with new names
+names(sst) <- new_names
 
-year_quarter <- c()
-for (i in seq_along(years)) {
-  for (j in seq_along(quarters)) {
-  year_quarter_new <- paste0("layer", years[i], "_", quarters[j])
-  year_quarter <- append(year_quarter, year_quarter_new)
-  }
-}
-
-names(sst) <- paste(year_quarter)
-
+# TESTING
 # Check the extent and resolution of the raster object
 identical(extent(sst), extent(mask))
 identical(res(sst), res(mask))
@@ -100,11 +119,11 @@ identical(origin(sst), origin(mask))
 # Convert the raster brick to a data frame
 sst_year_quarter_df <- as.data.frame(sst, xy = TRUE, na.rm = TRUE)
 sst_year_quarter_df <- sst_year_quarter_df %>%
-  pivot_longer(cols = starts_with("l"), # Select all columns that start with "l" for "layer"
-               names_to = "year_quarter", # Name of the new column to be created for year_quarter
+  pivot_longer(cols = starts_with("Q"), # Select all columns that start with "l" for "layer"
+               names_to = "quarter_year", # Name of the new column to be created for year_quarter
                values_to = "sst") %>%     # Name of the new column to be created for sst values
-  separate(year_quarter, c("year", "quarter")) %>% # Separate the year_quarter column into year and quarter columns
-  mutate(year = str_remove(year, "layer")) %>% # Removes the "layer" of the year values
+  separate(quarter_year, c("quarter", "year")) %>% # Separate the year_quarter column into year and quarter columns
+  mutate(quarter = str_remove(quarter, "Q")) %>% # Removes the "layer" of the year values
   rename(lon = "x", lat = "y") %>%  # Rename the x and y columns to lat and lon
   dplyr::select(year, quarter, lon, lat, sst)  # Reorder the columns as needed
 
@@ -114,6 +133,7 @@ sst_year_quarter_df <- sst_year_quarter_df %>%
 # KELP
 ## Kelp Area
 ```{r}
+# TESTING
 # Check the extent and resolution of the raster_kelp object
 identical(extent(kelp_area), extent(mask))
 identical(res(kelp_area), res(mask))
@@ -137,13 +157,11 @@ kelp_area_year_quarter_df <- as.data.frame(kelp_area, xy = TRUE, na.rm = TRUE)
 kelp_area_year_quarter_df <- kelp_area_year_quarter_df %>%
   pivot_longer(cols = starts_with("Q"), # Select all columns that start with "Q"
                names_to = "quarter_year", # Name of the new column to be created for quarter-year
-               values_to = "area") %>%     # Name of the new column to be created for SST values
+               values_to = "kelp_area") %>%     # Name of the new column to be created for SST values
   separate(quarter_year, c("quarter", "year")) %>% # Separate the quarter_year column into quarter and year columns
   mutate(quarter = str_remove(quarter, "Q")) %>% # Removes the Q of the quarter values
   rename(lon = "x", lat = "y") %>%  # Rename the x and y columns to lat and long
-  dplyr::select(year, quarter, lon ,lat, area)  # Reorder the columns as needed
-
-
+  dplyr::select(year, quarter, lon ,lat, kelp_area)  # Reorder the columns as needed
 ```
 
 ## Kelp Biomass
@@ -162,6 +180,7 @@ for (i in seq_along(years)) {
 
 names(kelp_biomass) <- paste(year_quarter)
 
+# TESTING
 # Check the extent and resolution of the raster object
 identical(extent(kelp_biomass), extent(mask))
 identical(res(kelp_biomass), res(mask))
@@ -169,20 +188,20 @@ identical(crs(kelp_biomass), crs(mask))
 identical(origin(kelp_biomass), origin(mask))
 
 # Convert the raster brick to a data frame
-kelp_biomass_year_quarter_df <- as.data.frame(kelp_biomass, xy = TRUE, na.rm = FALSE)
+kelp_biomass_year_quarter_df <- as.data.frame(kelp_biomass, xy = TRUE, na.rm = TRUE)
 kelp_biomass_year_quarter_df <- kelp_biomass_year_quarter_df %>%
   pivot_longer(cols = starts_with("l"), # Select all columns that start with "l" for "layer"
                names_to = "year_quarter", # Name of the new column to be created for year_quarter
-               values_to = "biomass") %>%     # Name of the new column to be created for kelp values
+               values_to = "kelp_biomass") %>%     # Name of the new column to be created for kelp values
   separate(year_quarter, c("year", "quarter")) %>% # Separate the year_quarter column into year and quarter columns
   mutate(year = str_remove(year, "layer")) %>% # Removes the "layer" of the year values
   rename(lon = "x", lat = "y") %>%  # Rename the x and y columns to lat and long
-  dplyr::select(year, quarter, lon, lat, biomass)  # Reorder the columns as needed
+  dplyr::select(year, quarter, lon, lat, kelp_biomass)  # Reorder the columns as needed
 
 ```
 
 # NUTRIENTS
-## Joined Nutrients
+## Observed Nutrients
 ```{r}
 # Extract the coordinates from the geometry column
 coordinates <- st_coordinates(joined_nutrients)
@@ -194,15 +213,255 @@ coordinates_df <- as.data.frame(coordinates)
 names(coordinates_df) <- c("lon", "lat")
 
 # Add the lon and lat columns to the original sf object
-joined_nutrients <- cbind(joined_nutrients, coordinates_df) %>% 
-  st_drop_geometry(joined_nutrients, "geometry") %>% 
-  dplyr::select("quarter", "year", "lon", "lat", "source", "nitrate_nitrite" ,"ammonium", "phosphate")
+joined_nutrients_df <- cbind(joined_nutrients, coordinates_df) %>% 
+  st_drop_geometry(joined_nutrients, "geometry")
 
 ```
 
+## Observed Phosphate
+```{r}
+#Create the names for the raster files
+# Get current names of layers in raster_brick
+current_names <- names(obs_phosphate)
+# Define quarter abbreviations
+quarter_name <- c("Q1", "Q2", "Q3", "Q4")
+# Create vector of new names in desired format
+new_names <- paste0(quarter_name, "-", rep(2014:2022, each = 4))
+# Rename layers in raster_brick with new names
+names(obs_phosphate) <- new_names
+
+# TESTING
+# Check the extent and resolution of the raster object
+identical(extent(obs_phosphate), extent(mask))
+identical(res(obs_phosphate), res(mask))
+identical(crs(obs_phosphate), crs(mask))
+identical(origin(obs_phosphate), origin(mask))
+
+# Convert the raster brick to a data frame
+phosphate_year_quarter_df <- as.data.frame(obs_phosphate, xy = TRUE, na.rm = FALSE)
+phosphate_year_quarter_df <- phosphate_year_quarter_df %>%
+  pivot_longer(cols = starts_with("Q"), # Select all columns that start with "l" for "layer"
+               names_to = "quarter_year", # Name of the new column to be created for year_quarter
+               values_to = "phosphate") %>%     # Name of the new column to be created for sst values
+  separate(quarter_year, c("quarter", "year")) %>% # Separate the year_quarter column into year and quarter columns
+  mutate(quarter = str_remove(quarter, "Q")) %>% # Removes the "layer" of the year values
+  rename(lon = "x", lat = "y") %>%  # Rename the x and y columns to lat and lon
+  dplyr::select(year, quarter, lon, lat, phosphate)  # Reorder the columns as needed
+```
+
+## Observed Nitrate Nitrite
+```{r}
+#Create the names for the raster files
+# Get current names of layers in raster_brick
+current_names <- names(obs_nitrate_nitrite)
+# Define quarter abbreviations
+quarter_name <- c("Q1", "Q2", "Q3", "Q4")
+# Create vector of new names in desired format
+new_names <- paste0(quarter_name, "-", rep(2014:2022, each = 4))
+# Rename layers in raster_brick with new names
+names(obs_nitrate_nitrite) <- new_names
+
+#TESTING
+# Check the extent and resolution of the raster object
+identical(extent(obs_nitrate_nitrite), extent(mask))
+identical(res(obs_nitrate_nitrite), res(mask))
+identical(crs(obs_nitrate_nitrite), crs(mask))
+identical(origin(obs_nitrate_nitrite), origin(mask))
+
+# Convert the raster brick to a data frame
+nitrate_nitrite_year_quarter_df <- as.data.frame(obs_nitrate_nitrite, xy = TRUE, na.rm = FALSE)
+nitrate_nitrite_year_quarter_df <- nitrate_nitrite_year_quarter_df %>%
+  pivot_longer(cols = starts_with("Q"), # Select all columns that start with "l" for "layer"
+               names_to = "quarter_year", # Name of the new column to be created for year_quarter
+               values_to = "nitrite_nitrate") %>%     # Name of the new column to be created for sst values
+  separate(quarter_year, c("quarter", "year")) %>% # Separate the year_quarter column into year and quarter columns
+  mutate(quarter = str_remove(quarter, "Q")) %>% # Removes the "layer" of the year values
+  rename(lon = "x", lat = "y") %>%  # Rename the x and y columns to lat and lon
+  dplyr::select(year, quarter, lon, lat, nitrite_nitrate)  # Reorder the columns as needed
+```
+
+## Observed Ammonium
+```{r}
+#Create the names for the raster files
+# Get current names of layers in raster_brick
+current_names <- names(obs_ammonium)
+# Define quarter abbreviations
+quarter_name <- c("Q1", "Q2", "Q3", "Q4")
+# Create vector of new names in desired format
+new_names <- paste0(quarter_name, "-", rep(2014:2022, each = 4))
+# Rename layers in raster_brick with new names
+names(obs_ammonium) <- new_names
+
+# TESTING
+# Check the extent and resolution of the raster object
+identical(extent(obs_ammonium), extent(mask))
+identical(res(obs_ammonium), res(mask))
+identical(crs(obs_ammonium), crs(mask))
+identical(origin(obs_ammonium), origin(mask))
+
+# Convert the raster brick to a data frame
+ammonium_year_quarter_df <- as.data.frame(obs_ammonium, xy = TRUE, na.rm = FALSE)
+ammonium_year_quarter_df <- ammonium_year_quarter_df %>%
+  pivot_longer(cols = starts_with("Q"), # Select all columns that start with "l" for "layer"
+               names_to = "quarter_year", # Name of the new column to be created for year_quarter
+               values_to = "ammonium") %>%     # Name of the new column to be created for sst values
+  separate(quarter_year, c("quarter", "year")) %>% # Separate the year_quarter column into year and quarter columns
+  mutate(quarter = str_remove(quarter, "Q")) %>% # Removes the "layer" of the year values
+  rename(lon = "x", lat = "y") %>%  # Rename the x and y columns to lat and lon
+  dplyr::select(year, quarter, lon, lat, ammonium)  # Reorder the columns as needed
+
+```
+
+# Synthesized Data Set
+## All values
+```{r}
+
+# Merge the all normalized data sets
+all_sythesized_merge <- depth_year_quarter_df %>% 
+  left_join(sst_year_quarter_df, by = c("year", "quarter", "lat", "lon")) %>% 
+  left_join(kelp_area_year_quarter_df, by = c("year", "quarter", "lat", "lon")) %>% 
+  left_join(kelp_biomass_year_quarter_df, by = c("year", "quarter", "lat", "lon")) %>% 
+  left_join(nitrate_nitrite_year_quarter_df, by = c("year", "quarter", "lat", "lon")) %>% 
+  left_join(phosphate_year_quarter_df, by = c("year", "quarter", "lat", "lon")) %>% 
+  left_join(ammonium_year_quarter_df, by = c("year", "quarter", "lat", "lon")) %>% 
+  relocate(lat, .before = lon)
+
+
+# Upload the synthesize data to the organizded kelpGeoMod Google Drive 
+write_csv(all_sythesized_merge, path = "/capstone/kelpgeomod/google_drive_download/04-deliverables/02-full-synthesized/full-synthesized.csv")
+
+write_csv(all_sythesized_merge, path = "/capstone/kelpgeomod/google_drive_download/03-analysis-data/03-data-synthesization-analysis/full-synthesized.csv")
+
+```
+
+## Observed Synthesized Data Set
+
+TESTING
+Understand how many observed data points we have per year and quarter
+```{r}
+points <- joined_nutrients %>% 
+  st_drop_geometry() %>% 
+  group_by(year, quarter) %>% 
+  summarise(count = n())
+
+# Its important to notice that for the Year 2020 Q2, there are no points for the observed nutrients
+```
+
+Extract the raster values of depth, sst, kelp area, and kelp biomass with the observed nutrient data Point
+```{r}
+
+# Replicate the depth layer to create a raster brick with 35 layers we will extract the raster of 2020, quarter two. alias the 26 out of the 36 raster bricks
+
+depth_brick <- stack(rep(list(depth), 35))
+
+# Create an example raster list
+raster_list <- list(kelp_biomass[[-26]], kelp_area[[-26]], sst[[-26]], depth_brick)
+
+years <- rep(2014:2022, each = 4)[-26]
+quarters <- rep(sequence(4), times = 9)[-26]
+
+# Create an empty list to store extracted values
+extracted_biomass_values <- list()
+extracted_area_values <- list()
+extracted_sst_values <- list()
+extracted_depth_values <- list()
+
+
+# Iterate over the years and quarters
+for (i in 1:length(years)) {
+  y <- years[i]
+  q <- quarters[i]
+  
+  # Filter the joined_nutrients dataframe for the specific quarter
+  filtered_nutrients <- subset(joined_nutrients, year == y & quarter == q)
+  
+  # Biomass
+  biomass_values <- raster::extract(x = kelp_biomass[[i]], y = filtered_nutrients)
+  extracted_biomass_values[[i]] <- biomass_values
+  
+  # Area
+  area_values <- raster::extract(x = kelp_area[[i]], y = filtered_nutrients)
+  extracted_area_values[[i]] <- area_values
+  
+  # SST
+  sst_values <- raster::extract(x = sst[[i]], y = filtered_nutrients)
+  extracted_sst_values[[i]] <- sst_values
+  
+  # Depth
+  depth_values <- raster::extract(x = depth_brick[[i]], y = filtered_nutrients)
+  extracted_depth_values[[i]] <- depth_values
+ 
+}
+
+```
+
+
+```{r}
+# Convert the individual exracted values lists to a data frame
+obs_nutrients_sythesized <- data.frame(
+  kelp_biomass = unlist(extracted_biomass_values),
+  kelp_area = unlist(extracted_area_values),
+  sst = unlist(extracted_sst_values),
+  depth = unlist(extracted_depth_values)
+) %>% 
+  cbind(joined_nutrients_df) %>% 
+  rename(nutrient_source = source) %>% 
+  dplyr::select(year, quarter,lat, lon, temp, nitrate, nitrite, nitrate_nitrite, phosphate, ammonium, sst, nutrient_source, depth, kelp_area, kelp_biomass)
+
+# Upload the synthesize data to our organized kelpGeoMod Google Drive
+write_csv(obs_nutrients_sythesized, path = "/capstone/kelpgeomod/google_drive_download/04-deliverables/03-observed-nutrients-synthesized/observed-nutrients-synthesized.csv")
+
+write_csv(obs_nutrients_sythesized, path = "/capstone/kelpgeomod/google_drive_download/03-analysis-data/03-data-synthesization-analysis/observed-nutrients-synthesized.csv")
+
+```
+
+TESTING
+```{r}
+# Checking the sythesized data
+one <- skimr::skim(obs_nutrients_sythesized)
+
+# Checking the depth data
+
+depth_check <- list()
+depth_values <- raster::extract(x = depth, y = joined_nutrients)
+depth_check <- depth_values
+
+check_df <- data.frame(depth = unlist(depth_check)
+) %>% 
+  cbind(joined_nutrients) %>%
+  filter(is.na(depth)) %>% 
+  group_by(geometry) %>% 
+  summarise(depth = sum(depth))
+
+# Convert the data frame to an sf object
+check_df <- st_as_sf(check_df)
+```
+
+TESTING
+Understand where are the point data and how it extracts the information for each raster layer
+```{r}
+# Display the tmap
+tmap_mode("view")
+
+# Create a tmap object
+tm_shape(kelp_biomass[[20]]) + # Q4, 2018
+  tm_raster(palette = "Greens") +
+tm_shape(depth) + 
+  tm_raster() +
+tm_shape(joined_nutrients) +
+  tm_symbols(col = "red", alpha = 0.8) +
+tm_shape(check_df) +
+  tm_symbols(col = "blue", size = 0.1)
+```
+
+# Time Series Interpolated Nutrients
+
 ## Interpolated Nutrients
+
 ### Phosphate
 ```{r}
+
+#TESTING
 # Check the extent and resolution of the raster_kelp object
 identical(extent(interp_phosphate), extent(mask))
 identical(res(interp_phosphate), res(mask))
@@ -292,30 +551,32 @@ sst_time_series <- sst_year_quarter_df %>%
 # Kelp Area
 kelp_area_time_series <- kelp_area_year_quarter_df %>% 
   group_by(year, quarter) %>% 
-  summarise(area = sum(area, na.rm = T)) %>% 
+  summarise(kelp_area = sum(kelp_area, na.rm = T)) %>% 
   mutate(year = as.factor(year)) %>% 
   mutate(quarter = as.factor(quarter))
 
 # Kelp Biomass
 kelp_biomass_time_series <- kelp_biomass_year_quarter_df %>% 
   group_by(year, quarter) %>% 
-  summarise(biomass = sum(biomass, na.rm = T)) %>% 
+  summarise(kelp_biomass = sum(kelp_biomass, na.rm = T)) %>% 
   mutate(year = as.factor(year)) %>% 
   mutate(quarter = as.factor(quarter))
 
 # NUTRIENTS
-nutrients_time_series <- joined_nutrients %>% 
+nutrients_time_series <- joined_nutrients_df %>% 
   group_by(year, quarter) %>% 
-  summarise(nitrate = mean(nitrate, na.rm = T),
+  summarise(temp = mean(temp, na.rm = T),
+            nitrate = mean(nitrate, na.rm = T),
             nitrite = mean(nitrite, na.rm = T),
             nitrate_nitrite = mean(nitrate_nitrite, na.rm = T),
             ammonium = mean(ammonium, na.rm = T),
             phosphate = mean(phosphate, na.rm = T)) %>% 
   mutate(year = as.factor(year)) %>% 
   mutate(quarter = as.factor(quarter))
+
 ```
 
-## Join
+## Join the time series data frames
 ```{r}
 # Merge the all normalized data sets
 time_series_merge <- depth_time_series %>% 
@@ -330,6 +591,10 @@ time_series_long <- pivot_longer(time_series_merge,
                                  names_to = "variable", 
                                  values_to = "value") %>% 
    mutate(date = as.Date(paste(year, as.integer(quarter)*3, "01", sep = "-")))
+
+# Upload the data to Tsosie
+write_csv(time_series_merge, 
+            path = "/capstone/kelpgeomod/google_drive_download/03-analysis-data/03-data-synthesization-analysis/time-series-synthesized.csv")
 ```
 
 ## Set the variable colors
@@ -338,6 +603,7 @@ my_colors <- c("depth" = "#2E2E2E",
                "sst" = "#FD8D3C", 
                "area" = "#3CB44B", 
                "biomass" = "#91CF60", 
+               "temp" = "#984EF1", 
                "nitrate" = "#1F78B4", 
                "nitrite" = "#A6CEE3",
                "nitrate_nitrite" = "#984EA3", 
@@ -386,8 +652,6 @@ for (i in seq_along(variable_names)) {
   print(p)
 }
 
-
-
 ```
 
 # Seasonal Rasters
@@ -410,13 +674,13 @@ sst_seasonal <- sst_year_quarter_df %>%
 # Kelp Area
 kelp_area_seasonal <- kelp_area_year_quarter_df %>% 
   group_by(quarter, lat, lon) %>% 
-  summarise(area = mean(area, na.rm = T)) %>% 
+  summarise(kelp_area = mean(kelp_area, na.rm = T)) %>% 
   mutate(quarter = as.factor(quarter))
 
 # Kelp Biomass
 kelp_biomass_seasonal <- kelp_biomass_year_quarter_df %>% 
   group_by(quarter, lat, lon) %>% 
-  summarise(biomass = mean(biomass, na.rm = T)) %>% 
+  summarise(kelp_biomass = mean(kelp_biomass, na.rm = T)) %>% 
   mutate(quarter = as.factor(quarter))
 
 ```
@@ -434,12 +698,13 @@ seasonal_merge <- depth_seasonal %>%
   
 ```
 
-
 Save the 36 raster brick
 ```{r}
 # Write RasterBrick Quarter object to file
-write_csv(seasonal_merge, "/capstone/kelpgeomod/analysis_data/synthesized/interpolated_join.csv")
-
-write_csv(time_series_merge, 
-            path = "/capstone/kelpgeomod/analysis_data/synthesized/time_series_join.csv")
+write_csv(seasonal_merge, "/capstone/kelpgeomod/google_drive_download/03-analysis-data/03-data-synthesization-analysis/quarterly-interpolated-synthesized.csv")
 ```
+
+
+
+
+
