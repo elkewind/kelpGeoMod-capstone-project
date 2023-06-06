@@ -1,0 +1,56 @@
+---
+title: "Masking Maxent"
+author: "Elke Windschitl"
+date: "2023-04-18"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      error = FALSE,
+                      message = FALSE)
+```
+
+```{r, results='hide'}
+library(tidyverse)
+library(raster)
+library(terra)
+library(sf)
+```
+
+```{r}
+#---- Set up the data directory (wherever your download of our Google Shared Drive lives)
+data_dir <- "/capstone/kelpgeomod/google_drive_download"
+```
+
+```{r}
+# Read in the maxent output
+maxent_quarter_1 <- raster(file.path(data_dir, "03-analysis-data/04-maxent-analysis/results/maxent-quarter-1-output.tif"))
+maxent_quarter_2 <- raster(file.path(data_dir, "03-analysis-data/04-maxent-analysis/results/maxent-quarter-2-output.tif"))
+maxent_quarter_3 <- raster(file.path(data_dir, "03-analysis-data/04-maxent-analysis/results/maxent-quarter-3-output.tif"))
+maxent_quarter_4 <- raster(file.path(data_dir, "03-analysis-data/04-maxent-analysis/results/maxent-quarter-4-output.tif"))
+
+# Read in sandy-bottom raster
+sandy_raster <- raster(file.path(data_dir, "03-analysis-data/05-substrate-analysis/sandy-bottom-1km.tif"))
+```
+
+```{r}
+# Mask maxent to areas without sandy-bottom
+sub_masked_1 <- mask(x = maxent_quarter_1, mask = sandy_raster, inverse = FALSE)
+sub_masked_2 <- mask(x = maxent_quarter_2, mask = sandy_raster, inverse = FALSE)
+sub_masked_3 <- mask(x = maxent_quarter_3, mask = sandy_raster, inverse = FALSE)
+sub_masked_4 <- mask(x = maxent_quarter_4, mask = sandy_raster, inverse = FALSE)
+
+sub_masked_brick <- brick(sub_masked_1, sub_masked_2, sub_masked_3, sub_masked_4)
+```
+
+```{r}
+#---- Write to data files
+# Change this file path to your own to re-write data
+
+terra::writeRaster(sub_masked_brick, "/capstone/kelpgeomod/google_drive_download/03-analysis-data/04-maxent-analysis/results/substrate_masked_brick.tif", overwrite = TRUE)
+```
+

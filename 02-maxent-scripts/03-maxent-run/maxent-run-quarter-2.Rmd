@@ -30,6 +30,7 @@ library(rgeos)
 library(ENMeval)
 library(wallace)
 library(tidyverse)
+library(sjPlot)
 ```
 
 ```{r}
@@ -269,6 +270,8 @@ maxentEvalPlot_Mp
 ```{r}
 vars <- eval.variable.importance(model_Mp)[["fc.LQ_rm.0.5"]]
 kable(vars)
+tab_df(vars,
+       title = "Model Variable Importance Quarter 2")
 ```
 
 ### Data Plots
