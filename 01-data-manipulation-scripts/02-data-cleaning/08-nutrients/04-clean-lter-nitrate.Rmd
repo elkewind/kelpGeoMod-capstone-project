@@ -15,14 +15,19 @@ library(tmap)
 ```
 
 ```{r}
+#---- Set up the data directory (wherever your download of our Google Shared Drive lives)
+data_dir <- "/capstone/kelpgeomod/google_drive_download"
+```
+
+```{r}
 # Read in AOI
-aoi <- st_read("/capstone/kelpgeomod/raw_data/New_AOI_SBchannel_shp/New_AOI_SBchannel.shp")
+aoi <- st_read(file.path(data_dir, "02-intermediate-data/02-aoi-sbchannel-shapes-intermediate/aoi-sbchannel.shp"))
 
 # Load nitrogen data
-nitrate_raw <- read_csv("/capstone/kelpgeomod/raw_data/Nitrate_LTER/kelp_no3_waves_quarterly_long (1).csv")
+nitrate_raw <- read_csv(file.path(data_dir, "01-raw-data/09-nutrients-various-raw/04-nutrients-lter-nitrate-raw/kelp_no3_waves_quarterly_long.csv"))
 
 # Load location data for each site
-locations_raw <- read_csv("/capstone/kelpgeomod/raw_data/Nitrate_LTER/locations (1).csv")
+locations_raw <- read_csv(file.path(data_dir, "01-raw-data/09-nutrients-various-raw/04-nutrients-lter-nitrate-raw/locations.csv"))
 ```
 
 ```{r}
@@ -31,15 +36,10 @@ nitrate_dat <- nitrate_raw %>%
   dplyr::select(c("site_id", "year", "quarter", "no3")) %>% 
   filter(year >= 2014 & year <= 2022) %>% 
   left_join(locations_raw, by = "site_id") #%>% # left join location data to the data set
-  #mutate(year = as.POSIXct(year, format = "%Y", origin = lubridate::origin)) #%>% # make year date time
-  #mutate(year = format(year, format = "%Y"))
-
-#nitrate_dat$year <- as.Date(year(nitrate_dat$year), format = '%Y')
-
 ```
 
 ```{r}
-# Vectorize lat lon point data
+# Vectorize lat lon point data and put into our nutrient data format
 nitrate_geo <- nitrate_dat %>% 
   st_as_sf(coords = c("lon", "lat")) %>% 
   dplyr::select(-site_id) %>% 
@@ -51,59 +51,14 @@ st_crs(nitrate_geo) = 4326
 nitrate_geo <- nitrate_geo %>% 
   st_filter(aoi)
 
+# Check it out
 tmap_mode("view")
 tm_shape(nitrate_geo) +
   tm_dots()
-tm_shape(aoi) +
-  tm_polygons()
 ```
 
 ```{r}
-write_rds(x = nitrate_geo, file = "/capstone/kelpgeomod/intermediate_data/nitrate/lter_nitrate.RDS")
-write_csv(x = nitrate_geo, file = "/capstone/kelpgeomod/intermediate_data/nitrate/lter_nitrate.csv")
+#---- Write to data files
+# Change this file path to your own to re-write data
+write_csv(x = nitrate_geo, file = "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/09-nutrients-intermediate/unjoined/lter-nitrate.csv")
 ```
-
-
-```{r}
-# Split full data frame by each year
-split_by_year <- split(x = nitrate_geo, f = as.factor(nitrate_geo$year))
-
-# Split each of those years into quarter
-# for (i in names(split_by_year)) {
-#   split_by_quarter <- split(x = split_by_year[[i]], f = as.factor(split_by_year[[i]]$quarter))
-#   for (j in names(split_by_quarter)) {
-#     assign(paste0("df_", i, "_", j), split_by_quarter[[j]])
-#   }
-# }
-```
-
-```{r}
-# Create an empty list to store the results
-df_list <- list()
-
-# Split each of those years into quarters and store in df_list
-for (i in names(split_by_year)) {
-  split_by_quarter <- split(x = split_by_year[[i]], f = as.factor(split_by_year[[i]]$quarter))
-  for (j in names(split_by_quarter)) {
-    df_list[[paste0("lter_", i, "_", j)]] <- split_by_quarter[[j]]
-  }
-}
-
-```
-
-```{r}
-# Create a temporary directory to save the RDS files
-temp_dir <- tempdir()
-for (i in seq_along(df_list)) {
-  file_name <- paste0(names(df_list[i]), ".rds")
-  saveRDS(file = file.path(temp_dir, file_name), df_list[[i]])
-}
-
-# Use the zip() function to create a compressed ZIP file
-zip("/capstone/kelpgeomod/intermediate_data/nitrate/lter_nitrate.zip", files = list.files(temp_dir, full.names = TRUE))
-
-# Remove the temporary directory
-unlink(temp_dir, recursive = TRUE)
-
-```
-

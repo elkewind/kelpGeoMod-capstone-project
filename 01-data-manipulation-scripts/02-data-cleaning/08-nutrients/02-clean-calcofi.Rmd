@@ -58,5 +58,7 @@ tm_shape(CalCOFI_ave) +
 ```
 
 ```{r}
+#---- Write to data files
+# Change this file path to your own to re-write data
 write_csv(x = CalCOFI_ave, file = "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/09-nutrients-intermediate/unjoined/calcofi.csv")
 ```
