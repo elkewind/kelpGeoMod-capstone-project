@@ -6,27 +6,26 @@ output: html_document
 ---
 
 ```{r}
-# Load in necessary packages for wrangling
+#---- Load in necessary packages for wrangling
 library(tidyverse)
 library(ncdf4)
-
-#library(terra)
 library(sp)
 library(sf)
 library(tidyverse)
 library(raster)
+
+#---- Set up the data directory (wherever your download of our Google Shared Drive lives)
+data_dir <- "/capstone/kelpgeomod/google_drive_download"
 ```
 
 ```{r}
-# Read in the netcdf file to convert to csv and rasterStack
+# Read in the netcdf file to convert to rasterStacks (in our case the final products are rasterBricks)
 # Source for our data: https://sbclter.msi.ucsb.edu/data/catalog/package/?package=knb-lter-sbc.74
-data_nc <- nc_open("~/Desktop/meds/capstone/data/area/LandsatKelpBiomass_2023_Q1_withmetadata.nc")
-#data_nc <- nc_open("/capstone/kelpgeomod/raw_data/LTER_kelp_area_biomass/LandsatKelpBiomass_2022_Q4_withmetadata.nc")
-#setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
+data_nc <- nc_open(file.path(data_dir, "01-raw-data/05-kelp-area-biomass-lter-raw/LandsatKelpBiomass_2022_Q4_withmetadata.nc"))
 ```
 
 ```{r}
-# First we will be converting to csv.
+# First we will be converting to csv as an intermediate step to get to standardized rasterStacks
 # Let's extract the variables of use from the netcdf file.
 lon <- ncvar_get(data_nc, varid = 'longitude') # Longitude
 lat <- ncvar_get(data_nc, varid = 'latitude') # Latitude
@@ -85,47 +84,34 @@ quarter$time_period = as.numeric(row.names(quarter))
 
 df_cleaned_time <- df_full %>% left_join(year) %>% rename(year = ncvar_get.data_nc...year..) %>% left_join(quarter) %>% rename(quarter = ncvar_get.data_nc...quarter..)
 
-# Prepare the data to write to csv
-to_write_full <- df_cleaned_time %>%
-  dplyr::select(-time_period) # Since we are done using the time_period to create year and quarter variables, we can remove it
-
-to_write_no_na <- df_cleaned_time %>%
+# Prepare the data for next steps
+# Can use with no NA because removing NAs from area and biomass individually give same number of rows
+kelp_data_no_na <- df_cleaned_time %>%
   dplyr::select(-time_period) %>% # Since we are done using the time_period to create year and quarter variables, we can remove it
   drop_na(area, biomass) # If you would like to get rid of NAs for area and biomass (the key variables of interest) before exporting
-
-# Write the data to csv. Change the path to whatever you'd like to name it.
-write.csv(to_write_full, file = "~/Desktop/meds/capstone/data/area/area_biomass_new_coords_2014_2022.csv", row.names = FALSE)
-write.csv(to_write_no_na, file = "~/Desktop/meds/capstone/data/area/area_biomass_no_na_new_coords_2014_2022.csv", row.names = FALSE)
 ```
 
 ```{r}
-# Read in data. Can use the no NA one because removing NAs from area and biomass individually give same number of rows.
-mydata <- read_csv("~/Desktop/meds/capstone/data/area/area_biomass_no_na_new_coords_2014_2022.csv")
-#mydata <- read_csv("/capstone/kelpgeomod/intermediate_data/area_biomass/area_biomass_no_na_new_coords_2014_2022.csv")
-
 # Convert year and quarter to usable date
-mydata$date <- as.Date(paste0(mydata$year, "-", as.character((mydata$quarter-1)*3+1), "-01"))
+kelp_data_no_na$date <- as.Date(paste0(kelp_data_no_na$year, "-", as.character((kelp_data_no_na$quarter-1)*3+1), "-01"))
 
 # Get rid of not necessary columns
-mydata_for_sf <- mydata %>%
+kelp_data_for_sf <- kelp_data_no_na %>%
   dplyr::select(-year, -quarter)
 
 # Create spatial geom
-kelp_sf <- st_as_sf(mydata_for_sf, coords = c("lon", "lat"), crs = st_crs(4326))
+kelp_sf <- st_as_sf(kelp_data_for_sf, coords = c("lon", "lat"), crs = st_crs(4326))
 
-# Read in mask
-mask <- raster::raster("~/Desktop/meds/capstone/Data-Cleaning/mask/mask_rast.tif")
-#mask <- raster::raster("/capstone/kelpgeomod/intermediate_data/mask/mask_rast.tif")
+# Read in mask for later steps
+mask <- raster::raster(file.path(data_dir, "02-intermediate-data/03-mask-intermediate/main-mask.tif"))
+
+# The commented out code below is if it's needed for your purposes. We did not need it because these steps essentially get done later for our purposes.
 
 # Make sure the sf data has the same CRS as the mask
-sf_data_2 <- st_transform(kelp_sf, crs = raster::projection(mask))
+# kelp_sf_transformed <- st_transform(kelp_sf, crs = raster::projection(mask))
 
 # Crop the sf data to the extent of the mask
-data_2_crop <- st_crop(sf_data_2, mask)
-
-# Write spatial csv
-write.csv(data_2_crop, file = "~/Desktop/meds/capstone/data/area/area_biomass_new_coords_2014_2022_geom.csv")
-saveRDS(data_2_crop, "~/Desktop/meds/capstone/data/area/area_biomass_new_coords_2014_2022_geom.RDS")
+# kelp_sf_cropped <- st_crop(kelp_sf_transformed, mask)
 ```
 
 ```{r}
@@ -169,7 +155,7 @@ names(area_stack)
 custom_pal <- c("grey", colorRampPalette(c("blue", "red"))(99))
 
 # Plot the first layer of the stack
-plot(area_stack[[1]], col = custom_pal) # check 10 goes up to roughly 900
+plot(area_stack[[1]], col = custom_pal)
 ```
 
 ```{r}
@@ -215,7 +201,7 @@ identical(nrow(area_stack_masked), nrow(mask))
 identical(ncol(area_stack_masked), ncol(mask))
 
 # Save the RasterBrick object
-writeRaster(area_stack_masked, filename = "~/Desktop/meds/capstone/data/area/area_brick_standardized.tif", format = "GTiff", overwrite = TRUE)
+writeRaster(area_stack_masked, filename = "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/05-kelp-area-biomass-intermediate/kelp-area-brick.tif", format = "GTiff", overwrite = TRUE)
 ```
 
 ```{r}
@@ -250,8 +236,10 @@ for (i in seq_along(years)) {
 
 names(biomass_stack) <- paste(year_quarter)
 names(biomass_stack)
+```
 
-# Use the mask on the rasterStack
+```{r}
+# Use the mask on the biomass rasterStack
 
 # Set CRS
 crs(biomass_stack) <- crs(mask)
@@ -288,5 +276,6 @@ identical(nrow(biomass_stack_masked), nrow(mask))
 identical(ncol(biomass_stack_masked), ncol(mask))
 
 # Save the RasterBrick object
-writeRaster(biomass_stack_masked, filename = "~/Desktop/meds/capstone/data/area/biomass_brick_standardized.tif", format = "GTiff", overwrite = TRUE)
+writeRaster(biomass_stack_masked, filename = "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/05-kelp-area-biomass-intermediate/kelp-biomass-brick.tif", format = "GTiff", overwrite = TRUE)
 ```
+
