@@ -1,6 +1,6 @@
 # kelpGeoMod-capstone-project
 
-#### DEVELOPING A GEOSPATIAL MODEL FOR KELP FOREST CULTIVATION AND RESTORATION
+#### DEVELOPING A DATA PIPELINE FOR KELP FOREST MODELING
 
 ##### *This README.txt file was generated on 2023-05-02 by kelpGeoMod team*
 
@@ -39,17 +39,17 @@
 
 -   Obtained: January and February 2023
 
--   Date Range: 1st January 2014 - 1st January 2023
+-   Date Range: 1st January 2014 - 31st December 2022
 
 #### Geographic location of data collection:
 
--   Point 1: -120.39, 34.59
+-   Point 1: -120.65, 34.59
 
--   Point 2: -118.48, 34.59
+-   Point 2: -118.80, 34.59
 
--   Point 3: -118.48, 33.51
+-   Point 3: -118.80, 33.85
 
--   Point 4: -120.39, 33.51
+-   Point 4: -120.65, 33.85
 
 <center>
 
