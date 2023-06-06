@@ -95,6 +95,7 @@ plot(CA_substrate_islands)
 ```
 
 ```{r label = "Write to GTiff file"}
+# An aux.xml metadata file is automatically written with each file. 
 terra::writeRaster(CA_substrate_islands, "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/08-substrate-intermediate/seafloormapping-islands-substrate.tif", filetype = "GTiff", overwrite = TRUE)
 ```
 

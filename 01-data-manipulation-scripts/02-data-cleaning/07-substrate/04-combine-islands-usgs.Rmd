@@ -92,7 +92,7 @@ plot(usgs_islands_raster)
 ```
 
 ```{r label = "write to shape file "}
-
+# An aux.xml metadata file is automatically written with each file. 
 terra::writeRaster(usgs_islands_raster, "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/08-substrate-intermediate/usgs-island-substrate.tif", filetype = "GTiff", overwrite = TRUE)
 ```
 

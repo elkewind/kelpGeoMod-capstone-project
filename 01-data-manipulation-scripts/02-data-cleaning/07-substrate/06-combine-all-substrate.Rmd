@@ -93,7 +93,12 @@ plot(SBC_substrate)
 ```
 
 ```{r label = "write to GTiff"}
+# An aux.xml metadata file is automatically written with each file. 
+# Write to intermediate folder
 terra::writeRaster(SBC_substrate, "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/08-substrate-intermediate/combined-sbchannel-substrate.tif", filetype = "GTiff", overwrite = TRUE)
+
+# Write to deliverable folder
+terra::writeRaster(SBC_substrate, "/capstone/kelpgeomod/google_drive_download/04-deliverables/04-combined-sbchannel-substrate/combined-sbchannel-substrate.tif", filetype = "GTiff", overwrite = TRUE)
 ```
 
 
