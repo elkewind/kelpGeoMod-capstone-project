@@ -1,17 +1,17 @@
-# Create A Shapefile of our area of expanded area interest -123.32, 30.59, -115.70, 36.08
+# Create A Shapefile of our area of interest -120.85, 33.85, -118.80, 34.59 
 #Load in libraries
 library(tidyverse)
 library(sf)
-
+library(tmap)
 
 # Create a data frame from the coordinates
 
 coordinates <- tribble(
   ~lat, ~lon,
-  30.59, -123.32, 
-  30.59, -115.70, 
-  36.08, -123.32, 
-  36.08, -115.70
+  34.59, -118.80, 
+  33.85, -120.85, 
+  34.59, -120.85, 
+  33.85, -118.80
 ) |> 
   st_as_sf(coords = c("lon", "lat"), 
            crs = "EPSG: 4326") |> 
@@ -21,8 +21,7 @@ coordinates <- tribble(
 
 # change your file path to wherever you want to save the shape file.
 st_write(coordinates,
-         "/Users/jfrench/Documents/MEDS/Capstone/DATA/Expaned_AOI_SBchannel.shp", 
-         driver = "ESRI Shapefile")
-
+         "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/02-aoi-sbchannel-shapes-intermediate/aoi-sbchannel.shp", 
+         driver = "ESRI Shapefile", append = FALSE)
 
 
