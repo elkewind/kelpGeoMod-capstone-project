@@ -22,8 +22,8 @@ library(naniar)
 library(here)
 ```
 
-```{r}
-datadir <- "/capstone/kelpgeomod/old_file_structure/intermediate_data/"
+```{r label = "define data directory"}
+data_dir <- "/capstone/kelpgeomod/google_drive_download"
 ```
 
 ## Read in data sets
@@ -39,28 +39,31 @@ data sets to read in
 # Read in data from tsosie
 
 # Plumes and Blooms
-PB <- readRDS(file.path(datadir, "Plumes_Blooms/Plumes_Blooms.RDS")) 
+PB <- read_csv(file.path(data_dir, "02-intermediate-data/09-nutrients-intermediate/unjoined/plumes-blooms.csv")) |> 
+  st_as_sf(coords = c("lon", "lat"))
 
 # CalCOFI
-calCOFI <- readRDS(file.path(datadir, "calcofi/calcofi_nutrients.RDS")) |> 
+calCOFI <- read_csv(file.path(data_dir, "02-intermediate-data/09-nutrients-intermediate/unjoined/calcofi.RDS")) |> 
   # create nitrate_nitrite combined column 
   mutate("nitrate_nitrite" = nitrate + nitrite, .after = nitrite) |> 
-  rename("ammonium" = "ammonia") # Natalie said the naming difference is likely do to how each data source quantified the measurement but it was okay to combine them. 
+  rename("ammonium" = "ammonia") |> # Natalie said the naming difference is likely do to how each data source quantified the measurement but it was okay to combine them. 
+  st_as_sf(coords = c("lon", "lat"))
 
 # USGS
 # Need to add source column 
 # Also not an sf object but the geom column looks the same.
-USGS <- readRDS(file.path(datadir, "usgs_nutrients/usgs_sp_data.rds")) |> 
+USGS <- read_csv(file.path(data_dir, "02-intermediate-data/09-nutrients-intermediate/unjoined/usgs.rds")) |> 
   mutate("source" = "USGS") |> 
-  st_as_sf()
+  st_as_sf(coords = c("lon", "lat"))
 
 # LTER Nitrate
-lter_nitrate <- readRDS(file.path(datadir, "nitrate/lter_nitrate.RDS")) |> 
-  st_as_sf()
+lter_nitrate <- read_csv(file.path(data_dir, "02-intermediate-data/09-nutrients-intermediate/unjoined/lter-nitrate.csv")) |> 
+  st_as_sf(coords = c("lon", "lat"))
 
 # LTER bottle 
-lter_bottle <- readRDS(file.path(datadir, "lter_bottle_nutrients/lter_bottle_new_coords_2014_2022_geom.RDS")) |> 
-  mutate("source" = "lter_bottle")
+lter_bottle <- read_csv(file.path(data_dir, "02-intermediate-data/09-nutrients-intermediate/unjoined/lter-bottle.csv")) |> 
+  mutate("source" = "lter_bottle") |> 
+  st_as_sf(coords = c("lon", "lat"))
 ```
 
 ```{r label = "combine"}
@@ -80,8 +83,8 @@ joined_nutrients <- bind_rows(data_set_list) |>
 ```
 
 
-```{r label = "write to rds"}
-# write to rds
-write_rds(joined_nutrients, "/capstone/kelpgeomod/old_file_structure/intermediate_data/joined_nutrients/joined_nutrients.RDS")
+```{r label = "write to csv"}
+# write to csv
+write_csv(joined_nutrients, "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/09-nutrients-intermediate/joined/joined-nutrients.csv")
 ```
 
