@@ -3,7 +3,7 @@ library(tmap)
 library(terra)
 library(tidyverse)
 
-
+data_dir <- "/capstone/kelpgeomod/google_drive_download"
 
 # Make an empty raster of 0.00003 degree resolution
 x <- rast() # make an empty raster
@@ -23,11 +23,9 @@ values(x) <- 1 # fill in values 1-10873 by row
 
 mask <- x
 
-# Path to read in if working locally
-boundaries <- st_read("/capstone/kelpgeomod/raw_data/land_bounds/California_County_Boundaries/cnty19_1.shp") 
+# Read in land bounds
+boundaries <- st_read(file.path(data_dir, "01-raw-data/02-ca-county-land-boundaries-raw/California_County_Boundaries/cnty19_1.shp")) 
 
-# Path to read in if working on tsosie
-# boundaries <- st_read("/raw_data/land_bounds/California_County_Boundaries/cnty19_1.shp")
 
 # Ensure CRS is WGS 84
 boundaries <- st_transform(x = boundaries, crs = 4326)
@@ -49,9 +47,6 @@ plot(land_bounds)
 # Converts everything that is NaN in the landbounds to NaN in the mask so that land is NaN
 mask <- mask * land_bounds
 
-# tmap_mode("plot")
-# tm_shape(mask) +
-#   tm_raster(palette = colors1,
-#             legend.show = FALSE)
 
-terra::writeRaster(mask, "/Users/jfrench/capstone/Data-Cleaning/mask/habitat_mask_rast.tif", filetype = "GTiff", overwrite = TRUE)
+# Change this file path to your own to re-write data
+terra::writeRaster(mask, "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/03-mask-intermediate/habitat-mask.tif", filetype = "GTiff", overwrite = TRUE)

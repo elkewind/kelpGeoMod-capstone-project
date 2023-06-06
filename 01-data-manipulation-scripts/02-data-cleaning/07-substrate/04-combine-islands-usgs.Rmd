@@ -22,8 +22,9 @@ library(tidyverse)
 
 ```
 
-```{r label = "set working directory"}
-setwd("/capstone/kelpgeomod/raw_data/Benthic_Habitat_2/USGS_channel_islands/")
+```{r label = "define data directory"}
+# define the data dorectory
+data_dir <- "/capstone/kelpgeomod/google_drive_download"
 ```
 
 These files are in a slightly different format and have different information than the main USGS files. From the metadata the bottom classification is in the BOTTOM_ID column and is coded as h for hard bottom, m for mixed hard and s for sediment soft bottom. There is not additional information for what may be an anthropogenic feature so they cannot be removed from this data. 
@@ -43,7 +44,7 @@ USGS_channel_fun <- function(shape_file) {
 ```{r label = "read in files"}
 # This entire code chunk is courtesy of ChatGPT.
 # get list of subdirectories in working directory
-subdirs <- list.dirs()
+subdirs <- list.dirs(file.path(data_dir, "01-raw-data/08-substrate-usgs-seafloormapping-raw/03-usgs-channel-islands"))
 
 # Create empty list
 USGS_islands <- list()
@@ -66,27 +67,6 @@ for (subdir in subdirs) {
 }
 ```
     
-    
-```{r label = "read in files"}
-# Read in files from USGS channel islands mapping
-north_anacapa_p <- st_read("nanphab/nanphab.shp") |> 
-  st_transform("EPSG:4326") |> 
-  dplyr::select(c(BOTTOM_ID, geometry))
-
-south_anacapa <- st_read("sanahab/sanahab.shp") |> 
-  st_transform("EPSG:4326") |> 
-  dplyr::select(c(BOTTOM_ID, geometry))
-
-south_anacapa_p <- st_read("sanphab/sanphab.shp") |> 
-  st_transform("EPSG:4326") |> 
-  dplyr::select(c(BOTTOM_ID, geometry))
-
-se_santa_cruz <- st_read("secruhab/secruhab.shp") |> 
-  st_transform("EPSG:4326") |> 
-  dplyr::select(c(BOTTOM_ID, geometry))
-
-```
-
 ```{r label = "combine into one data frame"}
 # Combine list if data frames into one using bind rows. 
 USGS_islands <-  bind_rows(USGS_islands) 
@@ -96,11 +76,8 @@ USGS_islands <-  bind_rows(USGS_islands)
 
 ```{r label = "read in mask"}
 # read in mask
-# use this for local
-# substrate_mask <- rast("/Users/jfrench/Documents/MEDS/Capstone/Data-Cleaning/mask/habitat_mask_rast.tif")
 
-# use this for tsosie
-substrate_mask <- rast("/Users/jfrench/capstone/Data-Cleaning/mask/habitat_mask_rast.tif")
+substrate_mask <- rast(file.path(data_dir, "02-intermediate-data/03-mask-intermediate/habitat-mask.tif"))
 ```
 
 ```{r label = "rasterize"}
@@ -116,6 +93,6 @@ plot(usgs_islands_raster)
 
 ```{r label = "write to shape file "}
 
-terra::writeRaster(usgs_islands_raster, "/capstone/kelpgeomod/intermediate_data/substrate/usgs_island_substrate.tif", filetype = "GTiff", overwrite = TRUE)
+terra::writeRaster(usgs_islands_raster, "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/08-substrate-intermediate/usgs-island-substrate.tif", filetype = "GTiff", overwrite = TRUE)
 ```
 

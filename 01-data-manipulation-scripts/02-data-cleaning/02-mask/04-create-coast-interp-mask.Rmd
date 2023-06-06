@@ -14,6 +14,9 @@ library(tidyverse)
 library(sf)
 library(tmap)
 library(terra)
+
+# define data directory
+data_dir <- "/capstone/kelpgeomod/google_drive_download"
 ```
 
 ## Create blank raster along the coast
@@ -22,11 +25,11 @@ library(terra)
 
 ```{r label = "create coast raster"}
 # read in AOI shape
-AOI <- st_read("/capstone/kelpgeomod/raw_data/New_AOI_SBchannel_shp/New_AOI_SBchannel.shp")
+AOI <- st_read(file.path(data_dir, "02-intermediate-data/02-aoi-sbchannel-shapes-intermediate/aoi-sbchannel.shp"))
 
 # Create land_bounds ----
 
-land_bounds <- st_read("/capstone/kelpgeomod/raw_data/land_bounds/California_County_Boundaries/cnty19_1.shp") |> 
+land_bounds <- st_read(file.path(data_dir, "01-raw-data/02-ca-county-land-boundaries-raw/California_County_Boundaries/cnty19_1.shp")) |> 
   # transform so that the crs matches exactly
   st_transform(crs = "EPSG:4326") |> 
   # crop to our AOI
@@ -95,9 +98,9 @@ tm_shape(land_bounds) +
 
 ```{r label = "write raster and shape to tsosie}
 # write polygon
-st_write(coast_buffer, "/capstone/kelpgeomod/raw_data/interpolation_shapes/sbc_coast.shp")
+st_write(coast_buffer, "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/04-interpolation-shapes-intermediate/coast-sbchannel.shp", append = FALSE)
 
 # write raster
-terra::writeRaster(coast_raster, "/capstone/kelpgeomod/raw_data/interpolation_shapes/sbc_coast.tif", filetype = "GTiff", overwrite = TRUE)
+terra::writeRaster(coast_raster, "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/04-interpolation-shapes-intermediate/coast-sbchannel.tif", filetype = "GTiff", overwrite = TRUE)
 ```
 

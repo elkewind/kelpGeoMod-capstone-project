@@ -24,7 +24,7 @@ The purpose of this is to check the files that have been combined and/ or conver
 # datadir <- "/Users/jfrench/Documents/MEDS/Capstone/Intermediate_data/substrate"
 
 # If working on tsosie
-datadir <- "/capstone/kelpgeomod/intermediate_data/substrate"
+datadir <- "/capstone/kelpgeomod/old_file_structure/intermediate_data/substrate"
 ```
 
 ## Read in and Reclassify
@@ -38,11 +38,11 @@ CA_maps <- rast(file.path(datadir, "CA_maps_substrate_islands.tif"))
 # create reclassification matrix
 # before reclassification 0 = hard and 1 = soft
 
-CA_maps_rcl <- matrix(c(0, 1, 1, 0), nrow = 2, ncol = 2, byrow = T)
+#CA_maps_rcl <- matrix(c(0, 1, 1, 0), nrow = 2, ncol = 2, byrow = T)
 
 # after reclassification 0 = soft and 1 = hard
 
-CA_maps <- classify(CA_maps, rcl = CA_maps_rcl)
+#CA_maps <- classify(CA_maps, rcl = CA_maps_rcl)
 
 plot(CA_maps)
 ```
