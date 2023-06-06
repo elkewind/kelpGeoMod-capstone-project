@@ -12,6 +12,8 @@ The purpose of this notebook is to join the intermediate nutrient data into a si
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+setwd("~/capstone/kelpGeoMod-capstone-project")
 ```
 
 ```{r label = "read in packages"}
@@ -82,6 +84,81 @@ joined_nutrients <- bind_rows(data_set_list) |>
 
 ```
 
+
+```{r label = "read in mask"}
+
+# read in mask
+mask <- rast(file.path(data_dir, "02-intermediate-data/03-mask-intermediate/main-mask.tif"))
+```
+
+## Create year and quarter raster bricks
+
+```{r label = "source in functions"}
+# source in function that creates a list of data frames by quarter
+source(here("01-data-manipulation-scripts/03-data-interpolation/02-functions/02-prep.R"))
+source(here("01-data-manipulation-scripts/03-data-interpolation/02-functions/03-implement.R"))
+```
+
+```{r label = "phosphate quarters"}
+# no need to assign this to anything, assignment is done in the function. 
+# use year and quarter if interpolating for each year and quarter. 
+idw_prep_year_quarters("phosphate", nutrients)
+idw_prep_year_quarters("nitrate_nitrite", nutrients)
+idw_prep_year_quarters("ammonium", nutrients)
+
+```
+
+```{r label = "rasterize year quarter nutrients"}
+# use idw_implement_rasterize.R function to convert each year and quarter to a raster. 
+
+# phosphate ----
+phosphate_year_quarter_raster_all <- idw_implement_rasterize(phosphate_year_quarter_df_list, 
+                                                         "phosphate", 
+                                                         mask, 
+                                                         all = TRUE)
+
+# save phosphat_year_quarter_all as raster brick and save as tif for pivoted data frame. 
+phosphate_raster_list <- lapply(seq_along(phosphate_year_quarter_raster_all), function(i) {
+  raster(phosphate_year_quarter_raster_all[[i]])
+})
+
+phosphate_idw_brick <- raster::brick(phosphate_raster_list)
+
+#nitrate_nitrite ----
+nitrate_year_quarter_raster_all <- idw_implement_rasterize(nitrate_nitrite_year_quarter_df_list, 
+                                                         "nitrate_nitrite", 
+                                                         mask, 
+                                                         all = TRUE)
+
+# concert to Raster object so can be saved as a brick
+nitrate_list <- lapply(seq_along(nitrate_year_quarter_raster_all), function(i) {
+  raster(nitrate_year_quarter_raster_all[[i]])
+})
+
+nitrate_nitrite_idw_brick <- raster::brick(nitrate_list)
+
+# ammonium ----
+ammonium_year_quarter_raster_all <- idw_implement_rasterize(ammonium_year_quarter_df_list, 
+                                                         "ammonium", 
+                                                         mask, 
+                                                         all = TRUE)
+
+# save ammonium_year_quarter_all as raster brick and save as tif for pivoted data frame. 
+ammonium_list <- lapply(seq_along(ammonium_year_quarter_raster_all), function(i) {
+  raster(ammonium_year_quarter_raster_all[[i]])
+})
+
+ammonium_idw_brick <- raster::brick(nitrate_list)
+```
+
+```{r label = "save year quarter raster bricks"}
+# write each brick to file 
+writeRaster(phosphate_idw_brick, "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/09-nutrients-intermediate/joined/phosphate-brick.tif", format = "GTiff", overwrite = TRUE)
+
+writeRaster(nitrate_nitrite_idw_brick, "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/09-nutrients-intermediate/joined/nitrate-nitrite-brick.tif", format = "GTiff", overwrite = TRUE)
+
+writeRaster(ammonium_idw_brick, "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/09-nutrients-intermediate/joined/ammonium-brick.tif", format = "GTiff", overwrite = TRUE)
+```
 
 ```{r label = "write to csv"}
 # write to csv
