@@ -12,11 +12,9 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 ```{r label = "set data directory"}
-# if running locally
-#datadir <- "/Users/jfrench/Documents/MEDS/Capstone/DATA/Nutrients/plumes_blooms"
 
-# if running on tsosie
-datadir <- "/capstone/kelpgeomod/raw_data/"
+# define the data directory
+data_dir <- "/capstone/kelpgeomod/google_drive_download"
 ```
 
 ```{r label = "read in libraries"}
@@ -277,10 +275,10 @@ Some of the files had a space between each line which caused an error. The loop 
 # want to create a loop that read in the files from the folder and converts the date to a character, will convert to date in a later step. 
 
 # create a list of file names in the asc folder
-file_names <- list.files(file.path(datadir, "plumes_and_blooms"))
+file_names <- list.files(file.path(data_dir, "01-raw-data/09-nutrients-various-raw/05-nutrients-plumes-blooms-raw"))
 
 # create empty list to add asc data frames to.
-asc_list <- c()
+asc_list <- list()
 
 # loop through the files in file_names
 for (i in seq_along(file_names)) {
@@ -289,8 +287,7 @@ for (i in seq_along(file_names)) {
   tryCatch(# read in files inside try catch so can move past errors.
     file <-
       read.table(file.path( # Use read.table to read files
-        datadir, 
-        "plumes_and_blooms",
+        data_dir, "01-raw-data/09-nutrients-various-raw/05-nutrients-plumes-blooms-raw",
         file_names[i]
       ),
       colClasses = c(V2 = "character")), # Set date column to character to not lose zeros
@@ -364,7 +361,7 @@ UPDATE: I looked at the other two by pasting them in with data pasta, no errors 
 # Column names are the same for the variables we are interested in so one vector of variables should do it. 
 # loop through files in asc_list and select for desired columns 
 for (i in seq_along(asc_list)) {
-  asc_list[[i]] <- select(asc_list[[i]], 
+  asc_list[[i]] <- dplyr::select(asc_list[[i]], 
                           c(Id, Date, Julian, Lat, Lon,
                  Nom_Depth, T068, PO4, NO2, NO3NO2, 
                  NH4))
@@ -418,33 +415,17 @@ PB_mean <- PB_combined |>
             "nitrite" = mean(nitrite, na.rm = T), 
             "nitrate_nitrite" = mean(nitrate_nitrite, na.rm = T),
             "temp" = mean(temp, na.rm = T)) |> 
-  mutate("source" = "plumes_blooms") # add source
+  mutate("source" = "plumes_blooms") |> # add source
+  mutate("Lon" = -Lon) |> # convert lon to western hemisphere
+  rename(c("lon" = "Lon", "lat" = "Lat")) # rename lat and lon
 ```
 
-### Convert lat lon to geomertry
-
-```{r label = "Convert geometry"}
-
-# convert lat and lon to geometry
-PB_mean_geom <- PB_mean |> 
-  mutate("Lon" = -Lon) |> 
-  st_as_sf(coords = c("Lon", "Lat")) |> 
-  st_set_crs( "EPSG:4326")
-```
 
 ### Write as an RDS file
-
-```{r label = "write to RDS file"}
-# if running locally
-#write_rds(PB_mean_geom, "/Users/jfrench/Documents/MEDS/Capstone/Intermediate_data/Plumes_Blooms/Plumes_Blooms.RDS")
-
-# if running on tsosie
-write_rds(PB_mean_geom, "/capstone/kelpgeomod/intermediate_data/Plumes_Blooms/Plumes_Blooms.RDS")
-```
 
 ```{r label = "Write to CSV"}
 # write the full data frame to csv, will lose date and geom.
 
-write_csv(PB_mean_geom, "/Users/jfrench/Documents/MEDS/Capstone/Intermediate_data/Plumes_Blooms/Plumes_Blooms.CSV")
+write_csv(PB_mean, "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/09-nutrients-intermediate/unjoined/plumes-blooms.csv", append = FALSE)
 ```
 
