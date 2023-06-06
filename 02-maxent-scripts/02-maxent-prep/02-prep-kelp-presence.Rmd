@@ -11,10 +11,15 @@ library(tidyverse)
 ```
 
 ```{r}
+#---- Set up the data directory (wherever your download of our Google Shared Drive lives)
+data_dir <- "/capstone/kelpgeomod/google_drive_download"
+```
+
+```{r}
 # Read in kelp data
-kelp_dat <- read_csv("/capstone/kelpgeomod/new_file_structure/03-analysis-data/synthesized/interpolated_join.csv") %>% 
-  drop_na(area) %>% # drop na values
-  filter(area > 0) %>% # remove values of 0
+kelp_dat <- read_csv(file.path(data_dir, "/03-analysis-data/03-data-synthesization-analysis/quarterly-interpolated-synthesized.csv")) %>% 
+  drop_na(kelp_area) %>% # drop na values
+  filter(kelp_area > 0) %>% # remove values of 0
   dplyr::select(quarter, lat, lon) %>% # remove area column
   mutate(scientific_name = "Macrocystis pyrifera") %>% # add sci name column
   relocate(scientific_name, .before = "lat") %>% # reorder to match maxent needs
@@ -25,19 +30,28 @@ kelp_dat <- read_csv("/capstone/kelpgeomod/new_file_structure/03-analysis-data/s
 ```
 
 ```{r}
-# Get four separate data frames 
+#---- Write to data files
+# Change the file path to your own to re-write data
 
+# Get four separate data frames 
 # split the data by quarter
 kelp_list <- split(kelp_dat, kelp_dat$quarter)
 
 # loop through the list of data frames and write each one to a separate CSV file in the respective folder
 for (i in 1:length(kelp_list)) {
   # create a file name based on the quarter and folder
-  folder_name <- paste0("/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_", i)
-  file_name <- paste0(folder_name, "/kelp_presence_", i, ".csv")
+  folder_name <- paste0("/capstone/kelpgeomod/google_drive_download/03-analysis-data/04-maxent-analysis/quarter-", i)
+  file_name <- paste0(folder_name, "/kelp-presence-", i, ".csv")
   # write the data frame to the CSV file
   write_csv(kelp_list[[i]], file_name)
 }
 
+```
+
+```{r}
+# Check visually
+kelp_1 <- st_as_sf(kelp_list[[1]], coords = c("longitude", "latitude"))
+tm_shape(kelp_1) +
+  tm_dots()
 ```
 

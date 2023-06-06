@@ -13,12 +13,9 @@ The purpose of this markdown is to combine the files from the California Mapping
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-```{r label = "set working directory"}
-# If working locally
-#setwd("/Users/jfrench/Documents/MEDS/Capstone/DATA/Benthic_Habitat_2/Habitat_tiffs/Channel_Islands")
-
-# If wokring on tsosie
-setwd("/capstone/kelpgeomod/old_file_structure")
+```{r label = "define data directory"}
+# Define data directory
+data_dir <- "/capstone/kelpgeomod/google_drive_download"
 ```
 
 ```{r label = "read in packages"}
@@ -27,12 +24,12 @@ library(terra)
 library(tmap)
 library(sf)
 library(tidyverse)
+library(doParallel)
 ```
 
 ```{r label = "read in the mask"}
 # Read in the mask
-habitat_mask <- rast("/Users/jfrench/capstone/Data-Cleaning/mask/habitat_mask_rast.tif") 
-
+habitat_mask <- rast(file.path(data_dir, "02-intermediate-data/03-mask-intermediate/habitat-mask.tif"))
 ```
 
 Prior to this the ESRI substrate .lyr files that were sent to us from the California Mapping Project were converted to .tif files using QGIS. The A cell value of 1 = Rock and 0 = Not Rock or sediment. There is one file, sp_3mrock that had slightly different coverage than the corresponding substrate file and was classified with a different method but with the same rugosity thresholds. 
@@ -55,9 +52,11 @@ CA_maps_fun <- function(raster_file) {
 ```
 
 ```{r label = "Read in files"}
+# set up parallel processing because this takes forever
+doParallel::registerDoParallel()
 # This entire code chunk is courtesy of ChatGPT.
 # get list of subdirectories in working directory
-subdirs <- list.dirs()
+subdirs <- list.dirs(file.path(data_dir, "01-raw-data/08-substrate-usgs-seafloormapping-raw/04-seafloormapping/Habitat_tiffs/Channel_Islands"))
 
 # Loop over subdirectories and read shapefiles
 for (subdir in subdirs) {
@@ -66,7 +65,7 @@ for (subdir in subdirs) {
   
   # Loop over shapefiles in current subdirectory and read them
   for (rasterfile in rasterfiles) {
-    # Read shapefile using sf::st_read function and assign to a new object with the name of the shapefile
+    # Read shapefile using rast from terra function and assign to a new object with the name of the .tif
     rast_file <- CA_maps_fun(rasterfile)
     rast_name <- sub('\\.tif$', '', basename(rasterfile))
     assign(rast_name, rast_file)
@@ -95,23 +94,7 @@ terra::set.names(CA_substrate_islands, "substrate_class")
 plot(CA_substrate_islands)
 ```
 
-```{r label = "convert to character"}
-# Convert the substrate raster to a dataframe so that the values can be converted to character. Use na.rm = FALSE to keep na cells, this is necessary for converting back to SpatRaster format correctly. 
-# CA_substrate_df <- as.data.frame(CA_substrate_islands, na.rm = FALSE) #|> 
-#    mutate("substrate_class" = case_when(substrate_class == 0 ~ "s", 
-#                                         substrate_class == 1 ~ "h")) 
-
-```
-
-
-```{r label = "Replace values with df values"}
-# replace values in CA_substrate_islands with the values in the CA_substrate_df
-# CA_substrate_islands <- setValues(CA_substrate_islands, CA_substrate_df)
-# 
-# plot(CA_substrate_islands)
-```
-
 ```{r label = "Write to GTiff file"}
-terra::writeRaster(CA_substrate_islands, "intermediate_data/substrate/CA_maps_substrate_islands.tif", filetype = "GTiff", overwrite = TRUE)
+terra::writeRaster(CA_substrate_islands, "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/08-substrate-intermediate/seafloormapping-islands-substrate.tif", filetype = "GTiff", overwrite = TRUE)
 ```
 

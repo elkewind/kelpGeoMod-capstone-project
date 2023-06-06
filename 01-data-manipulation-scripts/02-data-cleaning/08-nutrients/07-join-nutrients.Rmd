@@ -43,7 +43,7 @@ PB <- read_csv(file.path(data_dir, "02-intermediate-data/09-nutrients-intermedia
   st_as_sf(coords = c("lon", "lat"))
 
 # CalCOFI
-calCOFI <- read_csv(file.path(data_dir, "02-intermediate-data/09-nutrients-intermediate/unjoined/calcofi.RDS")) |> 
+calCOFI <- read_csv(file.path(data_dir, "02-intermediate-data/09-nutrients-intermediate/unjoined/calcofi.csv")) |> 
   # create nitrate_nitrite combined column 
   mutate("nitrate_nitrite" = nitrate + nitrite, .after = nitrite) |> 
   rename("ammonium" = "ammonia") |> # Natalie said the naming difference is likely do to how each data source quantified the measurement but it was okay to combine them. 
@@ -52,7 +52,7 @@ calCOFI <- read_csv(file.path(data_dir, "02-intermediate-data/09-nutrients-inter
 # USGS
 # Need to add source column 
 # Also not an sf object but the geom column looks the same.
-USGS <- read_csv(file.path(data_dir, "02-intermediate-data/09-nutrients-intermediate/unjoined/usgs.rds")) |> 
+USGS <- read_csv(file.path(data_dir, "02-intermediate-data/09-nutrients-intermediate/unjoined/usgs.csv")) |> 
   mutate("source" = "USGS") |> 
   st_as_sf(coords = c("lon", "lat"))
 
