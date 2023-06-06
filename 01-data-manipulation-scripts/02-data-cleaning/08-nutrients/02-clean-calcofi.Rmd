@@ -29,7 +29,7 @@ CalCOFI_cast <- read_csv(file.path(data_dir, "01-raw-data/09-nutrients-various-r
 # Read in the CalCOFI bottle data
 CalCOFI_bottle <- read_csv(file.path(data_dir, "01-raw-data/09-nutrients-various-raw/02-nutrients-calcofi-raw/194903-202001_Bottle.csv"), locale = locale(encoding = "latin1"))
 
-# Join cast and bottle data
+# Join cast and bottle data + vectorize lat lon point data and put into our nutrient data format
 CalCOFI_join <- CalCOFI_bottle %>% 
   right_join(CalCOFI_cast, by = "Cst_Cnt") %>% 
   dplyr::select(c("Lon_Dec", "Lat_Dec", "Depthm", "T_degC", "Quarter", "Year","PO4uM", "NO2uM", "NO3uM", "NH3uM")) %>% 
@@ -44,6 +44,7 @@ CalCOFI_join <- CalCOFI_bottle %>%
 ```
 
 ```{r}
+# Get averages of points in one location
 CalCOFI_ave <- CalCOFI_join %>% 
   group_by(quarter, year, geometry) %>% 
   summarise(temp = mean(temp, na.rm = TRUE),
@@ -51,14 +52,23 @@ CalCOFI_ave <- CalCOFI_join %>%
             nitrite = mean(nitrite, na.rm = TRUE),
             ammonia = mean(ammonia, na.rm = TRUE),
             phosphate = mean(phosphate, na.rm = TRUE)) %>% 
-  mutate("source" = "CalCOFI")
+  mutate("source" = "CalCOFI") 
 
+# Check it out
 tm_shape(CalCOFI_ave) +
   tm_dots()
+
+# Remove geometry for export to match our nutrient data structure
+cal_unlist <- CalCOFI_ave %>%
+  st_coordinates() %>%
+  as.data.frame() %>%
+  setNames(c("lon", "lat")) %>%
+  bind_cols(CalCOFI_ave) %>% 
+  select(-geometry)
 ```
 
 ```{r}
 #---- Write to data files
 # Change this file path to your own to re-write data
-write_csv(x = CalCOFI_ave, file = "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/09-nutrients-intermediate/unjoined/calcofi.csv")
+write_csv(x = cal_unlist, file = "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/09-nutrients-intermediate/unjoined/calcofi.csv")
 ```
