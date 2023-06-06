@@ -201,7 +201,8 @@ identical(nrow(area_stack_masked), nrow(mask))
 identical(ncol(area_stack_masked), ncol(mask))
 
 # Save the RasterBrick object
-writeRaster(area_stack_masked, filename = "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/05-kelp-area-biomass-intermediate/kelp-area-brick.tif", format = "GTiff", overwrite = TRUE)
+writeRaster(area_stack_masked, filename = "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/05-kelp-area-biomass-intermediate/kelp-area-brick.tif", format = "GTiff", overwrite = TRUE) # write to original location
+writeRaster(area_stack_masked, filename = "/capstone/kelpgeomod/google_drive_download/04-deliverables/02-full-synthesized/kelp-area-brick.tif", format = "GTiff", overwrite = TRUE) # write to deliverables location
 ```
 
 ```{r}
@@ -276,6 +277,7 @@ identical(nrow(biomass_stack_masked), nrow(mask))
 identical(ncol(biomass_stack_masked), ncol(mask))
 
 # Save the RasterBrick object
-writeRaster(biomass_stack_masked, filename = "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/05-kelp-area-biomass-intermediate/kelp-biomass-brick.tif", format = "GTiff", overwrite = TRUE)
+writeRaster(biomass_stack_masked, filename = "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/05-kelp-area-biomass-intermediate/kelp-biomass-brick.tif", format = "GTiff", overwrite = TRUE) # write to original location
+writeRaster(biomass_stack_masked, filename = "/capstone/kelpgeomod/google_drive_download/04-deliverables/02-full-synthesized/kelp-biomass-brick.tif", format = "GTiff", overwrite = TRUE) # write to deliverables location
 ```
 
