@@ -29,7 +29,8 @@ Read all the data sets
 ```{r}
 # NUTRIENTS
 # Observed Nutrients
-joined_nutrients <- readRDS(file.path(drive_dir, "02-intermediate-data/09-nutrients-intermediate/joined/joined-nutrients.RDS"))
+joined_nutrients <- read_csv(file.path(drive_dir, "02-intermediate-data/09-nutrients-intermediate/joined/joined-nutrients.csv")) %>% 
+  st_as_sf(coords = c("lon", "lat"))
 
 # Phosphate
 interp_phosphate <- brick(file.path(drive_dir, "03-analysis-data/02-nutrient-interpolation-analysis/phosphate/phosphate-quarter-brick.tif"))

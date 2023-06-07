@@ -12,8 +12,6 @@ The purpose of this notebook is to join the intermediate nutrient data into a si
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-
-setwd("~/capstone/kelpGeoMod-capstone-project")
 ```
 
 ```{r label = "read in packages"}
@@ -22,6 +20,8 @@ library(tmap)
 library(sf)
 library(naniar)
 library(here)
+library(terra)
+library(raster)
 ```
 
 ```{r label = "define data directory"}
@@ -102,10 +102,9 @@ source(here("01-data-manipulation-scripts/03-data-interpolation/02-functions/03-
 ```{r label = "phosphate quarters"}
 # no need to assign this to anything, assignment is done in the function. 
 # use year and quarter if interpolating for each year and quarter. 
-idw_prep_year_quarters("phosphate", nutrients)
-idw_prep_year_quarters("nitrate_nitrite", nutrients)
-idw_prep_year_quarters("ammonium", nutrients)
-
+idw_prep_year_quarters("phosphate", joined_nutrients)
+idw_prep_year_quarters("nitrate_nitrite", joined_nutrients)
+idw_prep_year_quarters("ammonium", joined_nutrients)
 ```
 
 ```{r label = "rasterize year quarter nutrients"}
@@ -158,10 +157,26 @@ writeRaster(phosphate_idw_brick, "/capstone/kelpgeomod/google_drive_download/02-
 writeRaster(nitrate_nitrite_idw_brick, "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/09-nutrients-intermediate/joined/nitrate-nitrite-brick.tif", format = "GTiff", overwrite = TRUE)
 
 writeRaster(ammonium_idw_brick, "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/09-nutrients-intermediate/joined/ammonium-brick.tif", format = "GTiff", overwrite = TRUE)
+
+# write each brick to file 
+writeRaster(phosphate_idw_brick, "/capstone/kelpgeomod/google_drive_download/04-deliverables/02-full-synthesized/phosphate-brick.tif", format = "GTiff", overwrite = TRUE)
+
+writeRaster(nitrate_nitrite_idw_brick, "/capstone/kelpgeomod/google_drive_download/04-deliverables/02-full-synthesized/nitrate-nitrite-brick.tif", format = "GTiff", overwrite = TRUE)
+
+writeRaster(ammonium_idw_brick, "/capstone/kelpgeomod/google_drive_download/04-deliverables/02-full-synthesized/ammonium-brick.tif", format = "GTiff", overwrite = TRUE)
 ```
 
 ```{r label = "write to csv"}
+# Remove geometries for joining process
+joined_nutrients2 <- joined_nutrients %>% 
+  st_coordinates() %>% 
+  as.data.frame() %>% 
+  setNames(c("lon", "lat")) %>% 
+  bind_cols(joined_nutrients) %>% 
+  dplyr::select(-geometry) %>% 
+  dplyr::select(-...14)
+
 # write to csv
-write_csv(joined_nutrients, "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/09-nutrients-intermediate/joined/joined-nutrients.csv")
+write_csv(joined_nutrients2, "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/09-nutrients-intermediate/joined/joined-nutrients.csv")
 ```
 

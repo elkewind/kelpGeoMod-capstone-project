@@ -13,6 +13,7 @@ library(sf)
 library(terra)
 library(tmap)
 library(RColorBrewer)
+library(mapview)
 ```
 
 ```{r}
@@ -154,6 +155,8 @@ tm_shape(resampled_depth) + # check the location
 # Write the new raster to intermediate data
 # Change this file path to your own to re-write data
 terra::writeRaster(resampled_depth, "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/06-depth-intermediate/depth.tif", filetype = "GTiff", overwrite = TRUE)
+# write to deliverables
+terra::writeRaster(resampled_depth, "/capstone/kelpgeomod/google_drive_download/04-deliverables/02-full-synthesized/depth.tif", filetype = "GTiff", overwrite = TRUE)
 ```
 
 ```{r}

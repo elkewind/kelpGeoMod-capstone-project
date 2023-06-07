@@ -130,18 +130,3 @@ final_joined_data <- joined_data %>%
 # Write spatial object to RDS file
 write_csv(final_joined_data, "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/09-nutrients-intermediate/unjoined/usgs.csv")
 ```
-
-TESTING: Plot the filtered joined data points
-```{r}
-
-#Convert to a spatial object
-st_joined_data <- st_sf(st_joined_data)
-
-# plot the joined data with the Set1 palette
-tm_shape(st_joined_data) +
-  tm_dots() +
-  tm_legend(title = "Selected Sites", title.position = c("center", "top"), frame = FALSE) +
-tm_shape(area_sf) + 
-  tm_borders(col = "red")
-
-```

@@ -26,6 +26,10 @@ library(exactextractr)
 library(leaflet)
 ```
 
+```{r}
+#---- Set up the data directory (wherever your download of our Google Shared Drive lives)
+data_dir <- "/capstone/kelpgeomod/google_drive_download"
+```
 
 ```{r}
 # Set color palette
@@ -44,7 +48,7 @@ maxent_pal <- "BuGn"
 
 ```{r, results='hide'}
 # Read in AOI
-aoi <- st_read("/capstone/kelpgeomod/new_file_structure/01-raw-data/New_AOI_SBchannel_shp/New_AOI_SBchannel.shp")
+aoi <- st_read(file.path(data_dir, "02-intermediate-data/02-aoi-sbchannel-shapes-intermediate/aoi-sbchannel.shp"))
 # Create a slightly larger bounding box
 bbox <- st_bbox(c(xmin = -120.65 - 0.1, 
                   xmax = -118.8 + 0.1,
@@ -70,10 +74,11 @@ This map shows the area of interest for this project -- the Santa Barbara Channe
 
 ```{r, results='hide'}
 # Prep data for output
-kelp <- brick("/capstone/kelpgeomod/new_file_structure/02-intermediate-data/area_biomass/area_brick_standardized.tif")
+kelp <- brick(file.path(data_dir, "02-intermediate-data/05-kelp-area-biomass-intermediate/kelp-area-brick.tif"))
 
 # Read in the counties data
-counties <- st_read("/capstone/kelpgeomod/new_file_structure/01-raw-data/land_bounds/California_County_Boundaries/cnty19_1.shp")
+counties <- st_read(file.path(data_dir, "01-raw-data/02-ca-county-land-boundaries-raw/California_County_Boundaries/cnty19_1.shp"))
+
 # Convert counties data to WGS84
 counties <- st_transform(counties, "+proj=longlat +datum=WGS84")
 
@@ -111,16 +116,16 @@ kelp_quarter3 <- kelp_all[[3]]
 kelp_quarter4 <- kelp_all[[4]]
 
 # Read in depth data
-depth <- raster("/capstone/kelpgeomod/new_file_structure/02-intermediate-data/depth/depth.tif")
+depth <- raster(file.path(data_dir, "02-intermediate-data/06-depth-intermediate/depth.tif"))
 
 # Read in sst data
-sst_quarter1 <- raster("/capstone/kelpgeomod/new_file_structure/02-intermediate-data/sst/sst_quarter_1.tif")
-sst_quarter2 <- raster("/capstone/kelpgeomod/new_file_structure/02-intermediate-data/sst/sst_quarter_2.tif")
-sst_quarter3 <- raster("/capstone/kelpgeomod/new_file_structure/02-intermediate-data/sst/sst_quarter_3.tif")
-sst_quarter4 <- raster("/capstone/kelpgeomod/new_file_structure/02-intermediate-data/sst/sst_quarter_4.tif")
+sst_quarter1 <- raster(file.path(data_dir, "02-intermediate-data/07-sst-intermediate/sst-quarter-1.tif"))
+sst_quarter2 <- raster(file.path(data_dir, "02-intermediate-data/07-sst-intermediate/sst-quarter-2.tif"))
+sst_quarter3 <- raster(file.path(data_dir, "02-intermediate-data/07-sst-intermediate/sst-quarter-3.tif"))
+sst_quarter4 <- raster(file.path(data_dir, "02-intermediate-data/07-sst-intermediate/sst-quarter-4.tif"))
 
 # Read in nitrogen data
-nitr_all <- brick("/capstone/kelpgeomod/new_file_structure/03-analysis-data/inteprolate_idw/nitrate_nitrite_quarterly.tif")
+nitr_all <- brick(file.path(data_dir, "03-analysis-data/02-nutrient-interpolation-analysis/nitrate-nitrite/nitrate-nitrite-quarter-brick.tif"))
 
 nitr_quarter1 <- nitr_all[[1]]
 nitr_quarter2 <- nitr_all[[2]]
@@ -128,7 +133,7 @@ nitr_quarter3 <- nitr_all[[3]]
 nitr_quarter4 <- nitr_all[[4]]
 
 # Read in phosphate data
-phos_all <- brick("/capstone/kelpgeomod/new_file_structure/03-analysis-data/inteprolate_idw/phosphate_quarterly.tif")
+phos_all <- brick(file.path(data_dir, "03-analysis-data/02-nutrient-interpolation-analysis/phosphate/phosphate-quarter-brick.tif"))
 
 phos_quarter1 <- phos_all[[1]]
 phos_quarter2 <- phos_all[[2]]
@@ -136,7 +141,7 @@ phos_quarter3 <- phos_all[[3]]
 phos_quarter4 <- phos_all[[4]]
 
 # Read in ammonium data
-amm_all <- brick("/capstone/kelpgeomod/new_file_structure/03-analysis-data/inteprolate_idw/ammonium_quarterly.tif")
+amm_all <- brick(file.path(data_dir, "03-analysis-data/02-nutrient-interpolation-analysis/ammonium/ammonium-quarter-brick.tif"))
 
 amm_quarter1 <- amm_all[[1]]
 amm_quarter2 <- amm_all[[2]]
@@ -390,35 +395,35 @@ This map has layers that can be toggled on and off. Each grid cell per layer is 
 # Prep for plotting
 # ---------------------------------Quarter 1  ---------------------------------
 # Read in kelp data and make sf object
-kelp_1 <- read_csv("/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_1/kelp_presence_1.csv") %>% 
+kelp_1 <- read_csv(file.path(data_dir, "03-analysis-data/04-maxent-analysis/quarter-1/kelp-presence-1.csv")) %>% 
   st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
 
 # Read in the maxent output
-maxent_quarter_1 <- raster("/capstone/kelpgeomod/new_file_structure/03-analysis-data/04-maxent-analysis/results/maxent-quarter-1-output.tif")
+maxent_quarter_1 <- raster(file.path(data_dir, "03-analysis-data/04-maxent-analysis/results/maxent-quarter-1-output.tif"))
 
 # ---------------------------------Quarter 2  ---------------------------------
 
-kelp_2 <- read_csv("/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_2/kelp_presence_2.csv") %>% 
+kelp_2 <- read_csv(file.path(data_dir, "03-analysis-data/04-maxent-analysis/quarter-2/kelp-presence-2.csv")) %>% 
   st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
 
 # Read in the maxent output
-maxent_quarter_2 <- raster("/capstone/kelpgeomod/new_file_structure/03-analysis-data/04-maxent-analysis/results/maxent-quarter-2-output.tif")
+maxent_quarter_2 <- raster(file.path(data_dir, "03-analysis-data/04-maxent-analysis/results/maxent-quarter-2-output.tif"))
 
 # ---------------------------------Quarter 3  ---------------------------------
 
-kelp_3 <- read_csv("/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_3/kelp_presence_3.csv") %>% 
+kelp_3 <- read_csv(file.path(data_dir, "03-analysis-data/04-maxent-analysis/quarter-3/kelp-presence-3.csv")) %>% 
   st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
 
 # Read in the maxent output
-maxent_quarter_3 <- raster("/capstone/kelpgeomod/new_file_structure/03-analysis-data/04-maxent-analysis/results/maxent-quarter-3-output.tif")
+maxent_quarter_3 <- raster(file.path(data_dir, "03-analysis-data/04-maxent-analysis/results/maxent-quarter-3-output.tif"))
 
 # ---------------------------------Quarter 4  ---------------------------------
 
-kelp_4 <- read_csv("/capstone/kelpgeomod/new_file_structure/03-analysis-data/maxent/quarter_4/kelp_presence_4.csv") %>% 
+read_csv(file.path(data_dir, "03-analysis-data/04-maxent-analysis/quarter-4/kelp-presence-4.csv")) %>% 
   st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
 
 # Read in the maxent output
-maxent_quarter_4 <- raster("/capstone/kelpgeomod/new_file_structure/03-analysis-data/04-maxent-analysis/results/maxent-quarter-4-output.tif")
+maxent_quarter_4 <- raster(file.path(data_dir, "03-analysis-data/04-maxent-analysis/results/maxent-quarter-4-output.tif"))
 
 ```
 
@@ -511,7 +516,7 @@ mean_masked_maxent <- mean(masked_rcl_1, masked_rcl_2, masked_rcl_3, masked_rcl_
 
 # Mask to sandy-bottom areas
 # Read in sandy-bottom raster
-sandy_raster <- raster("/capstone/kelpgeomod/new_file_structure/03-analysis-data/substrate/sandy-bottom-1km.tif")
+sandy_raster <- raster(file.path(data_dir, "03-analysis-data/05-substrate-analysis/sandy-bottom-1km.tif"))
 
 # Mask maxent to areas without sandy-bottom
 sub_masked_model <- mask(x = mean_masked_maxent, mask = sandy_raster, inverse = FALSE)
