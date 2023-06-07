@@ -21,49 +21,50 @@ library(sf)
 library(raster)
 library(paletteer)
 library(rasterVis)
+library(latticeExtra)
+library(gridExtra)
 ```
 
 ```{r label = "read in data"}
-setwd("/capstone/kelpgeomod/old_file_structure/")
-
+data_dir <- "/capstone/kelpgeomod/google_drive_download"
 
 # read in AOI shape
-aoi <- read_sf("raw_data/New_AOI_SBchannel_shp/New_AOI_SBchannel.shp")
+aoi <- read_sf(file.path(data_dir, "02-intermediate-data/02-aoi-sbchannel-shapes-intermediate/aoi-sbchannel.shp"))
 
 # read in land bounds
-land <- read_sf("raw_data/land_bounds/California_County_Boundaries/cnty19_1.shp") |> 
+land <- read_sf(file.path(data_dir, "01-raw-data/02-ca-county-land-boundaries-raw/California_County_Boundaries/cnty19_1.shp")) |> 
   st_union() |> # gets rid of the county lines
   st_transform("EPSG:4326") |> 
   st_crop(aoi)
 
 # read in observed synthesized data for visualization
-observed_syn <- read_csv("analysis_data/synthesized/observed-nutrients-synthesized.csv") |> 
+observed_syn <- read_csv(file.path(data_dir, "03-analysis-data/03-data-synthesization-analysis/observed-nutrients-synthesized.csv")) |> 
   st_as_sf(coords = c("lon", "lat"), crs = st_crs(4326)) |> 
   filter(nutrient_source != "lter_nitrate")
 
 # Year and quarter raster stacks of nitrogen (nitrate + nitrite), ammonium, and phospahte. 
-nitrogen <- brick("intermediate_data/joined_nutrients/nitrate_nitrite_raster.tif")
-ammonium <- brick("intermediate_data/joined_nutrients/ammonium_raster.tif")
-phosphate <- brick("intermediate_data/joined_nutrients/phosphate_raster.tif")
+nitrogen <- brick(file.path(data_dir, "02-intermediate-data/09-nutrients-intermediate/joined/nitrate-nitrite-brick.tif"))
+ammonium <- brick(file.path(data_dir, "02-intermediate-data/09-nutrients-intermediate/joined/ammonium-brick.tif"))
+phosphate <- brick(file.path(data_dir, "02-intermediate-data/09-nutrients-intermediate/joined/phosphate-brick.tif"))
 
 # Read in interpolated nutrient layers for nitrogen 
-n_interp <- brick("analysis_data/inteprolate_idw/nitrate_nitrite_quarterly.tif")
-p_interp <- brick("analysis_data/inteprolate_idw/phosphate_quarterly.tif")
-a_interp <- brick("analysis_data/inteprolate_idw/ammonium_quarterly.tif")
+n_interp <- brick(file.path(data_dir, "03-analysis-data/02-nutrient-interpolation-analysis/nitrate-nitrite/nitrate-nitrite-quarter-brick.tif"))
+p_interp <- brick(file.path(data_dir, "03-analysis-data/02-nutrient-interpolation-analysis/phosphate/phosphate-quarter-brick.tif"))
+a_interp <- brick(file.path(data_dir, "03-analysis-data/02-nutrient-interpolation-analysis/ammonium/ammonium-quarter-brick.tif"))
 
 # read in kelp area and biomass
-kelp_area <- brick("intermediate_data/area_biomass/area_brick_standardized.tif")
-kelp_bio <- brick("intermediate_data/area_biomass/biomass_brick_standardized.tif")
+kelp_area <- brick(file.path(data_dir, "02-intermediate-data/05-kelp-area-biomass-intermediate/kelp-area-brick.tif"))
+kelp_bio <- brick(file.path(data_dir, "02-intermediate-data/05-kelp-area-biomass-intermediate/kelp-biomass-brick.tif"))
 
 # read in substrate file 
 reclass_table <- cbind(c(0, 1, 2, 3), c("soft", "hard", "mixed", "anthropogenic"))
 
 
-substrate <- raster("intermediate_data/substrate/SBC_substrate.tif") 
+substrate <- rast(file.path(data_dir, "02-intermediate-data/08-substrate-intermediate/combined-sbchannel-substrate.tif"))
 
 test <- raster("raw_data/Benthic_Habitat_2/Habitat_tiffs/Channel_Islands/Santa_Cruz/gi_5msub.tif")
 
-plot(test)
+plot(substrate)
 ```
 
 ## Visualize the point data contained in the observed syntehsized data set
@@ -325,9 +326,16 @@ kelp_area_map
 
 ```{r label = "substrate map"}
 
-plot(substrate$substrate_class)
+# plot combined substrate raster
+plot(aoi$geometry)
+plot(land, add = TRUE, col = "#EFE2C9")
+plot(substrate, add = TRUE, col = c("#E7BF5F", "#6F6F6F", "#BFBFA5", "#9E5E9B"))
 
-rasterVis::levelplot(substrate, col.regions = paletteer_d("RColorBrewer::BrBG"))
+# rasterVis::levelplot(substrate, col.regions = paletteer_d("RColorBrewer::BrBG"), add = TRUE) +
+#   sp.polygons(SpatialPolygons(aoi))
+# 
+# tm_shape(substrate) +
+#   tm_raster()
 ```
 
 ## plot interpolation area
