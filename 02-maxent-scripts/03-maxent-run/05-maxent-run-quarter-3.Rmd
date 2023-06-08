@@ -66,12 +66,12 @@ current workspace, change to the correct file path
 
 ```{r}
 # NOTE: provide the folder path of the .csv file
-occs_path <- "03-analysis-data/04-maxent-analysis/quarter-2"
-occs_path <- file.path(data_dir, occs_path, "kelp-presence-2.csv")
+occs_path <- "03-analysis-data/04-maxent-analysis/quarter-3"
+occs_path <- file.path(data_dir, occs_path, "kelp-presence-3.csv")
 # get a list of species occurrence data
 userOccs_Mp <- occs_userOccs(
   txtPath = occs_path, 
-  txtName = "kelp-presence-2.csv", 
+  txtName = "kelp-presence-3.csv", 
   txtSep = ",", 
   txtDec = ".")
 occs_Mp <- userOccs_Mp$Macrocystis_pyrifera$cleaned
@@ -83,12 +83,12 @@ Using user-specified variables.
 
 ```{r}
 ## Specify the directory with the environmental variables
-dir_envs_Mp <- "/03-analysis-data/04-maxent-analysis/quarter-2"
-envs_path <- file.path(data_dir, dir_envs_Mp, c('depth-2.tif', 'nitrate-nitrite-2.tif', 'phosphate-2.tif'))
+dir_envs_Mp <- "/03-analysis-data/04-maxent-analysis/quarter-3"
+envs_path <- file.path(data_dir, dir_envs_Mp, c('depth-3.tif', 'nitrate-nitrite-3.tif', 'phosphate-3.tif'))
 # Create environmental object 
 envs_Mp <- envs_userEnvs(
   rasPath = envs_path,
-  rasName = c('depth-2.tif', 'nitrate-nitrite-2.tif', 'phosphate-2.tif'),
+  rasName = c('depth-3.tif', 'nitrate-nitrite-3.tif', 'phosphate-3.tif'),
   doBrick = FALSE)
 occs_xy_Mp <- occs_Mp[c('longitude', 'latitude')]
 occs_vals_Mp <- as.data.frame(raster::extract(envs_Mp, occs_xy_Mp, cellnumbers = TRUE))
@@ -271,7 +271,7 @@ maxentEvalPlot_Mp
 vars <- eval.variable.importance(model_Mp)[["fc.LQ_rm.0.5"]]
 kable(vars)
 tab_df(vars,
-       title = "Model Variable Importance Quarter 2")
+       title = "Model Variable Importance Quarter 3")
 ```
 
 ### Data Plots
@@ -279,7 +279,7 @@ tab_df(vars,
 ```{r}
 # Depth
 depth_dat <- cbind(as.data.frame(envs_Mp[[1]]), as.data.frame(predSel_Mp))
-ggplot(depth_dat, aes(depth.2, layer)) +
+ggplot(depth_dat, aes(depth.3, layer)) +
   geom_point() +
   theme_minimal() +
   labs(x = "Depth",
@@ -287,7 +287,7 @@ ggplot(depth_dat, aes(depth.2, layer)) +
 
 # Nitrogen
 nitr_dat <- cbind(as.data.frame(envs_Mp[[2]]), as.data.frame(predSel_Mp))
-ggplot(nitr_dat, aes(nitrate.nitrite.2, layer)) +
+ggplot(nitr_dat, aes(nitrate.nitrite.3, layer)) +
   geom_point() +
   theme_minimal() +
   labs(x = "Nitrogen",
@@ -295,7 +295,7 @@ ggplot(nitr_dat, aes(nitrate.nitrite.2, layer)) +
 
 # Phosphate
 phos_dat <- cbind(as.data.frame(envs_Mp[[3]]), as.data.frame(predSel_Mp))
-ggplot(phos_dat, aes(phosphate.2, layer)) +
+ggplot(phos_dat, aes(phosphate.3, layer)) +
   geom_point() +
   theme_minimal() +
   labs(x = "Phosphate",
@@ -306,5 +306,7 @@ ggplot(phos_dat, aes(phosphate.2, layer)) +
 #---- Write to data files
 # Change this file path to your own to re-write data
 
-terra::writeRaster(predSel_Mp, "/capstone/kelpgeomod/google_drive_download/03-analysis-data/04-maxent-analysis/results/maxent-quarter-2-output.tif", overwrite = TRUE)
+terra::writeRaster(predSel_Mp, "/capstone/kelpgeomod/google_drive_download/03-analysis-data/04-maxent-analysis/results/maxent-quarter-3-output.tif", overwrite = TRUE)
+
+terra::writeRaster(predSel_Mp, "/capstone/kelpgeomod/google_drive_download/04-deliverables/05-maxent-outputs/maxent-quarter-3-output.tif", overwrite = TRUE)
 ```

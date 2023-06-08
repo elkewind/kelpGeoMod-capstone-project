@@ -1,5 +1,5 @@
 ---
-title: "Untitled"
+title: "Technical Documentation Visualizations"
 author: "Jessica French"
 date: "`r Sys.Date()`"
 output: html_document
@@ -23,6 +23,8 @@ library(paletteer)
 library(rasterVis)
 library(latticeExtra)
 library(gridExtra)
+library(terra)
+library(ggthemes)
 ```
 
 ```{r label = "read in data"}
@@ -62,7 +64,6 @@ reclass_table <- cbind(c(0, 1, 2, 3), c("soft", "hard", "mixed", "anthropogenic"
 
 substrate <- rast(file.path(data_dir, "02-intermediate-data/08-substrate-intermediate/combined-sbchannel-substrate.tif"))
 
-test <- raster("raw_data/Benthic_Habitat_2/Habitat_tiffs/Channel_Islands/Santa_Cruz/gi_5msub.tif")
 
 plot(substrate)
 ```

@@ -274,11 +274,11 @@ nitrate_nitrite_year_quarter_df <- as.data.frame(obs_nitrate_nitrite, xy = TRUE,
 nitrate_nitrite_year_quarter_df <- nitrate_nitrite_year_quarter_df %>%
   pivot_longer(cols = starts_with("Q"), # Select all columns that start with "l" for "layer"
                names_to = "quarter_year", # Name of the new column to be created for year_quarter
-               values_to = "nitrite_nitrate") %>%     # Name of the new column to be created for sst values
+               values_to = "nitrate_nitrite") %>%     # Name of the new column to be created for sst values
   separate(quarter_year, c("quarter", "year")) %>% # Separate the year_quarter column into year and quarter columns
   mutate(quarter = str_remove(quarter, "Q")) %>% # Removes the "layer" of the year values
   rename(lon = "x", lat = "y") %>%  # Rename the x and y columns to lat and lon
-  dplyr::select(year, quarter, lon, lat, nitrite_nitrate)  # Reorder the columns as needed
+  dplyr::select(year, quarter, lon, lat, nitrate_nitrite)  # Reorder the columns as needed
 ```
 
 ## Observed Ammonium

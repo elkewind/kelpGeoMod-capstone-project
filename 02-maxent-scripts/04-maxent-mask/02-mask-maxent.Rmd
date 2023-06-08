@@ -51,6 +51,8 @@ sub_masked_brick <- brick(sub_masked_1, sub_masked_2, sub_masked_3, sub_masked_4
 #---- Write to data files
 # Change this file path to your own to re-write data
 
-terra::writeRaster(sub_masked_brick, "/capstone/kelpgeomod/google_drive_download/03-analysis-data/04-maxent-analysis/results/substrate_masked_brick.tif", overwrite = TRUE)
+terra::writeRaster(sub_masked_brick, "/capstone/kelpgeomod/google_drive_download/03-analysis-data/04-maxent-analysis/results/substrate-masked-brick.tif", overwrite = TRUE)
+
+terra::writeRaster(sub_masked_brick, "/capstone/kelpgeomod/google_drive_download/04-deliverables/05-maxent-outputs/substrate-masked-brick.tif", overwrite = TRUE)
 ```
 

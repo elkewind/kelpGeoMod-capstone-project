@@ -12,6 +12,8 @@ knitr::opts_chunk$set(echo = FALSE,
                       warning = FALSE,
                       error = FALSE,
                       message = FALSE)
+
+# A knitted html version of this document exists in "/04-deliverables/06-data-visualization/02-viz-deliverable.html". If you try to knit for yourself, we do not recommend trying to push the html to GitHub.
 ```
 
 ```{r, results='hide'}

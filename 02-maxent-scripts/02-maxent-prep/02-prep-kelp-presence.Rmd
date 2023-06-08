@@ -8,6 +8,9 @@ output: html_document
 ```{r}
 # Load in necessary packages for wrangling
 library(tidyverse)
+library(sf)
+library(tmap)
+library(tmaptools)
 ```
 
 ```{r}
@@ -50,6 +53,7 @@ for (i in 1:length(kelp_list)) {
 
 ```{r}
 # Check visually
+tmap_mode("view")
 kelp_1 <- st_as_sf(kelp_list[[1]], coords = c("longitude", "latitude"))
 tm_shape(kelp_1) +
   tm_dots()

@@ -307,4 +307,6 @@ ggplot(phos_dat, aes(phosphate.4, layer)) +
 # Change this file path to your own to re-write data
 
 terra::writeRaster(predSel_Mp, "/capstone/kelpgeomod/google_drive_download/03-analysis-data/04-maxent-analysis/results/maxent-quarter-4-output.tif", overwrite = TRUE)
+
+terra::writeRaster(predSel_Mp, "/capstone/kelpgeomod/google_drive_download/04-deliverables/05-maxent-outputs/maxent-quarter-4-output.tif", overwrite = TRUE)
 ```
