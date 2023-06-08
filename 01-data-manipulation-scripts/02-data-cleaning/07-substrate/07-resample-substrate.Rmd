@@ -100,7 +100,7 @@ tm_shape(rc2) +
   tm_raster() +
   tm_shape(polygons) +
   tm_polygons() +
-  tmap_options(check.and.fix = TRUE)
+  tmap_options(check.and.fix = TRUE) 
 ```
 
 ```{r}
