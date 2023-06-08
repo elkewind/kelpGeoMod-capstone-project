@@ -1,12 +1,14 @@
 # DEVELOPING A DATA PIPELINE FOR KELP FOREST MODELING
 
-### A Capstone Project submitted in partial satisfaction of the requirements for the degree of Master of Environmental Data Science for the Bren School of Environmental Science & Management 
+#### kelpGeoMod, A Capstone Project submitted in partial satisfaction of the requirements for the degree of Master of Environmental Data Science for the Bren School of Environmental Science & Management
 
-ADD PHOTO
+[![](04-README-images/kelp-image-underwater.jpg)](https://bren.ucsb.edu/projects/developing-data-pipeline-kelp-forest-modeling)
+
+Giant kelp (Macrocystis pyrifera) is an ecosystem engineer that creates complex vertical habitat by growing to approximately 50 m in dense forests. Healthy kelp forests are some of the most diverse ecosystems in the world that also protect coastlines from storms, provide nutrients to beaches, and giant kelp is a promising biofuel precursor that does not take up arable land or use freshwater to grow. Researchers are working to better understand nutrient utilization and cycling in this critical ecosystem and need comprehensive data on nutrient concentrations to further their research. Additionally, kelp aquaculture companies are working to show that giant kelp can be grown as a profitable biofuel precursor in the Santa Barbara Channel. In order to do this they need to grow kelp efficiently in areas that have suitable habitat. This project creates a synthesized data set that can be used and expanded on by researchers to make their data acquisition process more efficient. It also produces estimates of habitat suitability for giant kelp in the Santa Barbara Channel that kelp aquaculture organizations can use to supplement prior analyses and guide where to place future farms.
+
+To review the entire project please read the [technical documentation.](https://docs.google.com/document/d/1cjxZnd0RZNg_o5NuBgrulogFgRhWddKm/edit#)
 
 ## **CONTACT INFORMATION**
-
-### kelpGeoMod-capstone-project
 
 #### Principal Investigator Contact Information
 
@@ -38,13 +40,13 @@ ADD PHOTO
 
 -   Coordinates used to delimit the Santa Barbara Channel 33.85°- 34.59°N, 118.8°- 120.65°W
 
-![](04-images/aoi.png)
+    ![](04-README-images/aoi.png)
 
 ## **SHARING/ACCESS INFORMATION**
 
 #### Licenses/restrictions placed on the data:
 
-The present project is subject to the Creative Commons Attribution license, whereby all data sets utilized are publicly available. However, our proprietary cleaning and normalization techniques fall under this license. Accordingly, our processed data will be publicly accessible through our [repository](https://github.com/kelpGeoMod/kelpGeoMod-capstone-project). It is pertinent to acknowledge that every data set utilized in this project was accompanied by specific usage restrictions, requiring an individualized review and analysis for each source.
+All the final product and data sets were published under the Creative Commons Zero (CC0) intellectual property laws to enable public use. This was done to promote transparency, facilitate data sharing, and enable external users, such as researchers, stakeholders, and kelp farmers, to access and use our project's data. Accordingly, our processed data will be publicly accessible through our [repository](https://github.com/kelpGeoMod/kelpGeoMod-capstone-project). It is pertinent to acknowledge that every data set utilized in this project was accompanied by specific usage restrictions, requiring an individualized review and analysis for each source.
 
 #### Data Sources:
 
@@ -70,15 +72,17 @@ Environmental Factors:
 
 -   [Plumes and Blooms](http://www.oceancolor.ucsb.edu/plumes_and_blooms/)
 
+![An aerial shot of a Macrocystis pyrifera forest in California.](04-README-images/kelp-image-above.jpg)
+
 ## **DATA PIPELINE & FILE OVERVIEW**
 
 #### Data Pipeline:
 
-In order to make this project reproducible and easy for the clients to continue in the future, all of the code used to create each data product and the model results is provided in this open source [GitHub repository](https://github.com/kelpGeoMod/kelpGeoMod-capstone-project). To aid others in navigating the project a comprehensive [user guide](https://docs.google.com/document/d/12AFYFkcU2SIC8CTmjk4GBjN516gUXZBbKX3ptMEnp50/edit#heading=h.bzq6qxrutbie). The combination of this GitHub repository, user guide, and project schematic form the data pipeline which will make it possible for future users to use and build upon the project.
+In order to make this project reproducible and easy for the clients to continue in the future, all of the code used to create each data product and the model results is provided in this open source [GitHub Repository](https://github.com/kelpGeoMod/kelpGeoMod-capstone-project). To aid others in navigating the project a comprehensive [User Guide](https://docs.google.com/document/d/12AFYFkcU2SIC8CTmjk4GBjN516gUXZBbKX3ptMEnp50/edit#heading=h.bzq6qxrutbie). The combination of this GitHub repository, user guide, and project schematic form the data pipeline which will make it possible for future users to use and build upon the project.
 
-#### File List:
+#### File Path/ Working directory:
 
-This [link](https://docs.google.com/spreadsheets/d/1HR_xrE1kTqQGN9MN0-n7XIuDMotM1v1e56kE6-YUFT4/edit#gid=0) provides a list all files contained in the data set, with a brief description of their content. You need a UCSB email address for access. If you don't please contact the principal investigators.
+Currently, all the file paths are directed to where the kelpGeoMod Google Drive was stored. It's important to mention that for reproducibility purposes, setting the working directory using **`data_dir`** at the beginning of each R Markdown file, sets where the data is being pulled from. Absolute file path are used when writing data to not accidentally overwrite original data. Its highly recommended to set the new working directory to where you want the files to be written.
 
 #### Instrument- or software-specific information needed to interpret the data:
 
@@ -191,4 +195,4 @@ People involved with sample collection, processing, analysis, and/or submission:
 
 We acknowledge the Bren School of Environmental Science & Management's Master's of Environmental Data Science program at the University of California Santa Barbara for funding this synthesis project. We would also like to express our gratitude to our clients, Courtney Schatzman from Ocean Rainforest and Natalie Dornan from UCSB interdepartmental Graduate Program in Marine Science (IGPMS), as well as Sidney Gerst and Kirby Bartlett for providing user information, Jeff Massen for user testing and being the main contact as a kelp farmer, and Daphne from NCEAS for helping us explore different options for MaxEnt modeling. We are also grateful to Tamma Carleton for her valuable input during brainstorming meetings regarding statistics and model testing.
 
-[![](04-images/logo-bren.svg)](https://bren.ucsb.edu/masters-programs/master-environmental-data-science)
+[![](04-README-images/logo-bren.svg){width="65%"}](https://bren.ucsb.edu/masters-programs/master-environmental-data-science)
