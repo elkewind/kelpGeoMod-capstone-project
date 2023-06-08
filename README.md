@@ -72,7 +72,9 @@ Environmental Factors:
 
 -   [Plumes and Blooms](http://www.oceancolor.ucsb.edu/plumes_and_blooms/)
 
-![An aerial shot of a Macrocystis pyrifera forest in California.](04-README-images/kelp-image-above.jpg)
+![](04-README-images/kelp-image-above.jpg)
+
+For the kelpGeoMod kelp data, we utilized the LTER remote sensing dataset derived from Landsat sensors described in the data sources above. This image represents an aerial shot of a Macrocystis pyrifera forest in California.
 
 ## **DATA PIPELINE & FILE OVERVIEW**
 
@@ -161,7 +163,7 @@ We consolidated all the collected and cleaned data into this single file. In thi
 
 This data set displays the remote sensing data collection for each observed nutrient data point. In this case, we used the in-situ joined nutrient data set as the primary key and extracted values from the raster bricks. We had 3,059 data points in total, with all the 15 variables included.
 
-1**. Number of variables:** 15
+**1. Number of variables:** 15
 
 **2. Number of cases/rows:** 3,059
 
@@ -195,4 +197,4 @@ People involved with sample collection, processing, analysis, and/or submission:
 
 We acknowledge the Bren School of Environmental Science & Management's Master's of Environmental Data Science program at the University of California Santa Barbara for funding this synthesis project. We would also like to express our gratitude to our clients, Courtney Schatzman from Ocean Rainforest and Natalie Dornan from UCSB interdepartmental Graduate Program in Marine Science (IGPMS), as well as Sidney Gerst and Kirby Bartlett for providing user information, Jeff Massen for user testing and being the main contact as a kelp farmer, and Daphne from NCEAS for helping us explore different options for MaxEnt modeling. We are also grateful to Tamma Carleton for her valuable input during brainstorming meetings regarding statistics and model testing.
 
-[![](04-README-images/logo-bren.svg){width="65%"}](https://bren.ucsb.edu/masters-programs/master-environmental-data-science)
+[![](04-README-images/logo-bren.svg)](https://bren.ucsb.edu/masters-programs/master-environmental-data-science)
