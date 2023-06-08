@@ -64,7 +64,7 @@ cal_unlist <- CalCOFI_ave %>%
   as.data.frame() %>%
   setNames(c("lon", "lat")) %>%
   bind_cols(CalCOFI_ave) %>% 
-  select(-geometry) %>%
+  dplyr::select(-geometry) %>%
   mutate("nitrate_nitrite" = nitrate + nitrite, .after = nitrite) %>% # create nitrate_nitrite combined column
   rename("ammonium" = "ammonia") # Natalie said the naming difference is likely do to how each data source quantified the measurement but it was okay to combine them. 
 ```

@@ -166,7 +166,7 @@ joined_nutrients2 <- joined_nutrients %>%
   setNames(c("lon", "lat")) %>% 
   bind_cols(joined_nutrients) %>% 
   dplyr::select(-geometry) %>% 
-  dplyr::select(-...14)
+  dplyr::select(-...13)
 
 # write to csv
 write_csv(joined_nutrients2, "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/09-nutrients-intermediate/joined/joined-nutrients.csv")
