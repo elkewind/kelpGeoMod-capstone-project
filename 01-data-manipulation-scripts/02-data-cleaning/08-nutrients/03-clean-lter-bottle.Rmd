@@ -57,8 +57,9 @@ data_2014_2022 <- data_selected %>%
 
 # Summarize data by quarter
 lter_bottle_data_standardized <- data_2014_2022 %>%
-  group_by(lat, lon, year, quarter, temp) %>% # add depth here if want to keep depth as a dividing factor
-  summarize(phosphate = mean(phosphate, na.rm = TRUE),
+  group_by(lat, lon, year, quarter) %>% # add depth here if want to keep depth as a dividing factor
+  summarize(temp = mean(temp, na.rm = TRUE),
+            phosphate = mean(phosphate, na.rm = TRUE),
             nitrate_nitrite = mean(nitrate_nitrite, na.rm = TRUE),
             ammonium = mean(ammonium, na.rm = TRUE)) # take quarterly means of monthly data
 

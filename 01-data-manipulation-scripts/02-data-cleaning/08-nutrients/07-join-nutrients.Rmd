@@ -46,16 +46,10 @@ PB <- read_csv(file.path(data_dir, "02-intermediate-data/09-nutrients-intermedia
 
 # CalCOFI
 calCOFI <- read_csv(file.path(data_dir, "02-intermediate-data/09-nutrients-intermediate/unjoined/calcofi.csv")) |> 
-  # create nitrate_nitrite combined column 
-  mutate("nitrate_nitrite" = nitrate + nitrite, .after = nitrite) |> 
-  rename("ammonium" = "ammonia") |> # Natalie said the naming difference is likely do to how each data source quantified the measurement but it was okay to combine them. 
   st_as_sf(coords = c("lon", "lat"))
 
 # USGS
-# Need to add source column 
-# Also not an sf object but the geom column looks the same.
 USGS <- read_csv(file.path(data_dir, "02-intermediate-data/09-nutrients-intermediate/unjoined/usgs.csv")) |> 
-  mutate("source" = "USGS") |> 
   st_as_sf(coords = c("lon", "lat"))
 
 # LTER Nitrate
@@ -64,7 +58,6 @@ lter_nitrate <- read_csv(file.path(data_dir, "02-intermediate-data/09-nutrients-
 
 # LTER bottle 
 lter_bottle <- read_csv(file.path(data_dir, "02-intermediate-data/09-nutrients-intermediate/unjoined/lter-bottle.csv")) |> 
-  mutate("source" = "lter_bottle") |> 
   st_as_sf(coords = c("lon", "lat"))
 ```
 
@@ -86,7 +79,6 @@ joined_nutrients <- bind_rows(data_set_list) |>
 
 
 ```{r label = "read in mask"}
-
 # read in mask
 mask <- rast(file.path(data_dir, "02-intermediate-data/03-mask-intermediate/main-mask.tif"))
 ```
@@ -174,7 +166,7 @@ joined_nutrients2 <- joined_nutrients %>%
   setNames(c("lon", "lat")) %>% 
   bind_cols(joined_nutrients) %>% 
   dplyr::select(-geometry) %>% 
-  dplyr::select(-...14)
+  dplyr::select(-...13)
 
 # write to csv
 write_csv(joined_nutrients2, "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/09-nutrients-intermediate/joined/joined-nutrients.csv")
