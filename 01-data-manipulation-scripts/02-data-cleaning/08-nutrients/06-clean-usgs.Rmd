@@ -119,10 +119,12 @@ joined_data <- joined_data %>%
 # group_by and create the mean
 final_joined_data <- joined_data %>%
   group_by(year, quarter, lat, lon) %>%
-  summarise(temperature = mean(temperature, na.rm = TRUE),
-    nitrate_nitrite = mean(nitrate_and_nitrite, na.rm = TRUE),
+  summarise(temp = mean(temperature, na.rm = TRUE),
+            nitrate_nitrite = mean(nitrate_and_nitrite, na.rm = TRUE),
             phosphate = mean(phosphate, na.rm = TRUE),
             ammonium = mean(ammonium, na.rm = TRUE))
+
+final_joined_data['source'] = 'USGS' # add a source column for tracking when combining with other nutrient data
 ```
 
 
