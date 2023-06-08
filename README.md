@@ -1,10 +1,12 @@
-# DEVELOPING A GEOSPATIAL MODEL FOR KELP FOREST CULTIVATION AND RESTORATION
+# DEVELOPING A DATA PIPELINE FOR KELP FOREST MODELING
 
-### kelpGeoMod-capstone-project
+### A Capstone Project submitted in partial satisfaction of the requirements for the degree of Master of Environmental Data Science for the Bren School of Environmental Science & Management 
 
 ADD PHOTO
 
 ## **CONTACT INFORMATION**
+
+### kelpGeoMod-capstone-project
 
 #### Principal Investigator Contact Information
 
@@ -101,7 +103,7 @@ This [link](https://docs.google.com/spreadsheets/d/1HR_xrE1kTqQGN9MN0-n7XIuDMotM
 #### R-packages used:
 
 | **Package** | **Version** | **Description**                                                                                                                 |
-|-------------|-------------|---------------------------------------------------------------------------------------------------------------------------------|
+|-------------------|-------------------|----------------------------------|
 | abind       | 1.4-5       | Combines multi-dimensional arrays into a single array.                                                                          |
 | dplyr       | 1.1.0       | Provides a set of tools for working with data frames in a clear and consistent way.                                             |
 | forcats     | 0.5.2       | Provides tools for working with categorical data in a tidy way, including tools for reordering, recoding, and summarizing data. |
@@ -138,7 +140,7 @@ We consolidated all the collected and cleaned data into this single file. In thi
 **3. Variable List:**
 
 | **Variable Name** | **Units/ Range**             | **Type**       | **Description**                               |
-|-------------------|------------------------------|----------------|-----------------------------------------------|
+|------------------|------------------|------------------|-------------------|
 | year              | Range [2014-2023]            | Numerical data | Data year                                     |
 | quarter           | Range [1-4]                  | Numerical data | Quarter number per year. Range 1-4            |
 | lat               | decimal degrees              | Numerical data | Latitude in degrees                           |
@@ -162,7 +164,7 @@ This data set displays the remote sensing data collection for each observed nutr
 **3. Variable List:**
 
 | **Variable Name** | **Units/ Range**             | **Type**       | **Description**                               |
-|-------------------|------------------------------|----------------|-----------------------------------------------|
+|------------------|------------------|------------------|-------------------|
 | year              | Range [2014-2023]            | Numerical data | Data year                                     |
 | quarter           | Range [1-4]                  | Numerical data | Quarter number per year. Range 1-4            |
 | lat               | decimal degrees              | Numerical data | Latitude in degrees                           |
