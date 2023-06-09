@@ -1,0 +1,1 @@
+This script creates our main area of interest (AOI).

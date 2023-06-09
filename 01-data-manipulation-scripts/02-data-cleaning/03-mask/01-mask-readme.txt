@@ -1,0 +1,1 @@
+These scripts create our main mask (used for most things) and habitat mask (used as part of the substrate data combining process).

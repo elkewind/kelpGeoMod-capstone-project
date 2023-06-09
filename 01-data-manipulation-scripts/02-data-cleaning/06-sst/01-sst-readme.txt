@@ -1,0 +1,1 @@
+This R markdown cleans the Sea Surface Temperature (SST) data.
