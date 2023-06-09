@@ -6,7 +6,7 @@
 
 Giant kelp (Macrocystis pyrifera) is an ecosystem engineer that creates complex vertical habitat by growing to approximately 50 m in dense forests. Healthy kelp forests are some of the most diverse ecosystems in the world that also protect coastlines from storms, provide nutrients to beaches, and giant kelp is a promising biofuel precursor that does not take up arable land or use freshwater to grow. Researchers are working to better understand nutrient utilization and cycling in this critical ecosystem and need comprehensive data on nutrient concentrations to further their research. Additionally, kelp aquaculture companies are working to show that giant kelp can be grown as a profitable biofuel precursor in the Santa Barbara Channel. In order to do this they need to grow kelp efficiently in areas that have suitable habitat. This project creates a synthesized data set that can be used and expanded on by researchers to make their data acquisition process more efficient. It also produces estimates of habitat suitability for giant kelp in the Santa Barbara Channel that kelp aquaculture organizations can use to supplement prior analyses and guide where to place future farms.
 
-To review the entire project please read the [technical documentation.](https://docs.google.com/document/d/1cjxZnd0RZNg_o5NuBgrulogFgRhWddKm/edit#)
+To review the entire project please read the technical documentation ([Download PDF](technical-doc.pdf))
 
 ## **CONTACT INFORMATION**
 
@@ -111,7 +111,7 @@ Currently, all the file paths are directed to where the kelpGeoMod Google Drive 
 In this table, we have displayed all the packages that are loaded into our R Markdown environments. It is important to note that packages and their versions change over time as developers release updates and improvements to the R community. Here is a brief description of each package:
 
 | **Package**   | **Description**                                                                    |
-|------------------|------------------------------------------------------|
+|-------------------|-----------------------------------------------------|
 | animation     | Functions for creating animations and interactive visualizations                   |
 | cmocean       | Color palettes based on oceanographic and atmospheric data                         |
 | dismo         | Species distribution modeling and ecological niche modeling                        |
@@ -157,7 +157,7 @@ We consolidated all the collected and cleaned data into this single file. In thi
 **3. Variable List:**
 
 | **Variable Name** | **Units/ Range**             | **Type** | **Description**                               |
-|------------|---------------------|---------|------------------------------|
+|---------------|-----------------|---------------|--------------------------|
 | year              | Range [2014-2023]            | Factor   | Data year                                     |
 | quarter           | Range [1-4]                  | Factor   | Quarter number per year. Range 1-4            |
 | lat               | decimal degrees              | Factor   | Latitude in degrees                           |
@@ -181,7 +181,7 @@ This data set displays the remote sensing data collection for each observed nutr
 **3. Variable List:**
 
 | **Variable Name** | **Units/ Range**             | **Type**  | **Description**                               |
-|------------|---------------------|---------|------------------------------|
+|---------------|-----------------|---------------|--------------------------|
 | year              | Range [2014-2023]            | Factor    | Data year                                     |
 | quarter           | Range [1-4]                  | Factor    | Quarter number per year. Range 1-4            |
 | lat               | decimal degrees              | Factor    | Latitude in degrees                           |
