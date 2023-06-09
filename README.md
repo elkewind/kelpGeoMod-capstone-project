@@ -88,8 +88,6 @@ Currently, all the file paths are directed to where the kelpGeoMod Google Drive 
 
 #### Instrument- or software-specific information needed to interpret the data:
 
--   R version 4.2.2
-
 -   RStudio Version: 2023.03.0+386 "Cherry Blossom" Release (3c53477afb13ab959aeb5b34df1f10c237b256c3, 2023-03-09) for macOS
 
 -   Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)
@@ -156,10 +154,10 @@ We consolidated all the collected and cleaned data into this single file. In thi
 
 | **Variable Name** | **Units/ Range**             | **Type** | **Description**                               |
 |------------------|------------------|------------------|--------------------|
-| year              | Range [2014-2023]            | Factor   | Data year                                     |
-| quarter           | Range [1-4]                  | Factor   | Quarter number per year. Range 1-4            |
-| lat               | decimal degrees              | Factor   | Latitude in degrees                           |
-| lon               | decimal degrees              | Factor   | Longitudes in degrees                         |
+| year              | Range [2014-2022]            | Numeric   | Data year                                     |
+| quarter           | Range [1-4]                  | Numeric   | Quarter number per year. Range 1-4            |
+| lat               | decimal degrees              | Numeric   | Latitude in degrees                           |
+| lon               | decimal degrees              | Numeric   | Longitudes in degrees                         |
 | depth             | meters                       | Numeric  | Ocean depth in meters                         |
 | sst               | celsius                      | Numeric  | Sea Surface temperature in Celsius            |
 | kelp area         | meters squared               | Numeric  | Kelp area                                     |
@@ -180,10 +178,10 @@ This data set displays the remote sensing data collection for each observed nutr
 
 | **Variable Name** | **Units/ Range**             | **Type**  | **Description**                               |
 |------------------|------------------|------------------|--------------------|
-| year              | Range [2014-2023]            | Factor    | Data year                                     |
-| quarter           | Range [1-4]                  | Factor    | Quarter number per year. Range 1-4            |
-| lat               | decimal degrees              | Factor    | Latitude in degrees                           |
-| lon               | decimal degrees              | Factor    | Longitudes in degrees                         |
+| year              | Range [2014-2023]            | Numeric    | Data year                                     |
+| quarter           | Range [1-4]                  | Numeric    | Quarter number per year. Range 1-4            |
+| lat               | decimal degrees              | Numeric    | Latitude in degrees                           |
+| lon               | decimal degrees              | Numeric    | Longitudes in degrees                         |
 | temp              | celsius                      | Numeric   | Sea Surface temperature in Celsius            |
 | nitrate           | mcmol/L (micromol per liter) | Numeric   | Concentration of nitrate and nitrite in water |
 | nitrite           | mcmol/L (micromol per liter) | Numeric   | Concentration of nitrate and nitrite in water |
