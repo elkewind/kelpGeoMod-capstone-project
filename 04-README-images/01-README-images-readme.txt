@@ -1,1 +1,1 @@
-This contains all of the "images"" used in our big README.md, including pdf versions of our schematic, technical documentation, and user guide.
+This contains all of the "images" used in our big README.md, including pdf versions of our schematic, technical documentation, and user guide.
