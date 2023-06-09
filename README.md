@@ -108,30 +108,41 @@ Currently, all the file paths are directed to where the kelpGeoMod Google Drive 
 
 #### R-packages used:
 
-| **Package** | **Version** | **Description**                                                                                                                 |
-|-------------------|-------------------|----------------------------------|
-| abind       | 1.4-5       | Combines multi-dimensional arrays into a single array.                                                                          |
-| dplyr       | 1.1.0       | Provides a set of tools for working with data frames in a clear and consistent way.                                             |
-| forcats     | 0.5.2       | Provides tools for working with categorical data in a tidy way, including tools for reordering, recoding, and summarizing data. |
-| gganimate   | 1.0.8       | Allows for the creation of animated ggplot2 graphics.                                                                           |
-| ggplot2     | 3.4.1       | Provides a system for creating graphics using a grammar of graphics, allowing for high-level plotting with minimal code.        |
-| httr        | 1.4.5       | Provides tools for working with web APIs.                                                                                       |
-| janitor     | 2.1.0       | Provides tools for cleaning and tidying data.                                                                                   |
-| lubridate   | 1.8.0       | Provides tools for working with date and time data.                                                                             |
-| ncdf4       | 1.21        | Provides tools for reading and writing netCDF data.                                                                             |
-| naniar      | 1.0.0       | Provides tools for working with missing data.                                                                                   |
-| purrr       | 1.0.1       | Provides tools for functional programming and iteration in R.                                                                   |
-| raster      | 3.6-3       | Provides tools for working with raster data.                                                                                    |
-| readr       | 2.1.3       | Provides tools for reading and writing delimited text files.                                                                    |
-| sf          | 1.0-8       | Provides tools for working with vector (point, line, polygon) data in a tidy way.                                               |
-| sp          | 1.6-0       | Provides tools for working with spatial data in R.                                                                              |
-| stars       | 0.5-6       | Provides tools for working with spatiotemporal data in R.                                                                       |
-| stringr     | 1.5.0       | Provides tools for working with strings in a tidy way.                                                                          |
-| terra       | 1.6-17      | Provides tools for working with raster and vector data.                                                                         |
-| tidyr       | 1.3.0       | Provides tools for tidying data.                                                                                                |
-| tibble      | 3.2.1       | Provides tools for working with tabular data in a tidy way.                                                                     |
-| tictoc      | 1.1         | Provides tools for measuring and reporting execution time of R expressions.                                                     |
-| tmap        | 3.3-3       | Provides tools for creating thematic maps.                                                                                      |
+In this table, we have displayed all the packages that are loaded into our R Markdown environments. It is important to note that packages and their versions change over time as developers release updates and improvements to the R community. Here is a brief description of each package:
+
+| **Package**   | **Description**                                                                    |
+|------------------|------------------------------------------------------|
+| animation     | Functions for creating animations and interactive visualizations                   |
+| cmocean       | Color palettes based on oceanographic and atmospheric data                         |
+| dismo         | Species distribution modeling and ecological niche modeling                        |
+| doParallel    | Parallel computing with foreach and iterators frameworks                           |
+| dplyr         | Grammar of data manipulation with consistent set of verbs for transformation       |
+| ENMeval       | Model selection and evaluation for ecological niche models                         |
+| exactextractr | Extraction of raster values for points and polygons with precision and flexibility |
+| gganimate     | Animated visualizations using ggplot2 grammar of graphics                          |
+| ggplot2       | Flexible and powerful system for creating visualizations                           |
+| gstat         | Geostatistical modeling, prediction, and simulation                                |
+| gridExtra     | Arranging multiple grid-based plots on a page                                      |
+| httr          | Tools for working with HTTP and web APIs                                           |
+| janitor       | Utilities for data cleaning and tabulation                                         |
+| leaflet       | Interactive maps using the Leaflet JavaScript library                              |
+| lubridate     | Easier handling of dates and times in R                                            |
+| mapview       | Interactive viewing of spatial objects and raster maps                             |
+| ncdf4         | High-level interface to netCDF data files                                          |
+| naniar        | Functions for exploring and imputing missing data                                  |
+| paletteer     | Collection of color palettes for data visualization                                |
+| raster        | Tools for working with raster data                                                 |
+| RColorBrewer  | Color palettes from Cynthia Brewer's ColorBrewer                                   |
+| rgeos         | R interface to the GEOS library for geometric operations                           |
+| sf            | Simple features for manipulating and analyzing spatial data                        |
+| sjPlot        | Beautiful and customizable visualizations for statistical results                  |
+| sp            | Classes and methods for spatial data handling                                      |
+| spThin        | Spatial point thinning preserving spatial patterns                                 |
+| stars         | Classes and methods for working with raster and vector data                        |
+| stringr       | Set of string manipulation functions                                               |
+| tictoc        | Simple timer for benchmarking code execution time                                  |
+| tidyverse     | Collection of R packages for data manipulation and visualization                   |
+| tmap          | Thematic maps                                                                      |
 
 ## **SYNTHESIZED DATA SETS INFORMATION:**
 
@@ -145,19 +156,19 @@ We consolidated all the collected and cleaned data into this single file. In thi
 
 **3. Variable List:**
 
-| **Variable Name** | **Units/ Range**             | **Type**       | **Description**                               |
-|------------------|------------------|------------------|-------------------|
-| year              | Range [2014-2023]            | Numerical data | Data year                                     |
-| quarter           | Range [1-4]                  | Numerical data | Quarter number per year. Range 1-4            |
-| lat               | decimal degrees              | Numerical data | Latitude in degrees                           |
-| lon               | decimal degrees              | Numerical data | Longitudes in degrees                         |
-| depth             | meters                       | Numerical data | Ocean depth in meters                         |
-| sst               | celsius                      | Numerical data | Sea Surface temperature in Celsius            |
-| kelp area         | meters squared               | Numerical data | Kelp area                                     |
-| kelp biomass      | kilograms                    | Numerical data | Kelp biomass                                  |
-| phosphate         | mcmol/L (micromol per liter) | Numerical data | Concentration of phosphate in water           |
-| nitrate_nitrite   | mcmol/L (micromol per liter) | Numerical data | Concentration of nitrate and nitrite in water |
-| ammonium          | mcmol/L (micromol per liter) | Numerical data | Concentration of ammonium in water            |
+| **Variable Name** | **Units/ Range**             | **Type** | **Description**                               |
+|------------|---------------------|---------|------------------------------|
+| year              | Range [2014-2023]            | Factor   | Data year                                     |
+| quarter           | Range [1-4]                  | Factor   | Quarter number per year. Range 1-4            |
+| lat               | decimal degrees              | Factor   | Latitude in degrees                           |
+| lon               | decimal degrees              | Factor   | Longitudes in degrees                         |
+| depth             | meters                       | Numeric  | Ocean depth in meters                         |
+| sst               | celsius                      | Numeric  | Sea Surface temperature in Celsius            |
+| kelp area         | meters squared               | Numeric  | Kelp area                                     |
+| kelp biomass      | kilograms                    | Numeric  | Kelp biomass                                  |
+| phosphate         | mcmol/L (micromol per liter) | Numeric  | Concentration of phosphate in water           |
+| nitrate_nitrite   | mcmol/L (micromol per liter) | Numeric  | Concentration of nitrate and nitrite in water |
+| ammonium          | mcmol/L (micromol per liter) | Numeric  | Concentration of ammonium in water            |
 
 #### `observed-nutrients-sythesized.csv`
 
@@ -169,23 +180,23 @@ This data set displays the remote sensing data collection for each observed nutr
 
 **3. Variable List:**
 
-| **Variable Name** | **Units/ Range**             | **Type**       | **Description**                               |
-|------------------|------------------|------------------|-------------------|
-| year              | Range [2014-2023]            | Numerical data | Data year                                     |
-| quarter           | Range [1-4]                  | Numerical data | Quarter number per year. Range 1-4            |
-| lat               | decimal degrees              | Numerical data | Latitude in degrees                           |
-| lon               | decimal degrees              | Numerical data | Longitudes in degrees                         |
-| temp              | celsius                      | Numerical data | Sea Surface temperature in Celsius            |
-| nitrate           | mcmol/L (micromol per liter) | Numerical data | Concentration of nitrate and nitrite in water |
-| nitrite           | mcmol/L (micromol per liter) | Numerical data | Concentration of nitrate and nitrite in water |
-| nitrate_nitrite   | mcmol/L (micromol per liter) | Numerical data | Concentration of nitrate and nitrite in water |
-| phosphate         | mcmol/L (micromol per liter) | Numerical data | Concentration of phosphate in water           |
-| ammonium          | mcmol/L (micromol per liter) | Numerical data | Concentration of ammonium in water            |
-| sst               | celsius                      | Numerical data | Sea Surface temperature in Celsius            |
-| nutrient_source   | distinct data sets           | Character      | Specific nutrient data sets                   |
-| depth             | meters                       | Numerical data | Ocean depth in meters                         |
-| kelp area         | meters squared               | Numerical data | Kelp area                                     |
-| kelp biomass      | kilograms                    | Numerical data | Kelp biomass                                  |
+| **Variable Name** | **Units/ Range**             | **Type**  | **Description**                               |
+|------------|---------------------|---------|------------------------------|
+| year              | Range [2014-2023]            | Factor    | Data year                                     |
+| quarter           | Range [1-4]                  | Factor    | Quarter number per year. Range 1-4            |
+| lat               | decimal degrees              | Factor    | Latitude in degrees                           |
+| lon               | decimal degrees              | Factor    | Longitudes in degrees                         |
+| temp              | celsius                      | Numeric   | Sea Surface temperature in Celsius            |
+| nitrate           | mcmol/L (micromol per liter) | Numeric   | Concentration of nitrate and nitrite in water |
+| nitrite           | mcmol/L (micromol per liter) | Numeric   | Concentration of nitrate and nitrite in water |
+| nitrate_nitrite   | mcmol/L (micromol per liter) | Numeric   | Concentration of nitrate and nitrite in water |
+| phosphate         | mcmol/L (micromol per liter) | Numeric   | Concentration of phosphate in water           |
+| ammonium          | mcmol/L (micromol per liter) | Numeric   | Concentration of ammonium in water            |
+| sst               | celsius                      | Numeric   | Sea Surface temperature in Celsius            |
+| nutrient_source   | distinct data sets           | Character | Specific nutrient data sets                   |
+| depth             | meters                       | Numeric   | Ocean depth in meters                         |
+| kelp area         | meters squared               | Numeric   | Kelp area                                     |
+| kelp biomass      | kilograms                    | Numeric   | Kelp biomass                                  |
 
 ### Recommended Citation for the Project:
 
