@@ -6,7 +6,7 @@
 
 Giant kelp (Macrocystis pyrifera) is an ecosystem engineer that creates complex vertical habitat by growing to approximately 50 m in dense forests. Healthy kelp forests are some of the most diverse ecosystems in the world that also protect coastlines from storms, provide nutrients to beaches, and giant kelp is a promising biofuel precursor that does not take up arable land or use freshwater to grow. Researchers are working to better understand nutrient utilization and cycling in this critical ecosystem and need comprehensive data on nutrient concentrations to further their research. Additionally, kelp aquaculture companies are working to show that giant kelp can be grown as a profitable biofuel precursor in the Santa Barbara Channel. In order to do this they need to grow kelp efficiently in areas that have suitable habitat. This project creates a synthesized data set that can be used and expanded on by researchers to make their data acquisition process more efficient. It also produces estimates of habitat suitability for giant kelp in the Santa Barbara Channel that kelp aquaculture organizations can use to supplement prior analyses and guide where to place future farms.
 
-To review the entire project please read the technical documentation ([Download PDF](technical-doc.pdf))
+To review the entire project please read the [technical documentation](04-READEME-images/technical-doc.pdf)
 
 ## **CONTACT INFORMATION**
 
@@ -80,7 +80,7 @@ For the kelpGeoMod kelp data, we utilized the LTER remote sensing dataset derive
 
 #### Data Pipeline:
 
-In order to make this project reproducible and easy for the clients to continue in the future, all of the code used to create each data product and the model results is provided in this open source [GitHub Repository](https://github.com/kelpGeoMod/kelpGeoMod-capstone-project). To aid others in navigating the project a comprehensive [User Guide](https://docs.google.com/document/d/12AFYFkcU2SIC8CTmjk4GBjN516gUXZBbKX3ptMEnp50/edit#heading=h.bzq6qxrutbie). The combination of this GitHub repository, user guide, and project schematic form the data pipeline which will make it possible for future users to use and build upon the project.
+In order to make this project reproducible and easy for the clients to continue in the future, all of the code used to create each data product and the model results is provided in this open source [GitHub Repository](https://github.com/kelpGeoMod/kelpGeoMod-capstone-project). To aid others in navigating the project a comprehensive [User Guide](04-READEME-images/user-guide.pdf) in combination of this GitHub repository, and the project schematic [Project Schematic](04-READEME-images/schematic.pdf) form the data pipeline which will make it possible for future users to use and build upon the project.
 
 #### File Path/ Working directory:
 
@@ -110,39 +110,37 @@ Currently, all the file paths are directed to where the kelpGeoMod Google Drive 
 
 In this table, we have displayed all the packages that are loaded into our R Markdown environments. It is important to note that packages and their versions change over time as developers release updates and improvements to the R community. Here is a brief description of each package:
 
-| **Package**   | **Description**                                                                    |
-|-------------------|-----------------------------------------------------|
-| animation     | Functions for creating animations and interactive visualizations                   |
-| cmocean       | Color palettes based on oceanographic and atmospheric data                         |
-| dismo         | Species distribution modeling and ecological niche modeling                        |
-| doParallel    | Parallel computing with foreach and iterators frameworks                           |
-| dplyr         | Grammar of data manipulation with consistent set of verbs for transformation       |
-| ENMeval       | Model selection and evaluation for ecological niche models                         |
-| exactextractr | Extraction of raster values for points and polygons with precision and flexibility |
-| gganimate     | Animated visualizations using ggplot2 grammar of graphics                          |
-| ggplot2       | Flexible and powerful system for creating visualizations                           |
-| gstat         | Geostatistical modeling, prediction, and simulation                                |
-| gridExtra     | Arranging multiple grid-based plots on a page                                      |
-| httr          | Tools for working with HTTP and web APIs                                           |
-| janitor       | Utilities for data cleaning and tabulation                                         |
-| leaflet       | Interactive maps using the Leaflet JavaScript library                              |
-| lubridate     | Easier handling of dates and times in R                                            |
-| mapview       | Interactive viewing of spatial objects and raster maps                             |
-| ncdf4         | High-level interface to netCDF data files                                          |
-| naniar        | Functions for exploring and imputing missing data                                  |
-| paletteer     | Collection of color palettes for data visualization                                |
-| raster        | Tools for working with raster data                                                 |
-| RColorBrewer  | Color palettes from Cynthia Brewer's ColorBrewer                                   |
-| rgeos         | R interface to the GEOS library for geometric operations                           |
-| sf            | Simple features for manipulating and analyzing spatial data                        |
-| sjPlot        | Beautiful and customizable visualizations for statistical results                  |
-| sp            | Classes and methods for spatial data handling                                      |
-| spThin        | Spatial point thinning preserving spatial patterns                                 |
-| stars         | Classes and methods for working with raster and vector data                        |
-| stringr       | Set of string manipulation functions                                               |
-| tictoc        | Simple timer for benchmarking code execution time                                  |
-| tidyverse     | Collection of R packages for data manipulation and visualization                   |
-| tmap          | Thematic maps                                                                      |
+| **Package**  | **Description**                                                              |
+|--------------|------------------------------------------------------------------------------|
+| cmocean      | Color palettes based on oceanographic and atmospheric data                   |
+| dismo        | Species distribution modeling and ecological niche modeling                  |
+| doParallel   | Parallel computing with foreach and iterators frameworks                     |
+| dplyr        | Grammar of data manipulation with consistent set of verbs for transformation |
+| ENMeval      | Model selection and evaluation for ecological niche models                   |
+| ggplot2      | Flexible and powerful system for creating visualizations                     |
+| gstat        | Geostatistical modeling, prediction, and simulation                          |
+| gridExtra    | Arranging multiple grid-based plots on a page                                |
+| httr         | Tools for working with HTTP and web APIs                                     |
+| janitor      | Utilities for data cleaning and tabulation                                   |
+| leaflet      | Interactive maps using the Leaflet JavaScript library                        |
+| lubridate    | Easier handling of dates and times in R                                      |
+| mapview      | Interactive viewing of spatial objects and raster maps                       |
+| ncdf4        | High-level interface to netCDF data files                                    |
+| naniar       | Functions for exploring and imputing missing data                            |
+| paletteer    | Collection of color palettes for data visualization                          |
+| raster       | Tools for working with raster data                                           |
+| RColorBrewer | Color palettes from Cynthia Brewer's ColorBrewer                             |
+| rgeos        | R interface to the GEOS library for geometric operations                     |
+| sf           | Simple features for manipulating and analyzing spatial data                  |
+| sjPlot       | Beautiful and customizable visualizations for statistical results            |
+| sp           | Classes and methods for spatial data handling                                |
+| spThin       | Spatial point thinning preserving spatial patterns                           |
+| stars        | Classes and methods for working with raster and vector data                  |
+| stringr      | Set of string manipulation functions                                         |
+| tictoc       | Simple timer for benchmarking code execution time                            |
+| tidyverse    | Collection of R packages for data manipulation and visualization             |
+| tmap         | Thematic maps                                                                |
+| wallace      | Run the wallace shiny app for MaxEnt modeling                                |
 
 ## **SYNTHESIZED DATA SETS INFORMATION:**
 
@@ -157,7 +155,7 @@ We consolidated all the collected and cleaned data into this single file. In thi
 **3. Variable List:**
 
 | **Variable Name** | **Units/ Range**             | **Type** | **Description**                               |
-|---------------|-----------------|---------------|--------------------------|
+|-------------------|------------------------------|----------|-----------------------------------------------|
 | year              | Range [2014-2023]            | Factor   | Data year                                     |
 | quarter           | Range [1-4]                  | Factor   | Quarter number per year. Range 1-4            |
 | lat               | decimal degrees              | Factor   | Latitude in degrees                           |
@@ -181,7 +179,7 @@ This data set displays the remote sensing data collection for each observed nutr
 **3. Variable List:**
 
 | **Variable Name** | **Units/ Range**             | **Type**  | **Description**                               |
-|---------------|-----------------|---------------|--------------------------|
+|-------------------|------------------------------|-----------|-----------------------------------------------|
 | year              | Range [2014-2023]            | Factor    | Data year                                     |
 | quarter           | Range [1-4]                  | Factor    | Quarter number per year. Range 1-4            |
 | lat               | decimal degrees              | Factor    | Latitude in degrees                           |
@@ -200,7 +198,7 @@ This data set displays the remote sensing data collection for each observed nutr
 
 ### Recommended Citation for the Project:
 
-Egg, E., French, J., Patrón, J., & Windschitl, E. (2023). Developing a Geospatial Model for Kelp Forest Cultivation and Restoration. kelpGeoMod. <https://github.com/kelpGeoMod/kelpGeoMod-capstone-project>.
+Egg, E., French, J., Patrón, J., & Windschitl, E. (2023). Developing a data pipeline for kelp forest modeling. <https://github.com/kelpGeoMod/kelpGeoMod-capstone-project>.
 
 People involved with sample collection, processing, analysis, and/or submission: Please refer to the original data sources for individual sample collection information. For data retrieval and synthesis, the following individuals were involved: Erika Egg (UCSB), Jessica French (UCSB), Javier Patrón (UCSB), and Elke Windschitl (UCSB).
 
