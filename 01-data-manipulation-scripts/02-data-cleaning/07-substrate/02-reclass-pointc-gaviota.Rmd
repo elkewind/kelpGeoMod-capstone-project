@@ -22,20 +22,16 @@ library(tidyverse)
 library(stringr)
 ```
 
-```{r label = "set working directory"}
-# If working locally use this working directory or change to whereever the Benthic_Habitat_2 folder is
-#setwd("/Users/jfrench/Documents/MEDS/Capstone/DATA/Benthic_Habitat_2")
-
-# If working on tsosie uncomment this out and use this directory
-setwd("/capstone/kelpgeomod/raw_data/Benthic_Habitat_2")
+```{r label = "define data directory"}
+data_dir <- "/capstone/kelpgeomod/google_drive_download"
 ```
 
 ## Read in Data
 
 ```{r label = "read in data"}
-point_conception <- st_read("USGS_shape_files/Habitat_OffshorePointConception/Habitat_OffshorePointConception.shp")
+point_conception <- st_read(file.path(data_dir, "01-raw-data/08-substrate-usgs-seafloormapping-raw/02-usgs-coast/Habitat_OffshoreGaviota/Habitat_OffshoreGaviota.shp"))
 
-gaviota <- st_read("USGS_shape_files/Habitat_OffshoreGaviota/Habitat_OffshoreGaviota.shp")
+gaviota <- st_read(file.path(data_dir, "01-raw-data/08-substrate-usgs-seafloormapping-raw/02-usgs-coast/Habitat_OffshorePointConception/Habitat_OffshorePointConception.shp"))
 ```
 
 Start by creating an induration column and populating it from the CMECS Description column 
@@ -80,11 +76,13 @@ point_conception <- point_conception |>
 
 ```{r label = "write files to benthic habitat "}
 
-st_write(gaviota, "/capstone/kelpgeomod/raw_data/Benthic_Habitat_2/USGS_shape_files/USGS_Coast_shape_files/gaviota_reclass/gaviota_reclass.shp", 
-         delete_dsn = TRUE) # delete old file
+st_write(gaviota, "/capstone/kelpgeomod/google_drive_download/01-raw-data/08-substrate-usgs-seafloormapping-raw/02-usgs-coast/USGS_Coast_shape_files/gaviota-reclass/gaviota-reclass.shp", 
+         append = FALSE, 
+         config_options = c(SHAPE_RESTORE_SHX = "YES"))
 
-st_write(point_conception, "/capstone/kelpgeomod/raw_data/Benthic_Habitat_2/USGS_shape_files/USGS_Coast_shape_files/point_C_reclass/point_C_reclass.shp", 
-         delete_dsn = TRUE) # delete old file 
+st_write(point_conception, "/capstone/kelpgeomod/google_drive_download/01-raw-data/08-substrate-usgs-seafloormapping-raw/02-usgs-coast/USGS_Coast_shape_files/point-C-reclass/point-C-reclass.shp", 
+         append = FALSE, 
+         config_options = c(SHAPE_RESTORE_SHX = "YES")) # delete old file 
 
 ```
 

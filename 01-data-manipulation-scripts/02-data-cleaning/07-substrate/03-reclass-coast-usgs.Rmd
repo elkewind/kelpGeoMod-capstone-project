@@ -23,12 +23,9 @@ library(sf)
 library(tidyverse)
 ```
 
-```{r label = "set working directory"}
-# If working locally 
-#setwd("/Users/jfrench/Documents/MEDS/Capstone/DATA/Benthic_Habitat_2/USGS_shape_files/USGS_Coast_shape_files") 
-
-# If working on tsosie
-setwd("/capstone/kelpgeomod/raw_data/Benthic_Habitat_2/USGS_shape_files/USGS_Coast_shape_files")
+```{r label = "define data directory"}
+# define the data dorectory
+data_dir <- "/capstone/kelpgeomod/google_drive_download"
 ```
 
 Reading in the files from USGS:
@@ -54,7 +51,7 @@ USGS_coast_fun <- function(shape_file) {
 ```{r label = "Read in files"}
 # This entire code chunk is courtesy of ChatGPT.
 # get list of subdirectories in working directory
-subdirs <- list.dirs()
+subdirs <- list.dirs(file.path(data_dir, "01-raw-data/08-substrate-usgs-seafloormapping-raw/02-usgs-coast/USGS_Coast_shape_files"))
 
 # Create empty list
 SB_coast <- list()
@@ -110,21 +107,21 @@ SB_coast <-  bind_rows(SB_coast) |>
 
 ```{r label = "test plot"}
 plot(SB_coast$geometry)
+
+# write the combined substrate as a shape file to be used in visualizing the maxent output. 
+st_write(SB_coast, "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/08-substrate-intermediate/usgs-substrate-shape/usgs-substrate.shp", 
+         append = FALSE)
 ```
 
 
 ```{r label = "read in the mask"}
 # read in mask
-# use this for local
-#substrate_mask <- rast("/Users/jfrench/Documents/MEDS/Capstone/Data-Cleaning/mask/habitat_mask_rast.tif")
 
-# use this for tsosie
-substrate_mask <- rast("/Users/jfrench/capstone/Data-Cleaning/mask/habitat_mask_rast.tif")
+substrate_mask <- rast(file.path(data_dir, "02-intermediate-data/03-mask-intermediate/habitat-mask.tif"))
 ```
 
 ```{r label = "apply mask to rasterize"}
 # use rasterize to convert from shapefile to raster. 
-# This is causing a package issue on tsosie but works locally. 
 usgs_raster <- terra::rasterize(SB_coast, substrate_mask, field = "class")
 
 # set the names of the layer to be consistent with the other substrate files
@@ -135,7 +132,7 @@ plot(usgs_raster)
 
 ```{r label = "write to GTiff file "}
 
-terra::writeRaster(usgs_raster, "/capstone/kelpgeomod/intermediate_data/substrate/usgs_substrate.tif", filetype = "GTiff", overwrite = TRUE)
+terra::writeRaster(usgs_raster, "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/08-substrate-intermediate/usgs-coast-substrate.tif", filetype = "GTiff", overwrite = TRUE)
 ```
 
 

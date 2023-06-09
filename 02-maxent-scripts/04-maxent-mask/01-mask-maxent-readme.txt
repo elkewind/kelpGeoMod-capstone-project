@@ -1,0 +1,1 @@
+This contains code to mask the Maxent outputs by substrate type (sandy bottom in this case).

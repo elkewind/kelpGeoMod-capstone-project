@@ -13,17 +13,23 @@ library(sf)
 library(terra)
 library(tmap)
 library(RColorBrewer)
+library(mapview)
+```
+
+```{r}
+#---- Set up the data directory (wherever your download of our Google Shared Drive lives)
+data_dir <- "/capstone/kelpgeomod/google_drive_download"
 ```
 
 ```{r}
 # Read in mask
-mask <- terra::rast("mask/mask_rast.tif")
+mask <- terra::rast(file.path(data_dir, "02-intermediate-data/03-mask-intermediate/main-mask.tif"))
 plot(mask)
 ```
 
 ```{r}
 # Read in depth data
-depth_dat <- terra::rast("/capstone/kelpgeomod/raw_data/depth/depth_long.tiff")
+depth_dat <- terra::rast(file.path(data_dir, "01-raw-data/06-depth-noaa-raw/exportImage.tiff"))
 
 # Plot to visualize
 tmap_mode("view") # set to interactive view
@@ -36,7 +42,7 @@ tm_shape(depth_dat) + # check the location
 
 ```{r}
 # Read in Geoid tiles for depth correction (only applicable to depth)
-geoid1 <- terra::rast("/capstone/kelpgeomod/raw_data/depth/ETOPO_2022_v1_15s_N45W135_geoid.tif") # left tile
+geoid1 <- terra::rast(file.path(data_dir, "01-raw-data/06-depth-noaa-raw/ETOPO_2022_v1_15s_N45W135_geoid.tif")) # left tile
 
 tm_shape(geoid1) + # check the location
   tm_raster(style = "cont",
@@ -44,7 +50,7 @@ tm_shape(geoid1) + # check the location
             title = "Geoid Value",
             palette = "PRGn") 
 
-geoid2 <- terra::rast("/capstone/kelpgeomod/raw_data/depth/ETOPO_2022_v1_15s_N45W120_geoid.tif") # right tile
+geoid2 <- terra::rast(file.path(data_dir, "01-raw-data/06-depth-noaa-raw/ETOPO_2022_v1_15s_N45W120_geoid.tif")) # right tile
 
 tm_shape(geoid2) + # check the location
   tm_raster(style = "cont",
@@ -147,13 +153,16 @@ tm_shape(resampled_depth) + # check the location
 
 ```{r}
 # Write the new raster to intermediate data
-terra::writeRaster(resampled_depth, "/capstone/kelpgeomod/intermediate_data/depth/SBC_depth.tif", filetype = "GTiff", overwrite = TRUE)
+# Change this file path to your own to re-write data
+terra::writeRaster(resampled_depth, "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/06-depth-intermediate/depth.tif", filetype = "GTiff", overwrite = TRUE)
+# write to deliverables
+terra::writeRaster(resampled_depth, "/capstone/kelpgeomod/google_drive_download/04-deliverables/02-full-synthesized/depth.tif", filetype = "GTiff", overwrite = TRUE)
 ```
 
 ```{r}
 # Plot fancier
 
-boundaries <- st_read("/capstone/kelpgeomod/raw_data/land_bounds/California_County_Boundaries/cnty19_1.shp") 
+boundaries <- st_read(file.path(data_dir, "01-raw-data/02-ca-county-land-boundaries-raw/California_County_Boundaries/cnty19_1.shp")) 
 
 boundaries <- st_transform(x = boundaries, crs = 4326)
 

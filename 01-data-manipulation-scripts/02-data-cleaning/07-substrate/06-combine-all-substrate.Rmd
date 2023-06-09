@@ -20,11 +20,8 @@ library(tidyverse)
 The purpose of this is to check the files that have been combined and/ or converted to raster that they map correctly etc. 
 
 ```{r label = "set data directory"}
-# If working locally
-# datadir <- "/Users/jfrench/Documents/MEDS/Capstone/Intermediate_data/substrate"
-
-# If working on tsosie
-datadir <- "/capstone/kelpgeomod/intermediate_data/substrate"
+# Define data directory
+data_dir <- "/capstone/kelpgeomod/google_drive_download"
 ```
 
 ## Read in and Reclassify
@@ -33,23 +30,15 @@ For each file the substrate classification is different. After reading in each f
 
 ```{r label = "read in CA_maps file"}
 # read in data from intermediate data substrate folder
-CA_maps <- rast(file.path(datadir, "CA_maps_substrate_islands.tif")) 
+CA_maps <- rast(file.path(data_dir, "02-intermediate-data/08-substrate-intermediate/seafloormapping-islands-substrate.tif")) 
 
-# create reclassification matrix
-# before reclassification 0 = hard and 1 = soft
-
-CA_maps_rcl <- matrix(c(0, 1, 1, 0), nrow = 2, ncol = 2, byrow = T)
-
-# after reclassification 0 = soft and 1 = hard
-
-CA_maps <- classify(CA_maps, rcl = CA_maps_rcl)
 
 plot(CA_maps)
 ```
 
 ```{r label = "read in USGS_islands file"}
 # read in data from intermediate data folder
-USGS_islands <- rast(file.path(datadir, "usgs_island_substrate.tif"))
+USGS_islands <- rast(file.path(data_dir, "02-intermediate-data/08-substrate-intermediate/usgs-island-substrate.tif")) |> as.numeric()
 
 # create reclassification matrix
 # before reclassification 0 = hard, 1 = mixed, and 2 = soft
@@ -64,11 +53,12 @@ plot(USGS_islands)
 ```
 
 ```{r label = "read in USGS_coast data form intermediate data folder"}
-USGS_coast <- rast(file.path(datadir, "usgs_substrate.tif"))
+USGS_coast <- rast(file.path(data_dir, "02-intermediate-data/08-substrate-intermediate/usgs-coast-substrate.tif")) |> 
+  as.numeric()
 
 #create reclassification matrix
 # before reclassification 0 = anthropogenic, 1 = hard, 2 = mixed, and 3 = soft
-USGS_coast_rcl <- matrix(c(0, 3, 1, 1, 2, 2, 3, 0), nrow = 4, ncol = 2, byrow = T)
+USGS_coast_rcl <- matrix(c(4, 0, 2, 1, 1, 3, 3, 2), nrow = 4, ncol = 2, byrow = T)
 
 # after reclassification 0 = soft, 1 = hard, 2 = mixed, adn 3 = anthropogenic. 
 
@@ -103,7 +93,12 @@ plot(SBC_substrate)
 ```
 
 ```{r label = "write to GTiff"}
-terra::writeRaster(SBC_substrate, "/capstone/kelpgeomod/intermediate_data/substrate/SBC_substrate.tif", filetype = "GTiff", overwrite = TRUE)
+# An aux.xml metadata file is automatically written with each file. 
+# Write to intermediate folder
+terra::writeRaster(SBC_substrate, "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/08-substrate-intermediate/combined-sbchannel-substrate.tif", filetype = "GTiff", overwrite = TRUE)
+
+# Write to deliverable folder
+terra::writeRaster(SBC_substrate, "/capstone/kelpgeomod/google_drive_download/04-deliverables/04-combined-sbchannel-substrate/combined-sbchannel-substrate.tif", filetype = "GTiff", overwrite = TRUE)
 ```
 
 

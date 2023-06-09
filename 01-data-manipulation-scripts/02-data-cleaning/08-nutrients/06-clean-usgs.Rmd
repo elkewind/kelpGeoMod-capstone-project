@@ -5,11 +5,9 @@ date: "2023-03-28"
 ---
 
 ### **Assumptions and points to consider**
-
-1.  The -9999.00 values are no good for phosphate, ammonium, nitrate_and_nitrite in point conception, and Gill Ilands 2
+1.  The -9999.00 values are no good for phosphate, ammonium, nitrate_and_nitrite in point conception, and Gill Islands 2
 2.  The final values per quarter are the mean of the 10 observations per location
 im using the function rm.na = T, for NA values 
-
 
 Load the Libraries
 
@@ -27,11 +25,19 @@ library(lubridate)
 
 ```
 
-Read the data
 
+Set the kelpGeoMod Google Drive Working Directory
 ```{r}
-data_version2 <- read_csv("/capstone/kelpgeomod/raw_data/usgs_bottle_fall/RL-19-05_BTL_CTD_data v2.0.csv") 
-data_version3 <- read_csv("/capstone/kelpgeomod/raw_data/usgs_bottle_fall/SH-18-12_BTL_CTD_data_v3.0.csv")
+#---- Set up the data directory (wherever your download of our Google Shared Drive lives)
+drive_dir <- "/capstone/kelpgeomod/google_drive_download"
+```
+
+
+Read the data
+```{r}
+         
+data_version2 <- read_csv(file.path(drive_dir, "01-raw-data/09-nutrients-various-raw/06-nutrients-usgs-bottle-raw/RL-19-05_BTL_CTD_data_v2.0.csv"))
+data_version3 <- read_csv(file.path(drive_dir, "01-raw-data/09-nutrients-various-raw/06-nutrients-usgs-bottle-raw/SH-18-12_BTL_CTD_data_v3.0.csv"))
 
 ```
 
@@ -63,6 +69,7 @@ area_sf <- st_set_crs(area_sf, 4326)
 
 ```
 
+TESTING: See where the data points are
 ```{r}
 # Create map to see where the samples were taken
 tmap_mode(mode = "view")
@@ -78,14 +85,13 @@ tm_shape(area_sf) +
 ```
 
 ## Data Cleaning (Read, clean, select the columns and filter the sites)
-
 ```{r}
-data2 <- read_csv("/capstone/kelpgeomod/raw_data/usgs_bottle_fall/RL-19-05_BTL_CTD_data v2.0.csv") |> 
+data2 <- read_csv(file.path(drive_dir, "01-raw-data/09-nutrients-various-raw/06-nutrients-usgs-bottle-raw/RL-19-05_BTL_CTD_data_v2.0.csv")) |> 
   clean_names() |> 
   dplyr::select(c("site_name","date", "temperature", "phosphate", "ammonium", "nitrate_and_nitrite", "latitude", "longitude")) |> 
   filter(site_name == "Annapaca")
 
-data3 <- read_csv("/capstone/kelpgeomod/raw_data/usgs_bottle_fall/SH-18-12_BTL_CTD_data_v3.0.csv") |> 
+data3 <- read_csv(file.path(drive_dir, "01-raw-data/09-nutrients-various-raw/06-nutrients-usgs-bottle-raw/SH-18-12_BTL_CTD_data_v3.0.csv")) |> 
   clean_names() |> 
   dplyr::select(c("site_name", "date", "temperature", "phosphate", "ammonium", "nitrate_and_nitrite", "latitude", "longitude")) |> 
   filter(site_name  %in% c("Gull Island", "Anacapa"))
@@ -105,51 +111,24 @@ joined_data <- joined_data %>%
   mutate(year = year(date),
          quarter = quarter(date)) %>% 
   dplyr::select(year, quarter, temperature, nitrate_and_nitrite, phosphate, ammonium, latitude, longitude) %>% 
-    mutate(ammonium = ifelse(ammonium == "<0.019", 0.020, as.numeric(ammonium)))
+  mutate(ammonium = ifelse(ammonium == "<0.019", 0.020, as.numeric(ammonium))) %>% 
+  rename(lat = latitude) %>% 
+  rename(lon = longitude)
 
-# create a spatial data frame
-st_joined_data <- joined_data |> 
-  st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
 
 # group_by and create the mean
-st_joined_data <- st_joined_data %>%
-  group_by(geometry, year, quarter) %>%
-  summarise(temperature = mean(temperature, na.rm = TRUE),
-    nitrate_nitrite = mean(nitrate_and_nitrite, na.rm = TRUE),
+final_joined_data <- joined_data %>%
+  group_by(year, quarter, lat, lon) %>%
+  summarise(temp = mean(temperature, na.rm = TRUE),
+            nitrate_nitrite = mean(nitrate_and_nitrite, na.rm = TRUE),
             phosphate = mean(phosphate, na.rm = TRUE),
-            ammonium = mean(ammonium, na.rm = TRUE)) %>% 
-  relocate(geometry, .after = ammonium)
+            ammonium = mean(ammonium, na.rm = TRUE))
 
+final_joined_data['source'] = 'USGS' # add a source column for tracking when combining with other nutrient data
 ```
 
 
 ```{r}
 # Write spatial object to RDS file
-saveRDS(st_joined_data, "/capstone/kelpgeomod/intermediate_data/usgs_nutrients/usgs_sp_data.rds")
+write_csv(final_joined_data, "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/09-nutrients-intermediate/unjoined/usgs.csv")
 ```
-
-Plot
-
-```{r}
-
-#Convert to a spatial object
-st_joined_data <- st_sf(st_joined_data)
-
-# plot the joined data with the Set1 palette
-tm_shape(st_joined_data) +
-  tm_dots() +
-  tm_legend(title = "Selected Sites", title.position = c("center", "top"), frame = FALSE) +
-tm_shape(area_sf) + 
-  tm_borders(col = "red")
-
-```
-
-## Interpolate
-
-...
-
-## Create the raster
-
-... Create a raster stack one for each nutrient (Nitrate and Nitrite, Phosphate, Ammonium).
-
-... Add the attributes for each raster such as cruise, station, site name, date and time)

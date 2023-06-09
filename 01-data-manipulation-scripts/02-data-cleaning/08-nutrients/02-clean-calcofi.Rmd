@@ -13,18 +13,23 @@ library(tmap)
 ```
 
 ```{r}
+#---- Set up the data directory (wherever your download of our Google Shared Drive lives)
+data_dir <- "/capstone/kelpgeomod/google_drive_download"
+```
+
+```{r}
 # Read in AOI
-aoi <- st_read("/capstone/kelpgeomod/raw_data/New_AOI_SBchannel_shp/New_AOI_SBchannel.shp")
+aoi <- st_read(file.path(data_dir, "02-intermediate-data/02-aoi-sbchannel-shapes-intermediate/aoi-sbchannel.shp"))
 
 # Read in CalCOFI cast data
-CalCOFI_cast <- read_csv("/capstone/kelpgeomod/raw_data/CalCOFI/Cast.csv") %>% 
+CalCOFI_cast <- read_csv(file.path(data_dir, "01-raw-data/09-nutrients-various-raw/02-nutrients-calcofi-raw/194903-202001_Cast.csv")) %>% 
   filter(Year >= 2014) %>% 
   dplyr::select(c("Cst_Cnt", "Quarter", "Year", "Lat_Dec", "Lon_Dec"))
 
 # Read in the CalCOFI bottle data
-CalCOFI_bottle <- read_csv("/capstone/kelpgeomod/raw_data/CalCOFI/Bottle.csv", locale = locale(encoding = "latin1"))
+CalCOFI_bottle <- read_csv(file.path(data_dir, "01-raw-data/09-nutrients-various-raw/02-nutrients-calcofi-raw/194903-202001_Bottle.csv"), locale = locale(encoding = "latin1"))
 
-# Join cast and bottle data
+# Join cast and bottle data + vectorize lat lon point data and put into our nutrient data format
 CalCOFI_join <- CalCOFI_bottle %>% 
   right_join(CalCOFI_cast, by = "Cst_Cnt") %>% 
   dplyr::select(c("Lon_Dec", "Lat_Dec", "Depthm", "T_degC", "Quarter", "Year","PO4uM", "NO2uM", "NO3uM", "NH3uM")) %>% 
@@ -39,6 +44,7 @@ CalCOFI_join <- CalCOFI_bottle %>%
 ```
 
 ```{r}
+# Get averages of points in one location
 CalCOFI_ave <- CalCOFI_join %>% 
   group_by(quarter, year, geometry) %>% 
   summarise(temp = mean(temp, na.rm = TRUE),
@@ -46,45 +52,25 @@ CalCOFI_ave <- CalCOFI_join %>%
             nitrite = mean(nitrite, na.rm = TRUE),
             ammonia = mean(ammonia, na.rm = TRUE),
             phosphate = mean(phosphate, na.rm = TRUE)) %>% 
-  mutate("source" = "CalCOFI")
+  mutate("source" = "CalCOFI") 
 
+# Check it out
 tm_shape(CalCOFI_ave) +
   tm_dots()
+
+# Remove geometry for export to match our nutrient data structure
+cal_unlist <- CalCOFI_ave %>%
+  st_coordinates() %>%
+  as.data.frame() %>%
+  setNames(c("lon", "lat")) %>%
+  bind_cols(CalCOFI_ave) %>% 
+  dplyr::select(-geometry) %>%
+  mutate("nitrate_nitrite" = nitrate + nitrite, .after = nitrite) %>% # create nitrate_nitrite combined column
+  rename("ammonium" = "ammonia") # Natalie said the naming difference is likely do to how each data source quantified the measurement but it was okay to combine them. 
 ```
 
 ```{r}
-write_rds(x = CalCOFI_ave, file = "/capstone/kelpgeomod/intermediate_data/calcofi/calcofi_nutrients.RDS")
+#---- Write to data files
+# Change this file path to your own to re-write data
+write_csv(x = cal_unlist, file = "/capstone/kelpgeomod/google_drive_download/02-intermediate-data/09-nutrients-intermediate/unjoined/calcofi.csv")
 ```
-
-```{r}
-# # Split full data frame by each year
-# split_by_year <- split(x = CalCOFI_join, f = as.factor(CalCOFI_join$Year))
-# 
-# # Create an empty list to store the results
-# df_list <- list()
-# 
-# # Split each of those years into quarters and store in df_list
-# for (i in names(split_by_year)) {
-#   split_by_quarter <- split(x = split_by_year[[i]], f = as.factor(split_by_year[[i]]$Quarter))
-#   for (j in names(split_by_quarter)) {
-#     df_list[[paste0("calCOFI_", i, "_", j)]] <- split_by_quarter[[j]]
-#   }
-# }
-# ```
-# 
-# ```{r}
-# # Create a temporary directory to save the RDS files
-# temp_dir <- tempdir()
-# for (i in seq_along(df_list)) {
-#   file_name <- paste0(names(df_list[i]), ".rds")
-#   saveRDS(file = file.path(temp_dir, file_name), df_list[[i]])
-# }
-# 
-# # Use the zip() function to create a compressed ZIP file
-# zip("/capstone/kelpgeomod/intermediate_data/calcofi/calcofi_nutrients.zip", files = list.files(temp_dir, full.names = TRUE))
-# 
-# # Remove the temporary directory
-# unlink(temp_dir, recursive = TRUE)
-
-```
-

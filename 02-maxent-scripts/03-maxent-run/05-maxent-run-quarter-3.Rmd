@@ -1,0 +1,312 @@
+---
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+# Wallace Session 2023-05-29
+
+Please find below the R code history from your *Wallace* v2.0.5 session.
+
+You can reproduce your session results by running this R Markdown file
+in RStudio.
+
+Each code block is called a "chunk", and you can run them either
+one-by-one or all at once by choosing an option in the "Run" menu at the
+top-right corner of the "Source" pane in RStudio.
+
+For more detailed information see <http://rmarkdown.rstudio.com>).
+
+### Package installation
+
+Wallace uses the following R packages that must be installed and loaded
+before starting.
+
+```{r}
+library(spocc)
+library(spThin)
+library(dismo)
+library(rgeos)
+library(ENMeval)
+library(wallace)
+library(tidyverse)
+library(sjPlot)
+```
+
+```{r}
+#---- Set up the data directory (wherever your download of our Google Shared Drive lives)
+data_dir <- "/capstone/kelpgeomod/google_drive_download"
+```
+
+The *Wallace* session code .Rmd file is composed of a chain of module
+functions that are internal to *Wallace*. Each of these functions
+corresponds to a single module that the user ran during the session. To
+see the internal code for these module functions, click on the links in
+the .Rmd file. Users are encouraged to write custom code in the .Rmd
+directly to modify their analysis, and even modify the module function
+code to further customize. To see the source code for any module
+function, just type its name into the R console and press Return.
+
+```{r}
+# example:
+# just type the function name and press Return to see its source code
+# paste this code into a new script to edit it
+occs_queryDb
+```
+
+Your analyses are below.
+
+------------------------------------------------------------------------
+
+## Analysis for *Macrocystis pyrifera* (Mp)
+
+User CSV path with occurrence data. If the CSV file is not in the
+current workspace, change to the correct file path
+(e.g./Users/darwin/Documents/occs/").
+
+```{r}
+# NOTE: provide the folder path of the .csv file
+occs_path <- "03-analysis-data/04-maxent-analysis/quarter-3"
+occs_path <- file.path(data_dir, occs_path, "kelp-presence-3.csv")
+# get a list of species occurrence data
+userOccs_Mp <- occs_userOccs(
+  txtPath = occs_path, 
+  txtName = "kelp-presence-3.csv", 
+  txtSep = ",", 
+  txtDec = ".")
+occs_Mp <- userOccs_Mp$Macrocystis_pyrifera$cleaned
+```
+
+### Obtain environmental data
+
+Using user-specified variables.
+
+```{r}
+## Specify the directory with the environmental variables
+dir_envs_Mp <- "/03-analysis-data/04-maxent-analysis/quarter-3"
+envs_path <- file.path(data_dir, dir_envs_Mp, c('depth-3.tif', 'nitrate-nitrite-3.tif', 'phosphate-3.tif'))
+# Create environmental object 
+envs_Mp <- envs_userEnvs(
+  rasPath = envs_path,
+  rasName = c('depth-3.tif', 'nitrate-nitrite-3.tif', 'phosphate-3.tif'),
+  doBrick = FALSE)
+occs_xy_Mp <- occs_Mp[c('longitude', 'latitude')]
+occs_vals_Mp <- as.data.frame(raster::extract(envs_Mp, occs_xy_Mp, cellnumbers = TRUE))
+# Remove duplicated same cell values
+occs_Mp <- occs_Mp[!duplicated(occs_vals_Mp[, 1]), ]
+occs_vals_Mp <- occs_vals_Mp[!duplicated(occs_vals_Mp[, 1]), -1]
+# remove occurrence records with NA environmental values
+occs_Mp <- occs_Mp[!(rowSums(is.na(occs_vals_Mp)) >= 1), ]
+# also remove variable value rows with NA environmental values
+occs_vals_Mp <- na.omit(occs_vals_Mp)
+# add columns for env variable values for each occurrence record
+occs_Mp <- cbind(occs_Mp, occs_vals_Mp)
+```
+
+### Process environmental data
+
+Sampling of 800 background points and corresponding environmental data
+using a user provided background extent with a 0 degree buffer.
+
+```{r}
+# Set the background to our area of environmental data plus a slight buffer
+bgExt_Mp <- penvs_bgExtent(occs_Mp, bgSel = 'bounding box', bgBuf = 0.5)
+
+bgMask_Mp <- penvs_bgMask(
+  occs = occs_Mp,
+  envs = envs_Mp,
+  bgExt = bgExt_Mp)
+# Sample background points from the provided area
+bgSample_Mp <- penvs_bgSample(
+  occs = occs_Mp,
+  bgMask =  bgMask_Mp,
+  bgPtsNum = 800)
+# Extract values of environmental layers for each background point
+bgEnvsVals_Mp <- as.data.frame(raster::extract(bgMask_Mp,  bgSample_Mp))
+##Add extracted values to background points table
+bgEnvsVals_Mp <- cbind(scientific_name = paste0("bg_", "Macrocystis pyrifera"), bgSample_Mp,
+                            occID = NA, year = NA, institution_code = NA, country = NA,
+                            state_province = NA, locality = NA, elevation = NA,
+                            record_type = NA, bgEnvsVals_Mp)
+```
+
+### Partition occurrence data
+
+Partition occurrences and background points for model training and
+validation using "hierarchical checkerboard", a spatial partition method
+with an aggregation factor of 2.
+
+```{r}
+# R code to get partitioned data
+groups_Mp <- part_partitionOccs(
+  occs = occs_Mp ,
+  bg =  bgSample_Mp, 
+  method = "cb2",
+  bgMask = bgMask_Mp,
+  aggFact = 2) 
+```
+
+### Build and Evaluate Niche Model
+
+Generating a species distribution model using the maxent.jar algorithm
+as implemented in ENMeval V2.0 (with clamping = FALSE). For tuning using
+L, LQ, H, LQH, LQHP feature classes and regularization multipliers in
+the 0.5, 4.5 range increasing by 0.2. Not using any categorical
+predictor variables.
+
+If this returns an error with rJava, please refer to "Setting Up Java
+Version of Maxent" in the [Wallace help
+Documentation](https://wallaceecomod.github.io/wallace/articles/tutorial-v2.html#obtain-environmental-data)
+
+```{r}
+set.seed(123)
+
+# Run maxent model for the selected species using maxent
+# model_Mp <- model_maxent(
+#   occs = occs_Mp,
+#   bg = bgEnvsVals_Mp,
+#   user.grp = groups_Mp, 
+#   bgMsk = bgMask_Mp,
+#   rms = c(0.5, 4.5), 
+#   rmsStep =  0.2,
+#   fcs = c('L', 'LQ', 'H', 'LQH', 'LQHP'),
+#   clampSel = FALSE,
+#   algMaxent = "maxnet",
+#   parallel = TRUE,
+#   numCores = 6)
+
+
+#--------------------------------maxent.jar strategy------------------------------
+
+# Run maxent model for the selected species using maxent.jar 
+# This needs rjava to run -- without rjava run above
+# This gives access to feature importance, above does not
+model_Mp <- model_maxent(
+  occs = occs_Mp,
+  bg = bgEnvsVals_Mp,
+  user.grp = groups_Mp, 
+  bgMsk = bgMask_Mp,
+  rms = c(0.5, 4.5), 
+  rmsStep =  0.2,
+  fcs = c('L', 'LQ', 'H', 'LQH', 'LQHP'),
+  clampSel = FALSE,
+  algMaxent = "maxent.jar",
+  parallel = TRUE,
+  numCores = 30) # Change to realistic cores for your machine
+```
+
+### Model eval & selection
+
+```{r}
+# Make the results a dataframe
+mod_res <- model_Mp@results
+
+# Sort data frame by AICc column in ascending order
+mod_res_sorted <- mod_res[order(mod_res$AICc), ]
+
+# Select the row with the lowest AICc value
+lowest_AIC_row <- mod_res_sorted[1, ]
+
+# Retrieve the value of the "tune.args" column from the row with the lowest AICc
+lowest_AIC_tune_args <- lowest_AIC_row$tune.args
+lowest_AIC_tune_args # Use this in the following section
+```
+
+### Visualize
+
+Generate a map of the Maxent generated model with no threshold
+
+```{r}
+# Select current model and obtain raster prediction
+m_Mp <- model_Mp@models[["fc.LQ_rm.0.5"]] # Pulled from lowest_AIC_tune_args
+predSel_Mp <- dismo::predict(
+  m_Mp, bgMask_Mp,
+  args = c(paste0("outputformat=", "cloglog"), 
+           paste0("doclamp=", tolower(as.character(FALSE)))), 
+  na.rm = TRUE)
+#Get values of prediction
+mapPredVals_Mp <- getRasterVals(predSel_Mp, "cloglog")
+#Define colors and legend  
+rasCols <- c("#2c7bb6", "#abd9e9", "#ffffbf", "#fdae61", "#d7191c")
+legendPal <- colorNumeric(rev(rasCols), mapPredVals_Mp, na.color = 'transparent')
+rasPal <- colorNumeric(rasCols, mapPredVals_Mp, na.color = 'transparent')
+#Generate map
+m <- leaflet() %>% addProviderTiles(providers$Esri.WorldTopoMap) 
+m  %>%
+  leaflet::addLegend("bottomright", pal = legendPal,
+            title = "Predicted Suitability<br>(Training)",
+            values = mapPredVals_Mp, layerId = "train",
+            labFormat = reverseLabel(2, reverse_order = TRUE)) %>% 
+  #add occurrence data
+  addCircleMarkers(data = occs_Mp, lat = ~latitude, lng = ~longitude,
+                   radius = 5, color = 'red', fill = TRUE, fillColor = "red",
+                   fillOpacity = 0.2, weight = 2, popup = ~pop) %>% 
+  ##Add model prediction
+  addRasterImage(predSel_Mp, colors = rasPal, opacity = 0.7,
+                 group = 'vis', layerId = 'mapPred', method = "ngb") %>%
+ ##add background polygons
+  addPolygons(data = bgExt_Mp,fill = FALSE,
+              weight = 4, color = "blue", group = 'proj')
+```
+
+### Visualize
+
+Generate a Maxent evaluation plot using "delta.AICc" as evaluation
+statistic.
+
+```{r}
+# Generate an evaluation plot
+maxentEvalPlot_Mp <- ENMeval::evalplot.stats(
+   model_Mp,
+   "delta.AICc",
+   "rm",
+   "fc")
+#plot
+maxentEvalPlot_Mp
+```
+
+### Variable Importance
+
+```{r}
+vars <- eval.variable.importance(model_Mp)[["fc.LQ_rm.0.5"]]
+kable(vars)
+tab_df(vars,
+       title = "Model Variable Importance Quarter 3")
+```
+
+### Data Plots
+
+```{r}
+# Depth
+depth_dat <- cbind(as.data.frame(envs_Mp[[1]]), as.data.frame(predSel_Mp))
+ggplot(depth_dat, aes(depth.3, layer)) +
+  geom_point() +
+  theme_minimal() +
+  labs(x = "Depth",
+       y = "Predicted Habitat Suitability")
+
+# Nitrogen
+nitr_dat <- cbind(as.data.frame(envs_Mp[[2]]), as.data.frame(predSel_Mp))
+ggplot(nitr_dat, aes(nitrate.nitrite.3, layer)) +
+  geom_point() +
+  theme_minimal() +
+  labs(x = "Nitrogen",
+       y = "Predicted Habitat Suitability")
+
+# Phosphate
+phos_dat <- cbind(as.data.frame(envs_Mp[[3]]), as.data.frame(predSel_Mp))
+ggplot(phos_dat, aes(phosphate.3, layer)) +
+  geom_point() +
+  theme_minimal() +
+  labs(x = "Phosphate",
+       y = "Predicted Habitat Suitability")
+```
+
+```{r}
+#---- Write to data files
+# Change this file path to your own to re-write data
+
+terra::writeRaster(predSel_Mp, "/capstone/kelpgeomod/google_drive_download/03-analysis-data/04-maxent-analysis/results/maxent-quarter-3-output.tif", overwrite = TRUE)
+
+terra::writeRaster(predSel_Mp, "/capstone/kelpgeomod/google_drive_download/04-deliverables/05-maxent-outputs/maxent-quarter-3-output.tif", overwrite = TRUE)
+```

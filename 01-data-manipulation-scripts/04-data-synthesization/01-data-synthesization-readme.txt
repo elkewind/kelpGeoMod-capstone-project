@@ -1,0 +1,1 @@
+This R markdown walks you through how our 4 synthesized data sets were created. See 03-data-synthesization-analysis (in our data in Google Drive) for these data sets.

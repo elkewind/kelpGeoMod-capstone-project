@@ -1,0 +1,370 @@
+---
+title: "Technical Documentation Visualizations"
+author: "Jessica French"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+# Description 
+
+This markdown document contains the code to reproduce visualizations of the synthesized data set used in the technical documentation. 
+
+## Set up
+
+```{r label = "read in packages"}
+library(tidyverse)
+library(mapsf)
+library(tmap)
+library(tmaptools)
+library(sp)
+library(sf)
+library(raster)
+library(paletteer)
+library(rasterVis)
+library(latticeExtra)
+library(gridExtra)
+library(terra)
+library(ggthemes)
+```
+
+```{r label = "read in data"}
+data_dir <- "/capstone/kelpgeomod/google_drive_download"
+
+# read in AOI shape
+aoi <- read_sf(file.path(data_dir, "02-intermediate-data/02-aoi-sbchannel-shapes-intermediate/aoi-sbchannel.shp"))
+
+# read in land bounds
+land <- read_sf(file.path(data_dir, "01-raw-data/02-ca-county-land-boundaries-raw/California_County_Boundaries/cnty19_1.shp")) |> 
+  st_union() |> # gets rid of the county lines
+  st_transform("EPSG:4326") |> 
+  st_crop(aoi)
+
+# read in observed synthesized data for visualization
+observed_syn <- read_csv(file.path(data_dir, "03-analysis-data/03-data-synthesization-analysis/observed-nutrients-synthesized.csv")) |> 
+  st_as_sf(coords = c("lon", "lat"), crs = st_crs(4326)) |> 
+  filter(nutrient_source != "lter_nitrate")
+
+# Year and quarter raster stacks of nitrogen (nitrate + nitrite), ammonium, and phospahte. 
+nitrogen <- brick(file.path(data_dir, "02-intermediate-data/09-nutrients-intermediate/joined/nitrate-nitrite-brick.tif"))
+ammonium <- brick(file.path(data_dir, "02-intermediate-data/09-nutrients-intermediate/joined/ammonium-brick.tif"))
+phosphate <- brick(file.path(data_dir, "02-intermediate-data/09-nutrients-intermediate/joined/phosphate-brick.tif"))
+
+# Read in interpolated nutrient layers for nitrogen 
+n_interp <- brick(file.path(data_dir, "03-analysis-data/02-nutrient-interpolation-analysis/nitrate-nitrite/nitrate-nitrite-quarter-brick.tif"))
+p_interp <- brick(file.path(data_dir, "03-analysis-data/02-nutrient-interpolation-analysis/phosphate/phosphate-quarter-brick.tif"))
+a_interp <- brick(file.path(data_dir, "03-analysis-data/02-nutrient-interpolation-analysis/ammonium/ammonium-quarter-brick.tif"))
+
+# read in kelp area and biomass
+kelp_area <- brick(file.path(data_dir, "02-intermediate-data/05-kelp-area-biomass-intermediate/kelp-area-brick.tif"))
+kelp_bio <- brick(file.path(data_dir, "02-intermediate-data/05-kelp-area-biomass-intermediate/kelp-biomass-brick.tif"))
+
+# read in substrate file 
+reclass_table <- cbind(c(0, 1, 2, 3), c("soft", "hard", "mixed", "anthropogenic"))
+
+
+substrate <- rast(file.path(data_dir, "02-intermediate-data/08-substrate-intermediate/combined-sbchannel-substrate.tif"))
+
+
+plot(substrate)
+```
+
+## Visualize the point data contained in the observed syntehsized data set
+
+```{r label = "observed map"}
+
+# create map
+observed_map <- tm_shape(observed_syn) +
+  tm_dots(col = "nutrient_source", 
+          palette = paletteer_d("ggthemes::excel_Badge"), 
+          title = "Nutrient Source", 
+          size = 0.05, 
+          alpha = 0.7,
+          legend.show = FALSE) +
+  tm_shape(land) +
+  tm_polygons(col = "#EFE2C9") +
+  tm_add_legend(type = "symbol", 
+                col = paletteer_d("ggthemes::excel_Badge", 4),
+                alpha = 0.7,
+                labels = c("CalCOFI", 
+                           "SBC LTER Bottle", 
+                           "Plumes and Blooms", 
+                           "USGS"), 
+                title = "Nutrient Observation Source") +
+  tm_layout(legend.outside = T, 
+            legend.outside.size = 0.4)
+
+observed_map
+```
+
+
+## Nitrogen
+
+```{r label = "year/quarter nutrient viz"}
+# Create representative map for each nutrient in the year/ quarter raster stacks.
+
+red_pal <- c("#ff6700", "#db4200", "#bf3000", "#a11000", "#850000", "#550000")
+
+nitrogen_map <- tm_shape(aoi) +
+  tm_borders() +
+  tm_shape(land) +
+  tm_polygons(col = "#EFE2C9") +
+  tm_shape(nitrogen[[6]]) +
+  tm_raster(legend.show = FALSE, palette = red_pal) +
+  tm_layout(frame = FALSE)
+
+nitrogen_map
+```
+
+```{r label = "nitrogen interp viz"}
+nitrogen_interp_map_1 <- tm_shape(aoi) +
+  tm_borders() +
+  tm_shape(land) +
+  tm_polygons(col = "#EFE2C9") +
+  tm_shape(n_interp[[1]]) +
+  tm_raster(legend.show = T,
+            title = "nitrogen concentration \n(micromoles per L)",
+            breaks = c(0,3,6,9,12,20), 
+            palette = red_pal) +
+  tm_layout(frame = FALSE,
+            legend.width = 1,
+            legend.title.size = 1)
+
+nitrogen_interp_map_1
+
+nitrogen_interp_map_2 <- tm_shape(aoi) +
+  tm_borders() +
+  tm_shape(land) +
+  tm_polygons(col = "#EFE2C9") +
+  tm_shape(n_interp[[2]]) +
+  tm_raster(legend.show = F, 
+            breaks = c(0,3,6,9,12,20),
+            palette = red_pal) +
+  tm_layout(frame = FALSE)
+
+nitrogen_interp_map_2
+
+nitrogen_interp_map_3 <- tm_shape(aoi) +
+  tm_borders() +
+  tm_shape(land) +
+  tm_polygons(col = "#EFE2C9") +
+  tm_shape(n_interp[[3]]) +
+  tm_raster(legend.show = F, breaks = c(0,3,6,9,12,20), 
+            palette = red_pal) +
+  tm_layout(frame = FALSE)
+
+nitrogen_interp_map_3
+
+nitrogen_interp_map_4 <- tm_shape(aoi) +
+  tm_borders() +
+  tm_shape(land) +
+  tm_polygons(col = "#EFE2C9") +
+  tm_shape(n_interp[[4]]) +
+  tm_raster(legend.show = F, 
+            breaks = c(0,3,6,9,12,20), 
+            palette = red_pal) +
+  tm_layout(frame = FALSE)
+
+nitrogen_interp_map_4
+```
+
+## phosphate
+
+```{r label = "year and quarter phosphate"}
+# create color palette
+purp_pal <- c("#ff90ff", "#a500a5", "#9a009a", "#820082", "#6a006a", "#420042" )
+
+phosphate_map <- tm_shape(aoi) +
+  tm_borders() +
+  tm_shape(land) +
+  tm_polygons(col = "#EFE2C9") +
+  tm_shape(phosphate[[4]]) +
+  tm_raster(legend.show = FALSE, palette = purp_pal) +
+  tm_layout(frame = FALSE)
+
+phosphate_map
+```
+
+```{r label = "interp map phosphate"}
+phosphate_interp_map_1 <- tm_shape(aoi) +
+  tm_borders() +
+  tm_shape(land) +
+  tm_polygons(col = "#EFE2C9") +
+  tm_shape(p_interp[[1]]) +
+  tm_raster(legend.show = T,
+            title = "phosphate concentration \n(micromoles per L)",
+            breaks = c(0,0.4,0.8,1.2,1.6,2.0), 
+            palette = purp_pal) +
+  tm_layout(frame = FALSE,
+            legend.width = 0.8,
+            legend.title.size = 0.8, 
+            legend.position = c(0.02, 0.055))
+
+phosphate_interp_map_1
+
+phosphate_interp_map_2 <- tm_shape(aoi) +
+  tm_borders() +
+  tm_shape(land) +
+  tm_polygons(col = "#EFE2C9") +
+  tm_shape(p_interp[[2]]) +
+  tm_raster(legend.show = F, 
+            breaks = c(0,0.4,0.8,1.2,1.6,2.0),
+            palette = purp_pal) +
+  tm_layout(frame = FALSE)
+
+phosphate_interp_map_2
+
+phosphate_interp_map_3 <- tm_shape(aoi) +
+  tm_borders() +
+  tm_shape(land) +
+  tm_polygons(col = "#EFE2C9") +
+  tm_shape(p_interp[[3]]) +
+  tm_raster(legend.show = F, 
+            breaks = c(0,0.4,0.8,1.2,1.6,2.0), 
+            palette = purp_pal) +
+  tm_layout(frame = FALSE)
+
+phosphate_interp_map_3
+
+phosphate_interp_map_4 <- tm_shape(aoi) +
+  tm_borders() +
+  tm_shape(land) +
+  tm_polygons(col = "#EFE2C9") +
+  tm_shape(p_interp[[4]]) +
+  tm_raster(legend.show = F, 
+            breaks = c(0,0.4,0.8,1.2,1.6,2.0), 
+            palette = purp_pal) +
+  tm_layout(frame = FALSE)
+
+phosphate_interp_map_4
+```
+
+## Ammonium
+
+```{r label = "ammonium year and quarter"}
+blue_pal <- c("#0067ff",  "#0042db", "#0030bf", "#0011a1", "#000085", "#000055")
+
+ammonium_map <- tm_shape(aoi) +
+  tm_borders() +
+  tm_shape(land) +
+  tm_polygons(col = "#EFE2C9") +
+  tm_shape(ammonium[[6]]) +
+  tm_raster(legend.show = FALSE, palette = blue_pal) +
+  tm_layout(frame = FALSE)
+
+ammonium_map
+```
+
+
+```{r label = "amminium interp maps}
+ammonium_interp_map_1 <- tm_shape(aoi) +
+  tm_borders() +
+  tm_shape(land) +
+  tm_polygons(col = "#EFE2C9") +
+  tm_shape(a_interp[[1]]) +
+  tm_raster(legend.show = T,
+            title = "ammonium concentration \n(micromoles per L)",
+            breaks = c(0,0.4,0.8,1.2,1.6,2.0), 
+            palette = blue_pal) +
+  tm_layout(frame = FALSE,
+            legend.width = 0.8,
+            legend.title.size = 0.8, 
+            legend.position = c(0.02, 0.055))
+
+ammonium_interp_map_1
+
+ammonium_interp_map_2 <- tm_shape(aoi) +
+  tm_borders() +
+  tm_shape(land) +
+  tm_polygons(col = "#EFE2C9") +
+  tm_shape(a_interp[[2]]) +
+  tm_raster(legend.show = F, 
+            breaks = c(0,0.4,0.8,1.2,1.6,2.0),
+            palette = blue_pal) +
+  tm_layout(frame = FALSE)
+
+ammonium_interp_map_2
+
+ammonium_interp_map_3 <- tm_shape(aoi) +
+  tm_borders() +
+  tm_shape(land) +
+  tm_polygons(col = "#EFE2C9") +
+  tm_shape(a_interp[[3]]) +
+  tm_raster(legend.show = F, 
+            breaks = c(0,0.4,0.8,1.2,1.6,2.0), 
+            palette = blue_pal) +
+  tm_layout(frame = FALSE)
+
+ammonium_interp_map_3
+
+ammonium_interp_map_4 <- tm_shape(aoi) +
+  tm_borders() +
+  tm_shape(land) +
+  tm_polygons(col = "#EFE2C9") +
+  tm_shape(a_interp[[4]]) +
+  tm_raster(legend.show = F, 
+            breaks = c(0,0.4,0.8,1.2,1.6,2.0), 
+            palette = blue_pal) +
+  tm_layout(frame = FALSE)
+
+ammonium_interp_map_4
+```
+
+## Kelp
+
+```{r label = "kelp year quarter plot"}
+kelp_area_map <- tm_shape(aoi) +
+  tm_borders() +
+  tm_shape(land) +
+  tm_polygons(col = "#EFE2C9") +
+  tm_shape(kelp_area[[6]]) +
+  tm_raster(legend.show = FALSE, palette = paletteer_c("ggthemes::Classic Green", 6)) +
+  tm_layout(frame = FALSE)
+
+kelp_area_map
+```
+
+## Substrate
+
+```{r label = "substrate map"}
+
+# plot combined substrate raster
+plot(aoi$geometry)
+plot(land, add = TRUE, col = "#EFE2C9")
+plot(substrate, add = TRUE, col = c("#E7BF5F", "#6F6F6F", "#BFBFA5", "#9E5E9B"))
+
+# rasterVis::levelplot(substrate, col.regions = paletteer_d("RColorBrewer::BrBG"), add = TRUE) +
+#   sp.polygons(SpatialPolygons(aoi))
+# 
+# tm_shape(substrate) +
+#   tm_raster()
+```
+
+## plot interpolation area
+
+```{r}
+# read in shape file
+sb_coast <- st_read("/capstone/kelpgeomod/old_file_structure/raw_data/interpolation_shapes/sbc_coast.shp")
+
+# read in ca counties
+ca_counties <- st_read("/capstone/kelpgeomod/old_file_structure/raw_data/land_bounds/California_County_Boundaries/cnty19_1.shp") |> 
+  st_transform("EPSG: 4326")
+
+
+# read in aoi 
+aoi <- st_read("/capstone/kelpgeomod/old_file_structure/raw_data/New_AOI_SBchannel_shp/New_AOI_SBchannel.shp") 
+
+# crop ca counties to aoi 
+counties_crop <- st_crop(ca_counties, aoi) |> 
+  st_union()
+
+tm_shape(counties_crop) +
+  tm_polygons(col = "#D6C78C", alpha = 0.5) +
+  tm_shape(sb_coast) +
+  tm_polygons(col = "aquamarine4", alpha = 0.5) +
+  tm_add_legend(type = "fill", 
+                labels = c("Interpolated Area"), 
+                col = c("aquamarine4"), 
+                alpha = 0.5) +
+  tm_layout(legend.position = c(0.005, 0.005))
+```
+

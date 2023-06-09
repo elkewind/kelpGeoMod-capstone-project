@@ -1,0 +1,187 @@
+---
+title: "Arrange Quarterly Data"
+author: "Elke Windschitl"
+date: '`r format(Sys.time(), "%m/%d/%Y")`'
+output: html_document
+---
+
+This is a script that gathers oceanographic rasters from across our data sets, formats them for Wallace Maxent analysis, and saves them to easy-to-use folders.
+
+```{r}
+library(tidyverse)
+library(raster)
+library(terra)
+library(sf)
+```
+
+```{r}
+#---- Set up the data directory (wherever your download of our Google Shared Drive lives)
+data_dir <- "/capstone/kelpgeomod/google_drive_download"
+```
+
+# Load in data using terra, assign layer names, then convert to package Raster objects
+
+## SST
+
+```{r}
+# create a list to store the raster objects
+sst_list <- list()
+
+# loop through quarters 1-4
+for (i in 1:4) {
+  # Read in sst quarterly data --------------------
+  # create the file name
+  file_name <- paste0(data_dir, "/02-intermediate-data/07-sst-intermediate/sst-quarter-", i, ".tif")
+  # create the raster object and add it to the list
+  sst_list[[i]] <- rast(file_name, lyr = 1)
+  
+  # Process to match maxent needs -----------------
+  names(sst_list[[i]]) <- "sst"
+  sst_list[[i]] <- raster(sst_list[[i]])
+}
+```
+
+## Nitrate + Nitrite
+
+```{r}
+# create a list to store the raster objects
+nitrate_nitrite_list <- list()
+
+# loop through quarters 1-4
+for (i in 1:4) {
+  # Read in nitrate_nitrite quarterly data --------------------
+  # create the file name
+  file_name <- paste0(data_dir, "/03-analysis-data/02-nutrient-interpolation-analysis/nitrate-nitrite/nitrate-nitrite-quarter-", i, ".tif")
+  # create the raster object and add it to the list
+  nitrate_nitrite_list[[i]] <- rast(file_name, lyr = 1)
+  
+  # Process to match maxent needs -----------------
+  names(nitrate_nitrite_list[[i]]) <- "nitrate_nitrite"
+  nitrate_nitrite_list[[i]] <- raster(nitrate_nitrite_list[[i]])
+}
+```
+
+## Phosphate
+
+```{r}
+# create a list to store the raster objects
+phosphate_list <- list()
+
+# loop through quarters 1-4
+for (i in 1:4) {
+  # Read in phosphate quarterly data --------------------
+  # create the file name
+  file_name <- paste0(data_dir, "/03-analysis-data/02-nutrient-interpolation-analysis/phosphate/phosphate-quarter-", i, ".tif")
+  # create the raster object and add it to the list
+  phosphate_list[[i]] <- rast(file_name, lyr = 1)
+  
+  # Process to match maxent needs -----------------
+  names(phosphate_list[[i]]) <- "phosphate"
+  phosphate_list[[i]] <- raster(phosphate_list[[i]])
+}
+```
+
+## Ammonium -- This is the processing step for ammonium, however, we do not include it in maxent to to lack of data.
+
+```{r}
+# create a list to store the raster objects
+ammonium_list <- list()
+
+# loop through quarters 1-4
+for (i in 1:4) {
+  # Read in ammonium quarterly data --------------------
+  # create the file name
+  file_name <- paste0(data_dir, "/03-analysis-data/02-nutrient-interpolation-analysis/ammonium/ammonium-quarter-", i, ".tif")
+  # create the raster object and add it to the list
+  ammonium_list[[i]] <- rast(file_name, lyr = 1)
+  
+  # Process to match maxent needs -----------------
+  names(ammonium_list[[i]]) <- "ammonium"
+  ammonium_list[[i]] <- raster(ammonium_list[[i]])
+}
+```
+
+## Depth -- Althought depth is static over all quarters, we made four copies for ease of inclusion with other variables.
+
+```{r}
+# create a list to store the raster objects
+depth_list <- list()
+
+# loop through quarters 1-4
+for (i in 1:4) {
+  # Read in ammonium quarterly data --------------------
+  # create the file name
+  file_name <- paste0(data_dir, "/02-intermediate-data/06-depth-intermediate/depth.tif")
+  # create the raster object and add it to the list
+  depth_list[[i]] <- rast(file_name, lyr = 1)
+  
+  # Process to match maxent needs -----------------
+  names(depth_list[[i]]) <- "depth"
+  depth_list[[i]] <- raster(depth_list[[i]])
+}
+
+```
+
+### Mask data to only include cells where we have values for every oceanographic factor.
+
+
+```{r}
+for (i in 1:4){
+  # Read in the three rasters
+  #sst <- sst_list[[i]]
+  nitrate_nitrite <- nitrate_nitrite_list[[i]]
+  phosphate <- phosphate_list[[i]]
+  depth <- depth_list[[i]]
+  
+  # define a function that checks if all values are not NA
+  all_not_na <- function(nitrate_nitrite, phosphate, depth) {
+    ifelse(!is.na(nitrate_nitrite) & !is.na(phosphate) & !is.na(depth), 1, NA)
+    }
+  # apply the function to the rasters using overlay
+  maxent_mask <- overlay(nitrate_nitrite, phosphate, depth, fun = all_not_na)
+  assign(paste0("maxent_mask_", i), maxent_mask)
+}
+```
+
+### Apply the mask to every raster and export
+
+```{r}
+#---- Write to data files
+# Change the file paths to your own to re-write data
+
+for (i in 1:4) {
+  # create the maxent_mask for this iteration
+  maxent_mask <- get(paste0("maxent_mask_", i)) 
+  
+  # mask the input rasters with the maxent_mask
+  depth_i <- mask(depth_list[[i]], maxent_mask)
+  nitrate_nitrite_i <- mask(nitrate_nitrite_list[[i]], maxent_mask)
+  phosphate_i <- mask(phosphate_list[[i]], maxent_mask)
+  
+  # save the masked rasters to files with unique names
+  writeRaster(depth_i, paste0("/capstone/kelpgeomod/google_drive_download/03-analysis-data/04-maxent-analysis/quarter-", i, "/depth-", i, ".tif"), overwrite = TRUE)
+  
+  writeRaster(nitrate_nitrite_i, paste0("/capstone/kelpgeomod/google_drive_download/03-analysis-data/04-maxent-analysis/quarter-", i, "/nitrate-nitrite-", i, ".tif"), overwrite = TRUE)
+  
+  writeRaster(phosphate_i, paste0("/capstone/kelpgeomod/google_drive_download/03-analysis-data/04-maxent-analysis/quarter-", i, "/phosphate-", i, ".tif"), overwrite = TRUE)
+} 
+
+```
+
+### Add AOI to each file 
+
+```{r}
+# read in the shapefile of aoi
+aoi_shp <- st_read(file.path(data_dir, "02-intermediate-data/02-aoi-sbchannel-shapes-intermediate/aoi-sbchannel.shp"))
+
+#---- Write to data files
+# Change the file paths to your own to re-write data
+
+# write the aoi object to a shapefile in each quarter file
+st_write(aoi_shp, "/capstone/kelpgeomod/google_drive_download/03-analysis-data/04-maxent-analysis/quarter-1/aoi.shp", append = FALSE)
+st_write(aoi_shp, "/capstone/kelpgeomod/google_drive_download/03-analysis-data/04-maxent-analysis/quarter-2/aoi.shp", append = FALSE)
+st_write(aoi_shp, "/capstone/kelpgeomod/google_drive_download/03-analysis-data/04-maxent-analysis/quarter-3/aoi.shp", append = FALSE)
+st_write(aoi_shp, "/capstone/kelpgeomod/google_drive_download/03-analysis-data/04-maxent-analysis/quarter-4/aoi.shp", append = FALSE)
+
+```
+
