@@ -1,5 +1,5 @@
 # DEVELOPING A DATA PIPELINE FOR KELP FOREST MODELING
-
+ 
 #### kelpGeoMod, A Capstone Project submitted in partial satisfaction of the requirements for the degree of Master of Environmental Data Science for the Bren School of Environmental Science & Management 
 
 [![](04-README-images/kelp-image-underwater.jpg)](https://bren.ucsb.edu/projects/developing-data-pipeline-kelp-forest-modeling)
